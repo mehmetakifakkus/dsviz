@@ -1,0 +1,33 @@
+canvas { border-left: 2px solid black; }
+
+
+$purple: #5c4084;
+
+body {
+  background-color: $purple;
+  padding-top: 15px;
+}
+
+div .mytitle {
+  display: inline-block;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  width: auto;
+  height: 20px;
+  margin: 15px 0px;
+  padding: 8px 12px;
+  padding-top: 5px;
+
+  border: none;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  font: normal 20px/normal "Trebuchet MS", lucida, sans-serif;
+/*font-family: "Trebuchet MS", lucida, sans-serif;*/
+  color: rgba(255,255,255,0.9);
+  -o-text-overflow: clip;
+  text-overflow: clip;
+  background: rgba(110,2,234,1);
+  -webkit-box-shadow: 2px 2px 2px 0 rgba(0,0,0,0.2) ;
+  box-shadow: 2px 2px 2px 0 rgba(0,0,0,0.2) ;
+}

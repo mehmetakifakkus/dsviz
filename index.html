@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+	<!--    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Roboto" rel="stylesheet">-->
+<!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"  rel="stylesheet">-->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+
+<!--    http://mdbootstrap.com/css/colors/-->
+<!--    <link href="css/mdb.min.css" rel="stylesheet" type="text/css">-->
+
+	<link href="css/shapes.css" rel="stylesheet">
+	<link href="css/myButtons.css" rel="stylesheet">
+	<link href="css/myCodeMirrorSettings.css" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.css" rel="stylesheet">
+	<link href="https://codemirror.net/theme/eclipse.css" rel="stylesheet">
+
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src='js/peg-0.9.0.min.js'></script>
+
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/javascript/javascript.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/addon/edit/closetag.js"></script>
+
+    <title> Linked Lists </title>
+</head>
+<body>
+
+
+ <div class="container">
+
+<h1>Linked Lists</h1>
+<!--  <p>This app is basically focused on linked lists. Code part at the left automatically changes your codes to visualisation.  </p>-->
+ <div class="row">
+
+
+		  <div class="col-md-5">
+			<div class="col-xs-12" style="height:10px;"></div>
+
+<div class = "mytitle">
+	<p class="big"> Write Your Code for Visualisation </p>
+</div>
+
+
+
+<textarea id="codemirror">
+var x = 8 //burada variable tanimliyoruz
+print x // deneme
+var y = x + 4 // burada p pointeri bir ileri
+append 10
+append 11
+append 12
+append 13
+
+var end = Node(4)
+var z = Node(3, end)
+var y = Node(2, z)
+var x = Node(1, y)
+
+var p1 = Pointer(x) // p1 points Node s
+</textarea>
+
+<style>
+#content h2.suggestion .step-title { margin-left: 2.5em; }
+
+#content textarea.code {
+  width: 100%; height: 20em;
+  border: 1px solid gray;
+  font-family: "Lucida Console", fixed, monospace;
+}
+
+#content #output-header {
+  margin: 1.25em 0 0 0; border: none; padding: .45em 1em 0.45em 1.0em;
+  font-size: 1em;
+  color: white; background-color: silver;
+}
+#content #output {
+  overflow: auto;
+  max-height: 20em;
+  margin: 0; padding: .5em 1em; border: 2px solid silver; border-top: none;
+  background-color: #f0f0f0;
+  font-family: "Lucida Console", fixed, monospace;
+}
+#content #output.disabled { color: gray; }
+
+</style>
+
+	<div class="col-xs-12" style="height:5px;"></div>
+
+<!--<button type="button" onclick="restart()" class="btn btn-round btn-m"><i class="material-icons md-20">replay</i></button>-->
+<button type="button" onclick="parse()" class="btn btn-round btn-lg" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-play icon-white"></span></button>
+<!--<button type="button" onclick="forward()" class="btn btn-round btn-m"><span class="glyphicon glyphicon-step-forward"></span></button>-->
+
+
+ 		<div class="col-xs-12" style="height:20px;"></div>
+
+		<div class="row">
+		  <div class="col-md-6">
+       <div class = "mytitle">
+            <p class="big"> Command Prompt </p>
+        </div>
+		</div>
+		  <div class="col-md-6">
+				<div class="col-xs-12" style="height:20px;"></div>
+				<h4><span id = "resultSign" class="label label-default"></span></h4>
+		  </div>
+		</div>
+
+		<textarea id="command" class = "commandPrompt"></textarea>
+
+		<div class="col-xs-12" style="height:20px;"></div>
+
+<!--		<div id = "result" class="alert alert-success" role="alert"></div>-->
+
+		<div id = "content">
+			<div class="content-height">
+            <h2 id="output-header">Output</h2>
+				<pre style="overflow:auto; white-space:pre-wrap; word-wrap:break-word;" id="result" class=""></pre>
+          </div>
+        </div>
+	</div>
+
+		<div class="col-md-7">
+			<div class="col-xs-12" style="height:60px;"></div>
+			<canvas id="myCanvas0" height="600" width="800"></canvas>
+		</div>
+		<div class="col-xs-12" style="height:120px;"></div>
+
+    </div>
+
+     <hr>
+     <br><br>
+
+
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">This app is developed by
+            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> using paper.js, peg.js, codemirror.js and jquery.
+        </p>
+        <p class="text-muted">Middle East Technical University. Computer Engineering Department</p>
+
+      </div>
+    </footer>
+
+    </div>
+</body>
+
+
+<script>
+
+var editor = CodeMirror.fromTextArea(document.getElementById('codemirror'), {
+  mode: "javascript",
+  extraKeys: {"Ctrl-Space": "autocomplete"},
+  lineNumbers: true,
+  autoCloseTags: true,
+  theme: 'eclipse'
+});
+
+window.editor =editor;
+
+var editor2 = CodeMirror.fromTextArea(document.getElementById('command'), {
+  mode: "javascript",
+  lineNumbers: false,
+  theme: 'eclipse'
+});
+
+window.editor =editor;
+
+var commandHist = [];
+var currHist = 0;
+
+editor2.setOption("extraKeys", {
+	Enter: function(cm) {
+	  deneme()
+	  console.log(editor2.getValue())
+	  commandHist.push(editor2.getValue())
+	  currHist = commandHist.length;
+
+	  cm.setValue("");
+	  cm.clearHistory();
+	},
+	Up: function(cm){
+		if(currHist <= 0)
+			return;
+
+		currHist--;
+		editor2.setValue(commandHist[currHist]);
+		editor2.setCursor({line: 1, ch: 50})
+	},
+	Down: function(cm){
+		if(currHist >= commandHist.length-1)
+			return;
+
+		currHist++;
+		editor2.setValue(commandHist[currHist]);
+		editor2.setCursor({line: 1, ch: 50})
+	}
+});
+
+editor2.setSize(550, 45);
+window.editor2 = editor2;
+
+function deneme(){
+
+	try {
+		var command = editor2.getValue();
+		var result = parse(command);
+		document.getElementById("result").textContent = JSON.stringify(result, null, 3);
+		document.getElementById("resultSign").innerHTML = "Successfully operated";
+		document.getElementById("resultSign").className = "label label-success";
+	}
+	catch (err) {
+		document.getElementById("result").textContent = err.toString();
+		document.getElementById("resultSign").innerHTML = "Error!";
+		document.getElementById("resultSign").className = "label label-warning";
+	}
+
+	setTimeout(function(){
+		document.getElementById("resultSign").className = "label label-default";
+		document.getElementById("resultSign").innerHTML = "";
+	}, 5000);
+
+}
+
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.js"></script>
+
+<script src='js/addon/active-line.js'></script>
+<script src='js/addon/closebrackets.js'></script>
+
+<script src='js/addon/foldcode.js'></script>
+<script src='js/addon/foldgutter.js'></script>
+
+<script src='js/addon/show-hint.js'></script>
+<script src='js/mode/simple.js'></script>
+
+<!-- Load the Paper.js library -->
+<script type="text/javascript" src="js/paper.js"></script>
+
+<!-- Define inlined PaperScript associate it with myCanvas -->
+<!--<script type="text/javascript" src="js/parser.js"></script>	-->
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+
+</html>

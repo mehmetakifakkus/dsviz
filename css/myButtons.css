@@ -1,0 +1,65 @@
+.btn-round {
+    border-radius: 10px;
+}
+
+.btn-lg {
+    width: 70px;
+    height: 40px;
+    padding: 5px 22px;
+    font-size: 20px;
+    line-height: 1.73;
+}
+
+.btn-round.btn-m {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    padding: 0px 4px;
+}
+
+
+.btn-round.btn-sm {
+    width: 34px;
+    height: 34px;
+}
+
+.btn-round.btn-xs {
+    width: 24px;
+    height: 24px;
+}
+
+.btn:focus,
+.btn.focus,{
+    outline: none;
+}
+
+.btn{
+    margin: 4px;
+}
+
+    button {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    outline: none;
+    border: 0;
+    background: transparent;
+}
+
+
+    .icon-white{
+        color: #ffffff;
+    }
+
+    .icon-black{
+        color: #000000;
+    }
+
+    .icon-blue{
+        color: blue;
+    }
+
+
+    /* Rules for sizing the icon. */
+.material-icons.md-20 { font-size: 20px; }
+
