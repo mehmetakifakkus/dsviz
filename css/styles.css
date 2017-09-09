@@ -60,3 +60,21 @@ body {
   border:0 #eee solid;
   border-right-width:5px;
 }
+
+
+
+.styled-background-normal {
+  background-color: yellow;
+  color: #000;
+}
+
+.styled-background-logical-true {
+  background-color: #62fd46;
+  color: #000;
+}
+
+
+.styled-background-logical-false {
+  background-color: #eb847f;
+  color: #000;
+}

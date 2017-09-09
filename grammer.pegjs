@@ -5,38 +5,6 @@
  * var p2 = Node(3)
  * p1.next = p2
  */
-{
-
-/*
-
-function iterate(){}
-function redraw(){}
-function appendANode(){}
-var list1 = []
-
-function Node(val, next){ 
-	console.log('node '+val+' is created with next '+next)
-	//this.drawNodeSomewhere = function(){}
-	//this.drawArrow = function(){}
-	//this.setName = function(){}
-    //this.next = next;
-} 
-
-function Pointer(val){ 
-	console.log('pointer '+val+' is created.')
-	//this.draw = function(){}
-   	//this.setName = function(){}
-    //this.points = val;
-   	//this.drawArrow = function(){}
-} 
-*/
-
-
-window.Node = Node; 
-window.Pointer = Pointer;
-
-}
-
 
 start = statement*
 
@@ -95,9 +63,11 @@ compound_statement
 
 
 block_item
- =   object_poperty_set1
-    / object_poperty_set2
-    / print_statement
+=   left_right_object_poperty 
+	/ left_object_poperty
+    / right_object_poperty
+    / object_poperty
+	/ print_statement
   	/ appendNode
   	/ object_statement
 	/ declaration
@@ -157,74 +127,47 @@ print_statement = _ "print" _ exp:( _  '+'? _ (math_functions / StringLiteral / 
 }
 
 
-///// Object reference //////
+/////////////////////////			 Object reference 		////////////////
 
 appendNode
- = "append" _ intt:(integer / name)   _ (comment)* nl{
-	appendANode(list1, eval(intt));
-	redraw();
-	return "node "+intt;
+ = "append" _ data:(integer / name)   _ (comment)* nl{
+	return {'type': 'node append', value: data, 'lineNumber': location().start.line};
  }
 
 object_statement
- = "var " _ name:name _ "=" _ Object_Constructor nl{
-	window.eval("var "+name+"=secret9999");
-   	//window.eval(""+name+".drawNodeSomewhere();");
-	window.eval(name+".setName('"+name+"')");
+ = "var " _ name:name _ "=" _ obj:Object_Constructor nl{
+	return {'type': 'declaration', 'lhs': name, 'rhs': obj, 'lineNumber': location().start.line}
  }
  
 Object_Constructor
  = node
- / pointer
  
 node
- = "Node("_ value:integer _ next:("," _ name)? ")" _ comment? { 
- 	if(next)
-        window.eval("var secret9999=new Node("+value+","+next[2]+")");
-    else
-    	window.eval("var secret9999=new Node("+value+")");
-	
-	window.eval("if(!secret9999.boxDraw) secret9999.drawNodeSomewhere();");
-	return "secret9999" 
+ = "Node("_ value:integer _ next:("," _ name)? ")" _ comment? nl{ 
+	return {'type': 'node', 'data': value, 'next': next? next[2]: null, 'lineNumber': location().start.line}
  } 
- 
-pointer 
- = "Pointer(" _ p:name _ ")" _ comment? {
-	window.eval("var secret9999=new Pointer("+p+")");
-	console.log(eval('secret9999')) 	
-	return "secret9999";
- }
 
-object_poperty_set2
- = left:name next:(".next")+ _ "=" _ right:name nl{
-	var str = 'var pointedNode9999=0; ' +
-              'if('+left+'.constructor.name == "Pointer") ' +
-                 	'pointedNode9999 = '+left+'.points; ' +
-              'else if('+ left + '.constructor.name == "Node") ' +
-                  	'pointedNode9999 = '+left+';';
-
-        window.eval(str);	
-
-        var left = "pointedNode9999";
-
-        for(var i=0; i < next.length-1; i++) // go to the last node when we have multiple next
-	        window.eval('pointedNode9999 = pointedNode9999.next;');
-
-        window.eval(left+".drawArrow("+right+")");      	 
-        window.eval(left+".next="+right);
-
-        return left+'->'+right;
-  } 
+/////////////////////////       Object properties        ////////////////
   
-object_poperty_set1
- = left:name _ "=" _ right:name next:(".next")+ nl{
-	console.log(left+".draw("+right+".points"+next.join('')+")");
-	window.eval(left+".draw("+right+".points"+next.join('')+")");
-	
-	return left+'->'+right+' '+next.length+'  -'+next.join('')+'-\n'; 
+left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
+ = propL: object_poperty _ "=" _ propR: object_poperty nl{
+ 	return {'type': 'object property left-right', 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propL.property,}
+  } 
+
+left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11)
+ = prop:object_poperty "=" _ right: (Object_Constructor / name) nl{
+  	return {'type': 'object property left', 'lhs': prop.variable, 'property': prop.property, 'rhs': right}
+  } 
+
+right_object_poperty   												// pointer hareketi icin p1 = p1.next
+ = left:name _ "=" _ prop:object_poperty nl{
+ 	return {'type': 'object property right', 'lhs': left, 'property': prop.property, 'rhs': prop.variable}
   }  
 
-
+object_poperty
+ = variable:name prop:('.' name)+ _ nl{
+ 	return {'type': 'object property', 'variable': variable, 'property': prop}
+  } 
 
 
 
@@ -248,8 +191,8 @@ Factor
 
 logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_operator _ logical_statement)* _ nl
 {
-	var text = f1+' ';
-    text += op + ' ' + f2; 
+	var text = f1.text+' ';
+    text += op + ' ' + f2.text; 
         
     if(log[0] != undefined)  
     {	
@@ -263,9 +206,7 @@ logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_opera
 }
 	  
 factor2 = "(" logical_statement ")" 
-	   / name
-	   / Float
-       / integer
+	   / expression_statement
 	   
 
 ////////////////////////////////////////////////////////////////////// math functions

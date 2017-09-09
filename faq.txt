@@ -1,0 +1,10 @@
+Soru : Bu kodlarla uygulama gelistirmek mümkün mü yoksa ogretmek amacıyla mı?
+Cevap: Türkçe Programlama Dili programlama öğrenmek isteyenlere ana dilde öğrenmesini sağlayacak bir araç. Özellikle herhangi bir yazılım kurmayı gerektirmemesi ve kodun çalışmasını adım adım görmeyi sağlaması en önemli evantajlarından. İleri bir tarihte, oyun programlama, web programlama gibi özellikler eklenebilir, ama bu kısmı zaten yapan işinde ustalaşmış diller var, bunları onlara havale ediyoruz. 
+
+Öte yandan algoritma geliştirmek ve bunları veri yapılarını kullanarak nasıl çalışacağını bilmek daha önemli bir ihtiyaç. Bu dilin algoritmaları anlamada bir araç olarak da kullanılabileceğini düşünüyor ve enerjimizi bu noktaya yoğunlaştırmak istiyoruz.
+
+
+
+Soru : İngilizce olsa daha iyi olmazmiydi, neden Türkçe yapmaya çalışıyorsunuz?
+
+Cevap: Türkçe olmasının bir çok yeni başlayan için motive edici bir unsur olduğu düşüncesindeyiz. Mantığı anladıktan sonra bir kaç gün içinde  herhangi yeni bir dil öğrenilebilir.
