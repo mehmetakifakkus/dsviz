@@ -33,7 +33,7 @@
  <div class="row">
 
 
-		  <div class="col-md-5">
+		  <div class="col-md-4">
 			<div class="col-xs-12" style="height:10px;"></div>
 
 <div class = "mytitle">
@@ -42,17 +42,17 @@
 
 
 <textarea id="codemirror">
-var x = Node(1)
-var y = Node(2)
-var z = Node(3)
+var x = new Node(1)
+var y = new Node(2)
+var z = new Node(3)
 
 x.next = y
 y.next = z
 
-p1 = x
+var p1 = x
 
-z.next = Node(4)
-z.next.next = Node(5)</textarea>
+z.next = new Node(4)
+z.next.next = new Node(5)</textarea>
 
 <div class="col-xs-12" style="height:5px;"></div>
 
@@ -86,9 +86,9 @@ z.next.next = Node(5)</textarea>
         </div>
 	</div>
 
-		<div class="col-md-7">
+		<div class="col-md-8">
 			<div class="col-xs-12" style="height:60px;"></div>
-			<canvas id="myCanvas0" height="600" width="800"></canvas>
+			<canvas id="myCanvas0" height="600" width="1200"></canvas>
 		</div>
 		<div class="col-xs-12" style="height:120px;"></div>
 

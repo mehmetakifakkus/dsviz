@@ -8,7 +8,7 @@ var editor = CodeMirror.fromTextArea(document.getElementById('codemirror'), {
   autoCloseTags: true,
   theme: 'eclipse'
 });
-editor.setSize(550, 250);
+editor.setSize(450, 250);
 
 
 var editor2 = CodeMirror.fromTextArea(document.getElementById('command'), {
@@ -17,7 +17,7 @@ var editor2 = CodeMirror.fromTextArea(document.getElementById('command'), {
   theme: 'eclipse'
 });
 
-editor2.setSize(550, 45);
+editor2.setSize(450, 45);
 
 var commandHist = [], currHist = 0;
 editor2.setOption("extraKeys", {

@@ -52,7 +52,7 @@ function createRandom2D(minX, maxX, minY, maxY) {
 
 ////////////////////////////////////////// Linked List Node //////////////////////////////
 
-var initialPositionX = 100, initialPositionY = 200;
+var initialPositionX = 80, initialPositionY = 150;
 function Node(content, next){
 
 	if(typeof Node.counter == undefined || content == undefined)
@@ -98,7 +98,7 @@ function Node(content, next){
 		var normalized;
 
 		while(true){
-			normalized = createRandom2D(initialPositionX, initialPositionX + 30, initialPositionY - 100, initialPositionY + 100) - [25,12];
+			normalized = createRandom2D(initialPositionX, initialPositionX + 30, initialPositionY - 80, initialPositionY + 80) - [25,12];
 
 			var hitResult = project.hitTest(normalized, {fill:true, tolerance:75});
 			if (!hitResult) // if random point hits create a new one
@@ -495,10 +495,7 @@ function processOneItem(item){
 		{
 			var nodeItem = item.rhs;
 
-			if(nodeItem.next)
-				window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + "," +nodeItem.next + ")");
-			else
-				window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
+			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
 
 			window.eval(item.lhs + ".setName('" + item.lhs + "')");
 			window.eval("if(!"+item.lhs+".boxDraw) "+item.lhs+".drawNodeSomewhere2();");
@@ -543,7 +540,6 @@ function processOneItem(item){
 			drawGraphics(item, true, eval(item.text));
 		else
 			drawGraphics(item, false, eval(item.text));
-		console.error(item)
 	}
 	if(item.type == 'print')
 	{
@@ -706,6 +702,19 @@ window.parse = function(text) {
 			var result = eval(res.variable + str);
 
 			document.getElementById("result").textContent = JSON.stringify(typeof result == 'number' ? result : createSummary(result), null, 3);
+			return;
+		}
+
+		if(res.type == 'node')
+		{
+			window.eval("var temp_node = new Node(" + res.data + ");");
+			window.eval("if(!temp_node.boxDraw) temp_node.drawNodeSomewhere();");
+
+			//console.error(item.lhs + str + prop + ' = temp_node')
+
+			//window.eval(item.lhs + str + prop + ' = temp_node')
+			//window.eval(item.lhs + str + '.drawArrow(temp_node)')
+
 			return;
 		}
 

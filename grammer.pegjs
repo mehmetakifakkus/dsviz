@@ -12,8 +12,8 @@ statement
   =	block_item
   
 
-if_statement
-  = _ 'eğer' + '(' _ los:logical_statement  _ ')' _ nl
+if_statement "if"
+  = _ ('if' / 'eğer') + '(' _ los:logical_statement  _ ')' _ nl
   		_ lines1:(compound_statement / block_item) _ nl
   lines2:( _ 'değilse' _ nl 
   		_ (compound_statement / block_item) )? nl
@@ -35,7 +35,7 @@ if_statement
 }
  
 while_statement
- = _ 'yinele' _ '(' los:logical_statement ')' _ nl 
+ = _ ('yinele' / 'while') _ '(' los:logical_statement ')' _ nl 
    _ lines:(compound_statement / block_item) _ nl
 { 
     if(lines instanceof Array)
@@ -63,17 +63,21 @@ compound_statement
 
 
 block_item
-=   left_right_object_poperty 
+=	logical_statement
+	/ object_statement	
+	/ Object_Constructor
+	
+	/ left_right_object_poperty 
 	/ left_object_poperty
     / right_object_poperty
-    / object_poperty
-	/ print_statement
-  	/ appendNode
-  	/ object_statement
+	/ object_poperty
+
 	/ declaration
-	/ logical_statement
+	
+	/ print_statement
 	/ if_statement
 	/ while_statement
+
 	/ print_statement
 	/ math_functions
 	/ expression_statement
@@ -91,16 +95,16 @@ null_statement
 
 
 declaration
- =  _ 'var' _ dec:init_declarator_list _ nl{
+ =  _ 'var' _ dec:init_declarator_list {
 	return {'type': 'declaration', '#evaluation': 0, 'text':'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
  }
  /
-  _ ass:init_declarator_list  {
+  _ ass:init_declarator_list {
 	return {'type': 'assignment', '#evaluation': 0, 'text': ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': location().start.line};
  }
 
 init_declarator_list
- = 	init:init_declarator (',' _ init_declarator)* {return init;}
+ = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
 
 init_declarator
 	= _ left:name _"="_ exp: (dogru / yanlis / math_functions / expression_statement) nl{
@@ -129,13 +133,8 @@ print_statement = _ "print" _ exp:( _  '+'? _ (math_functions / StringLiteral / 
 
 /////////////////////////			 Object reference 		////////////////
 
-appendNode
- = "append" _ data:(integer / name)   _ (comment)* nl{
-	return {'type': 'node append', value: data, 'lineNumber': location().start.line};
- }
-
 object_statement
- = "var " _ name:name _ "=" _ obj:Object_Constructor nl{
+ = "var " _ name:name _ "=" _ obj:Object_Constructor _ nl{
 	return {'type': 'declaration', 'lhs': name, 'rhs': obj, 'lineNumber': location().start.line}
  }
  
@@ -143,30 +142,30 @@ Object_Constructor
  = node
  
 node
- = "Node("_ value:integer _ next:("," _ name)? ")" _ comment? nl{ 
+ = _ 'new' _ 'Node' '('_ value:integer _ next:("," _ name)? ")" _ comment? _ nl{ 
 	return {'type': 'node', 'data': value, 'next': next? next[2]: null, 'lineNumber': location().start.line}
  } 
 
 /////////////////////////       Object properties        ////////////////
   
 left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
- = propL: object_poperty _ "=" _ propR: object_poperty nl{
+ = propL: object_poperty _ "=" _ propR: object_poperty _ nl{
  	return {'type': 'object property left-right', 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propL.property,}
   } 
 
 left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11)
- = prop:object_poperty "=" _ right: (Object_Constructor / name) nl{
+ = prop:object_poperty "=" _ right: (Object_Constructor / name) _ nl{
   	return {'type': 'object property left', 'lhs': prop.variable, 'property': prop.property, 'rhs': right}
   } 
 
 right_object_poperty   												// pointer hareketi icin p1 = p1.next
- = left:name _ "=" _ prop:object_poperty nl{
+ = left:name _ "=" _ prop:object_poperty _ nl{
  	return {'type': 'object property right', 'lhs': left, 'property': prop.property, 'rhs': prop.variable}
   }  
 
 object_poperty
  = variable:name prop:('.' name)+ _ nl{
- 	return {'type': 'object property', 'variable': variable, 'property': prop}
+ 	return {'type': 'object property', 'variable': variable, 'property': prop, 'text': text()}
   } 
 
 
@@ -206,7 +205,9 @@ logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_opera
 }
 	  
 factor2 = "(" logical_statement ")" 
+	   / object_poperty
 	   / expression_statement
+	   
 	   
 
 ////////////////////////////////////////////////////////////////////// math functions
@@ -223,16 +224,20 @@ function_combination
 math_functions
  = taban / tavan/ karekok / mutlakDeger
 
-taban = 'taban' _ '(' _ exp:expression_statement _ ')'{
+taban 
+ = 'taban' _ '(' _ exp:expression_statement _ ')'{
  	return {'type':'math_func', '#evaluation': 0, 'text': 'Math.floor(' + exp.text + ')', 'lineNumber': location().end.line, 'start':location().start.column, 'end':location().end.column-1}; 
 }
-tavan = 'tavan' _ '(' _ exp:expression_statement _ ')'{
+tavan 
+ = 'tavan' _ '(' _ exp:expression_statement _ ')'{
  	return {'type':'math_func', '#evaluation': 0, 'text': 'Math.ceil(' + exp.text + ')', 'lineNumber': location().end.line, 'start':location().start.column, 'end':location().end.column-1}; 
 }
-karekok = 'karekök' _ '(' _ exp:expression_statement _ ')'{
+karekok "karekök"
+ = 'karekök' _ '(' _ exp:expression_statement _ ')'{
  	return {'type':'math_func', '#evaluation': 0, 'text': 'Math.sqrt(' + exp.text + ')', 'lineNumber': location().end.line, 'start':location().start.column, 'end':location().end.column-1}; 
 }
-mutlakDeger = 'mutlak' _ '(' _ exp:expression_statement _ ')'{
+mutlakDeger 
+ = 'mutlak' _ '(' _ exp:expression_statement _ ')'{
  	return {'type':'math_func', '#evaluation': 0, 'text': 'Math.abs(' + exp.text + ')', 'lineNumber': location().end.line, 'start':location().start.column, 'end':location().end.column-1}; 
 }
 
