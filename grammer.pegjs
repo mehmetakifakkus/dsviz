@@ -142,7 +142,7 @@ Object_Constructor
  = node
  
 node
- = _ 'new' _ 'Node' '('_ value:integer _ next:("," _ name)? ")" _ comment? _ nl{ 
+ = _ 'new'? _ 'Node' '('_ value:integer _ next:("," _ name)? ")" _ comment? _ nl{ 
 	return {'type': 'node', 'data': value, 'next': next? next[2]: null, 'lineNumber': location().start.line}
  } 
 
