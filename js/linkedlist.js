@@ -93,7 +93,7 @@ function Node(content, next){
 		self.drawNode(normalized);
 	}
 
-	this.drawNodeSomewhere2 = function(){
+	this.drawNodeNearby = function(){
 
 		var normalized;
 
@@ -498,7 +498,7 @@ function processOneItem(item){
 			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
 
 			window.eval(item.lhs + ".setName('" + item.lhs + "')");
-			window.eval("if(!"+item.lhs+".boxDraw) "+item.lhs+".drawNodeSomewhere2();");
+			window.eval("if(!"+item.lhs+".boxDraw) "+item.lhs+".drawNodeNearby();");
 
 
 			// node isminde bir pointer oluştur, görsel amaçlı
@@ -569,7 +569,7 @@ function processOneItem(item){
 		if(item.rhs.type == 'node')
 		{
 			window.eval("var temp_node = new Node(" + item.rhs.data + ");");
-			window.eval("if(!temp_node.boxDraw) temp_node.drawNodeSomewhere2();");
+			window.eval("if(!temp_node.boxDraw) temp_node.drawNodeNearby();");
 
 			console.error(item.lhs + str + prop + ' = temp_node')
 
@@ -617,8 +617,10 @@ function processOneItem(item){
 			strRight += el.join('')
 		});
 
-		window.eval(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
+		console.error(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
+
 		window.eval(item.lhs + strLeft + '.drawArrow(' + item.rhs + strRight + ')')
+		window.eval(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
 	}
 }
 
@@ -640,10 +642,11 @@ function recursivelyProcess(items){
 
 //console.log(PARSER.parse('{var aaa=123 //deneme}'));
 
-var grammer = null;
+var grammer = null, parser = null;
 
 $.get("grammer.pegjs", function(response) {
 	grammer = response;
+ 	parser = PEG.buildParser(grammer);
 	//console.log(response)
 });
 
@@ -651,12 +654,13 @@ restart();
 
 window.parse = function(text) {
 
+	//initialPositionX = 80;
+	//project.activeLayer.removeChildren(); // clears all including background
+
 	try {
 		var text = text || editor.getValue();
 
 		//var result = PARSER.parse(grammer); // normalde parser.js derleyip ekledigimiz zaman direk PARSER. diyerek kullanabiliriz. Su an grammer i ekleyerek calisacagiz
-
-		var parser = PEG.buildParser(grammer);
 		var result = parser.parse(text);
 
 		console.log(result);

@@ -150,7 +150,7 @@ node
   
 left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
  = propL: object_poperty _ "=" _ propR: object_poperty _ nl{
- 	return {'type': 'object property left-right', 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propL.property,}
+ 	return {'type': 'object property left-right', 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propR.property,}
   } 
 
 left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11)
