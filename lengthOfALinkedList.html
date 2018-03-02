@@ -54,27 +54,18 @@ y.next = z
 var p1 = x
 </textarea>
 <br>
+<p>Now we can create a pointer, and using that pointer we can move it towards end of the list. While we are moving we increment a variable to count the nodes.</p>
 
-<ul>
-	<li>
-		<strong>Append an item at the end of the linked list. </strong> <a href="appendAnItemOnTheLinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Find the length of a linked list. </strong> <a href="lengthOfALinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Remove duplicates from a linked list. </strong> <a href="removeDuplicatesOnAlinkedList.html">Go the page</a>
-	</li>
-</ul>
+<br>
 
-<!--
-var p1 = x
-if(p1.next != null)
-	p1.next = Node(4) // add a new node
-else
+<textarea id = "text3" class = "deneme">
+var count = 0
+while(p1 != null) // go to the last node
+{
   p1 = p1.next
--->
-
+  count = count + 1
+}
+</textarea>
 
 
 <div class="col-xs-12" style="height:5px;"></div>

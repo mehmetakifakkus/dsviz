@@ -15,7 +15,7 @@ statement
 if_statement "if"
   = _ ('if' / 'eğer') + '(' _ los:logical_statement  _ ')' _ nl
   		_ lines1:(compound_statement / block_item) _ nl
-  lines2:( _ 'değilse' _ nl 
+  lines2:( _ ('else' / 'değilse') _ nl 
   		_ (compound_statement / block_item) )? nl
 {      
   los.mainType = 'if';
@@ -63,24 +63,26 @@ compound_statement
 
 
 block_item
-=	logical_statement
+=	 [ \t\r] {return 'ws';}
+    /l: logical_statement _ nl {return l;}
 	/ object_statement	
 	/ Object_Constructor
-	
+	/ free_item
+		
 	/ left_right_object_poperty 
 	/ left_object_poperty
     / right_object_poperty
-	/ object_poperty
 
-	/ declaration
-	
+    / declaration
+
 	/ print_statement
 	/ if_statement
 	/ while_statement
 
-	/ print_statement
-	/ math_functions
 	/ expression_statement
+	/ object_poperty
+
+	/ math_functions
 	/ null_statement
 	/ comment
 
@@ -107,7 +109,7 @@ init_declarator_list
  = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
 
 init_declarator
-	= _ left:name _"="_ exp: (dogru / yanlis / math_functions / expression_statement) nl{
+	= _ left:name _"="_ exp: (dogru / yanlis / math_functions / object_poperty / expression_statement) _ nl{
 
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it       
@@ -134,7 +136,7 @@ print_statement = _ "print" _ exp:( _  '+'? _ (math_functions / StringLiteral / 
 /////////////////////////			 Object reference 		////////////////
 
 object_statement
- = "var " _ name:name _ "=" _ obj:Object_Constructor _ nl{
+ = "var " _ name:name _ "=" _ "new"? _ obj:Object_Constructor _ nl{
 	return {'type': 'declaration', 'lhs': name, 'rhs': obj, 'lineNumber': location().start.line}
  }
  
@@ -150,25 +152,28 @@ node
   
 left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
  = propL: object_poperty _ "=" _ propR: object_poperty _ nl{
- 	return {'type': 'object property left-right', 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propR.property,}
+ 	return {'type': 'object property left-right', '#evaluation': 0, 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propR.property, 'lineNumber': location().start.line}
   } 
 
-left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11)
- = prop:object_poperty "=" _ right: (Object_Constructor / name) _ nl{
-  	return {'type': 'object property left', 'lhs': prop.variable, 'property': prop.property, 'rhs': right}
+left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11) veya data guncellemek icin
+ = prop:object_poperty "=" _ right: (Object_Constructor / name / Integer) _ nl{
+  	return {'type': 'object property left', '#evaluation': 0, 'lhs': prop.variable, 'property': prop.property, 'rhs': right, 'lineNumber': location().start.line}
   } 
 
 right_object_poperty   												// pointer hareketi icin p1 = p1.next
  = left:name _ "=" _ prop:object_poperty _ nl{
- 	return {'type': 'object property right', 'lhs': left, 'property': prop.property, 'rhs': prop.variable}
+ 	return {'type': 'object property right', '#evaluation': 0, 'lhs': left, 'property': prop.property, 'rhs': prop.variable, 'lineNumber': location().start.line}
   }  
 
 object_poperty
  = variable:name prop:('.' name)+ _ nl{
- 	return {'type': 'object property', 'variable': variable, 'property': prop, 'text': text()}
+ 	return {'type': 'object property', 'variable': variable, 'property': prop, 'text': text(), 'lineNumber': location().start.line}
   } 
 
-
+free_item
+ = ("free " / "delete ") _ op:(object_poperty / name) _ nl{
+   return {'type': 'free object', 'text': op.text != undefined ? op.text: op,  'lineNumber': location().start.line}
+ }
 
 
 
@@ -183,12 +188,13 @@ Term
 
 Factor
   = "(" _ expr:expression_statement _ ")" { return expr; }
+  / op: object_poperty {return op.text;}
   / f:Float { return f.text;}
   / i:Integer { return i.text;}
   / n:name {return n.text}
   
 
-logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_operator _ logical_statement)* _ nl
+logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_operator _ logical_statement)*
 {
 	var text = f1.text+' ';
     text += op + ' ' + f2.text; 
@@ -200,10 +206,10 @@ logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_opera
     	text += ' '+ log[1];
         text += ' '+ log[3].text;
     }
-    
+	
 	return {'type':'logical', 'text': text, 'lineNumber': location().start.line, 'start': location().start.column-1, 'end': location().end.column-1};
 }
-	  
+
 factor2 = "(" logical_statement ")" 
 	   / object_poperty
 	   / expression_statement

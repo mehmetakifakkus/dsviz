@@ -108,6 +108,11 @@ function Node(content, next){
 		initialPositionX += 100;
 	}
 
+	// re-draw a node with old position
+	this.redraw = function(){
+		self.drawNode(self.position);
+	}
+
 
 	// delete the old one, redraw it
 	this.drawArrow = function(obj){ // obj is the node that this node points
@@ -180,6 +185,16 @@ function Pointer(node, name, color, direction){
 	}
 
 	this.remove = function(){
+		if(self.drawing != undefined)
+			self.drawing.remove();
+
+		//var text = new PointText({ position: [20 + 40*self.id, 20], fontSize: 22+'px', fillColor: color, content:''+ self.name});
+		//self.drawing = text;
+	}
+
+	this.markNull = function(){
+		self.points = null;
+
 		if(self.drawing != undefined) // p1 = null
 			self.drawing.remove();
 
@@ -412,24 +427,59 @@ Array.prototype.clear = function() {
 };
 
 
-/////////////////////  Some Useful Functions  //////////////////////
+/////////////////////  Draw the Graphics Part  /////////////////////
 
-var time = 0.5, speed = 100;
-function drawGraphics(line, isLoop, result){
+var time = 0.3, speed = 500;
+function drawGraphics(line, result){
 
 	var res = result;
+	var lhs_temp = window.eval(line.lhs || line.text);
+	var rhs_temp = window.eval(line.rhs);
 
   setTimeout(function(){
+
 	  console.log(line)
 
-
   	if(line.type == 'declaration' || line.type == 'assignment')
-		highlightLine(line);
-	else if(line.type == 'logical')
-		highlightLine(line, 'logical', res);
-	else if(line.type == 'print')
 	{
 		highlightLine(line);
+
+		if(line.rhs.type == 'node') 		//  x = Node(2)
+		{
+			window.eval("if(!"+line.lhs+".boxDraw) "+line.lhs+".drawNodeNearby();");
+
+
+			if(eval('typeof pointer_' + line.lhs) != 'undefined') // daha oncekini sil,
+				window.eval("pointer_" + line.lhs + ".remove()");
+
+
+			// node isminde bir pointer oluştur, görsel amaçlı ('pointer_x' gibi)
+			window.eval("var pointer_" + line.lhs + " = new Pointer(" + line.lhs + ",'"+ line.lhs +"', 'blue', 'up')");
+		}
+
+		else if(line.rhs == 'null')  // reference to null  // p1 = null
+		{
+			window.eval("pointer_" + line.lhs + ".markNull()");
+		}
+		else if(eval(line.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x   // p1 = x.next
+		{
+			if(eval('typeof pointer_' + line.lhs) == 'undefined')
+				window.eval("var pointer_" + line.lhs + " = new Pointer(" + line.rhs + ",'"+ line.lhs + "')");
+			else
+				window.eval("pointer_" + line.lhs + ".draw(" + line.rhs + ")");
+		}
+		else{
+			//window.eval(line.text);
+		}
+	}
+	else if(line.type == 'logical')
+	{
+		highlightLine(line, 'logical', res);
+		console.log(res)
+	}
+	else if(line.type == 'print')
+	{
+		//highlightLine(line);
 //		insertText(res);
 	}
 	else if(line.type == 'node append')
@@ -437,9 +487,58 @@ function drawGraphics(line, isLoop, result){
 		appendANode(list1, eval(line.value));
 		//redraw();
 	}
-	else{
-		var result = window.eval(line.text);
+	if(line.type == 'object property left') // p.next = x;  p.next = Node(11)
+	{
 		highlightLine(line);
+
+		if(line.property[0][1] == 'next')
+		{
+			if(line.rhs.type == 'node')
+			{
+				window.eval("var temp_node = new Node(" + line.rhs.data + ");");
+				window.eval("if(!temp_node.boxDraw) temp_node.drawNodeNearby();");
+
+				window.eval(line.lhs + res.str + res.prop + ' = temp_node')
+				window.eval(line.lhs + res.str + '.drawArrow(temp_node)')
+				return;
+			}
+			window.eval(line.lhs + res + '.drawArrow(' + line.rhs + ')')
+		}
+		else if(line.property[0][1] == 'data')
+		{
+			//window.eval(line.lhs+".boxDraw.remove()");
+			//window.eval(line.lhs+".redraw()");
+
+			console.log(lhs_temp)
+
+			lhs_temp.boxDraw.remove();
+			lhs_temp.redraw();
+		}
+	}
+	if(line.type == 'object property right') // p1 = p1.next
+	{
+		highlightLine(line);
+
+		if(res == null)
+			window.eval("pointer_" + line.lhs + ".markNull()");
+		else{
+			tempNode = res;
+			window.eval("pointer_"+line.lhs +".draw(tempNode)"); // draw it on the next position
+		}
+	}
+	if(line.type == 'free object') // removes the object // free p1 / free p1.next
+	{
+		lhs_temp.boxDraw.remove()
+		lhs_temp.arrowDraw.remove()
+	}
+	if(line.type == 'object property left-right') // p.next = x.next
+	{
+		eval('lhs_temp' + res.strLeft + '.drawArrow(' + 'rhs_temp' + res.strRight + ')')
+	}
+	else
+	{
+		//var result = window.eval(line.text);
+		//highlightLine(line);
 	}
 
    }, speed * time)
@@ -459,7 +558,7 @@ function processOneItem(item){
 
 		if(item.mainType == 'if')
 		{
-			drawGraphics(item, false, eval(item.text));
+			drawGraphics(item, eval(item.text));
 
 			if(eval(item.text))
 				recursivelyProcess(item.truePart)
@@ -470,12 +569,12 @@ function processOneItem(item){
 		else if(item.mainType == 'while')
 		{
 			while(eval(item.text)){
-				drawGraphics(item, false, eval(item.text));
+				drawGraphics(item, eval(item.text));
 
 				if(eval(item.text))
 					recursivelyProcess(item.statements)
 			}
-			drawGraphics(item, false, eval(item.text));
+			drawGraphics(item, eval(item.text));
 		}
 		else if(item.mainType == 'for')
 		{
@@ -486,47 +585,36 @@ function processOneItem(item){
 			}
 			drawGraphics(item, eval(item.text));
 		}
+		else{ // there is no type, only logical expression
+			drawGraphics(item, item.text);
+		}
 	}
 	if(item.type == 'declaration' || item.type == 'assignment')
 	{
 		item['#evaluation']++;
 
-		if(item.rhs.type == 'node') 		//  x = Node(2)
+		if(item.rhs.type == 'node') 		//  x = new? Node(2)
 		{
 			var nodeItem = item.rhs;
 
 			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
-
 			window.eval(item.lhs + ".setName('" + item.lhs + "')");
-			window.eval("if(!"+item.lhs+".boxDraw) "+item.lhs+".drawNodeNearby();");
 
-
-			// node isminde bir pointer oluştur, görsel amaçlı
-			window.eval("var pointer_" + item.lhs + " = new Pointer(" + item.lhs + ",'"+ item.lhs +"', 'blue', 'up')");
-
+			drawGraphics(item);
 		}
-		else if(item.rhs == 'null')  // reference to a node (by assigning it) p1 = x
+		else if(item.rhs == 'null')  // reference to null  // p1 = null
 		{
-			window.eval("pointer_" + item.lhs + ".remove()");
 			window.eval(item.lhs + " = null");
+			drawGraphics(item)
 		}
-		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) p1 = x
+		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x
 		{
 			eval(item.lhs + ' = '+ item.rhs);
-
-			if(eval('typeof pointer_' + item.lhs) == 'undefined')
-				window.eval("var pointer_" + item.lhs + " = new Pointer(" + item.rhs + ",'"+ item.lhs + "')");
-			else
-				window.eval("pointer_" + item.lhs + ".draw(" + item.rhs + ")");
-
+			drawGraphics(item)
 		}
 		else{
 			window.eval(item.text);
-
-			if(item.up == 'while')
-				drawGraphics(item, true, eval(item.lhs));
-			else
-				drawGraphics(item, false, eval(item.lhs));
+			drawGraphics(item);
 		}
 	}
 	if(item.type == 'expression')
@@ -536,10 +624,7 @@ function processOneItem(item){
 
 		console.log('['+ item.type + '] text:'+ item.text +' line '+item.lineNumber +' is getting processed, result is: '+ eval(item.text));
 
-		if(item.up == 'while')
-			drawGraphics(item, true, eval(item.text));
-		else
-			drawGraphics(item, false, eval(item.text));
+		drawGraphics(item, eval(item.text));
 	}
 	if(item.type == 'print')
 	{
@@ -548,13 +633,14 @@ function processOneItem(item){
 			resu += item.list[i].subtype == 'var' ? eval(item.list[i].text) : item.list[i].text;
 
 		console.log(resu)
-		drawGraphics(item, false, resu);
+		drawGraphics(item, resu);
 	}
 	if(item.type == 'node append')
 		drawGraphics(item, false);
 
 	if(item.type == 'object property left') // p.next = x;  p.next = Node(11)
 	{
+		item['#evaluation']++;
 
 		var str = ''
 
@@ -565,40 +651,32 @@ function processOneItem(item){
 
 		var prop = item.property[i].join(''); // son property
 
-
 		if(item.rhs.type == 'node')
 		{
-			window.eval("var temp_node = new Node(" + item.rhs.data + ");");
-			window.eval("if(!temp_node.boxDraw) temp_node.drawNodeNearby();");
-
-			console.error(item.lhs + str + prop + ' = temp_node')
-
-			window.eval(item.lhs + str + prop + ' = temp_node')
-			window.eval(item.lhs + str + '.drawArrow(temp_node)')
-
+			//window.eval(item.lhs+".next=" + item.rhs);
+			drawGraphics(item, {str: str, prop:prop})
 			return;
 		}
+		else if(item.property[0][1] == 'data')
+			window.eval(item.lhs+".data=" + item.rhs.text);
+		else
+			window.eval(item.lhs+".next=" + item.rhs);
 
-		window.eval(item.lhs + str + prop + ' = ' + item.rhs)
-		window.eval(item.lhs + str + '.drawArrow(' + item.rhs + ')')
+		drawGraphics(item, str)
 	}
 
 	if(item.type == 'object property right') // p1 = p1.next
 	{
+		item['#evaluation']++;
+
 		var str = ''
 		item.property.forEach(function(el){ // p1 = p1.next.next
 			str += el.join('')
 		});
+		item.text = item.lhs +' = '+item.rhs + str;
 
-		if(eval(item.rhs + str) == null)
-		{
-			window.eval("pointer_" + item.lhs + ".remove()");
-			window.eval(item.lhs + " = null");
-		}
-		else{
-			eval(item.lhs +' = '+item.rhs + str)
-			eval("pointer_"+item.lhs +".draw("+ item.lhs + ")"); // draw it on the next position
-		}
+		window.eval(item.text)
+		drawGraphics(item, eval(item.lhs))
 	}
 
 	if(item.type == 'object property left-right') // p.next = x.next
@@ -618,9 +696,13 @@ function processOneItem(item){
 		});
 
 		console.error(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
-
-		window.eval(item.lhs + strLeft + '.drawArrow(' + item.rhs + strRight + ')')
 		window.eval(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
+		drawGraphics(item, {strLeft: strLeft, propLeft:propLeft, strRight:strRight})
+	}
+
+	if(item.type == 'free object') // removes the object // free p1 / free p1.next
+	{
+		drawGraphics(item);
 	}
 }
 
@@ -637,10 +719,14 @@ function recursivelyProcess(items){
 	else
 		processOneItem(items);
 
+	setTimeout(function(){ // delete the last line after all operations done
+		  deleteLastLine();
+	}, speed * time)
+	time++;
 }
 
 
-//console.log(PARSER.parse('{var aaa=123 //deneme}'));
+//console.log(PARSER.parse('{var aaa = 123 //deneme}'));
 
 var grammer = null, parser = null;
 
@@ -656,79 +742,89 @@ window.parse = function(text) {
 
 	//initialPositionX = 80;
 	//project.activeLayer.removeChildren(); // clears all including background
+	time = 0.3
 
 	try {
 		var text = text || editor.getValue();
 
 		//var result = PARSER.parse(grammer); // normalde parser.js derleyip ekledigimiz zaman direk PARSER. diyerek kullanabiliriz. Su an grammer i ekleyerek calisacagiz
 		var result = parser.parse(text);
+		console.log(result)
 
-		console.log(result);
+		if(!result)
+			return null;
+
 		recursivelyProcess(result);
 
-		res = result[0];
+		//document.getElementById("output").textContent = JSON.stringify(result, null, 3); // parse result output kismina yaziliyor
 
-		if(res.type == 'logical')
-		{
-			var result = eval(res.text)
-			document.getElementById("result").textContent = JSON.stringify(result, null, 2);
-			return;
-		}
-
-		if(res.type == 'assignment')
-		{
-			var result = eval(res.lhs)
-			document.getElementById("result").textContent = JSON.stringify(result, null, 2);
-			return;
-		}
-
-		function createSummary(tree){
-			if(tree.next == null)
-				return {data: tree.data, next:null};
-
-			return {data: tree.data, next: createSummary(tree.next)};
-		}
-
-		if(res.type == 'expression')
-		{
-			var result = eval(res.text);
-			document.getElementById("result").textContent = JSON.stringify(createSummary(result), null, 3);
-			return;
-		}
-
-		if(res.type == 'object property')
-		{
-			var str = ''
-			res.property.forEach(function(el){
-				str += el.join('')
-			});
-
-			var result = eval(res.variable + str);
-
-			document.getElementById("result").textContent = JSON.stringify(typeof result == 'number' ? result : createSummary(result), null, 3);
-			return;
-		}
-
-		if(res.type == 'node')
-		{
-			window.eval("var temp_node = new Node(" + res.data + ");");
-			window.eval("if(!temp_node.boxDraw) temp_node.drawNodeSomewhere();");
-
-			//console.error(item.lhs + str + prop + ' = temp_node')
-
-			//window.eval(item.lhs + str + prop + ' = temp_node')
-			//window.eval(item.lhs + str + '.drawArrow(temp_node)')
-
-			return;
-		}
-
-
-
-		return;
-
-		document.getElementById("result").textContent = JSON.stringify(result, null, 3);
+		return result;
 	} catch (err) {
-		document.getElementById("result").textContent = err.toString();
+		document.getElementById("output").textContent = err.toString();
+		return null;
 	}
 }
 
+
+
+
+function qsa(sel) {
+    return Array.apply(null, document.querySelectorAll(sel));
+}
+
+function setEditors(items){
+
+	//deneme ismindeki tüm editörler codemirror editorü olacak
+	items.forEach(function (editorEl) {
+
+	//console.log(editorEl)
+
+	 var editor = CodeMirror.fromTextArea(editorEl, {
+	  mode: "javascript",
+	  extraKeys: {"Ctrl-Space": "autocomplete"},
+	  styleActiveLine: true,
+	  lineNumbers: true,
+	  lineWrapping: true,
+	  autoCloseBrackets: true,
+	  autoCloseTags: true,
+	  theme: 'eclipse',
+	  viewportMargin: Infinity
+	});
+
+	//editor.setSize(450, 160);
+
+	var map = {
+		"Ctrl-Enter": function(){
+			parse(editor.getValue());
+			window.activeEditor = editor.doc
+		},
+		"Cmd-Enter": function(){
+			parse(editor.getValue());
+			window.activeEditor = editor.doc
+		}
+	}
+	editor.addKeyMap(map);
+
+	//editor.on("focus", function() { console.log(editor.doc); window.activeEditor = editor.doc })
+
+	});
+}
+
+setEditors(qsa(".deneme"));
+
+// add editor
+editorNo = 0;
+window.addEditor  = function() {
+
+	editorNo++;
+
+	$( "#addElement" ).before(
+	'<br>'+
+	'<textarea class = "addedEditor'+editorNo+'" onClick = window.>'+
+	'var list2 = Node(3);\n'+
+	'list2.next = Node(4);\n'+
+	'list2.next.next = Node(8);\n'+
+	'</textarea>'
+	 ) ;
+	setEditors(qsa(".addedEditor"+editorNo));
+}

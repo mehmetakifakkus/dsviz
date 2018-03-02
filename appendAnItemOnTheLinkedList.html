@@ -54,27 +54,14 @@ y.next = z
 var p1 = x
 </textarea>
 <br>
+<p>Now we can create a pointer, and using that pointer we can add the new one to the end of the list. Let's try it on a window below.</p>
 
-<ul>
-	<li>
-		<strong>Append an item at the end of the linked list. </strong> <a href="appendAnItemOnTheLinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Find the length of a linked list. </strong> <a href="lengthOfALinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Remove duplicates from a linked list. </strong> <a href="removeDuplicatesOnAlinkedList.html">Go the page</a>
-	</li>
-</ul>
+<textarea id = "text2" class = "deneme">
+while(p1.next != null) // go to the last node
+  p1 = p1.next         // using pointer p1
 
-<!--
-var p1 = x
-if(p1.next != null)
-	p1.next = Node(4) // add a new node
-else
-  p1 = p1.next
--->
-
+p1.next = new Node(5)
+</textarea>
 
 
 <div class="col-xs-12" style="height:5px;"></div>
