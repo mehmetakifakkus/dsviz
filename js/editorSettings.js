@@ -45,7 +45,7 @@ function evaluateCommand(){
 
 		if(command.length == 0) return null;
 
-		result = window.parse(command);
+		var result = window.parse(command);
 
 		if(!result)
 			return
@@ -93,10 +93,9 @@ function evaluateCommand(){
 
 	if(res.type == 'expression')
 	{
-		var result = eval(res.text);
+		var evaluation = eval(res.text);
 
-		document.getElementById("output").textContent = JSON.stringify(typeof result == 'number' ? result : createSummary(result), null, 3);
-
+		document.getElementById("output").textContent = JSON.stringify(typeof evaluation == 'object' ? createSummary(evaluation) : evaluation, null, 3);
 
 		/*if(result.constructor.name == 'Node')
 			document.getElementById("output").textContent = JSON.stringify(createSummary(result), null, 3);

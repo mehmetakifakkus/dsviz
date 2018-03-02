@@ -44,27 +44,39 @@
 
 
 <textarea id = "text1" class = "deneme">
-var x = new Node(1)
-var y = new Node(2)
-var z = new Node(3)
+var list1 = new Node(10)
+list1.next = new Node(20)
+list1.next.next = new Node(30)
 
-x.next = y
-y.next = z
-
-var p1 = x
+var list2 = new Node(10)
+list2.next = new Node(20)
+list2.next.next = new Node(30)
+list2.next.next.next = new Node(40)
 </textarea>
 <br>
+<p>Now we can create a pointer, and using that pointer we can move it towards end of the list. While we are moving we increment a variable to count the nodes.</p>
 
-<p>Select the code block and simply <kbd>CTRL</kbd>+<kbd>ENTER</kbd> to run the code.</p>
-<p>You can also write one line code to command prompt.</p>
-<!--
-var p1 = x
-if(p1.next != null)
-	p1.next = Node(4) // add a new node
-else
-  p1 = p1.next
--->
+<br>
 
+<textarea id = "text3" class = "deneme">
+var p = list1
+var q = list2
+var flag = true
+
+// go until the end of the both list
+while(p != null and q != null)
+{
+  if(p.data != q.data)
+	flag = false
+
+  p = p.next
+  q = q.next
+}
+
+// if one of the is not null, that means size are not equal
+if(p != null or q != null)
+	flag = false
+</textarea>
 
 
 <div class="col-xs-12" style="height:5px;"></div>
@@ -108,28 +120,9 @@ else
 <!--			<div class="col-xs-12" style="height:60px;"></div>-->
 			<canvas id="myCanvas0" height="900" width="1200"></canvas>
 		</div>
-		<div class="col-xs-12" style="height:60px;"></div>
+		<div class="col-xs-12" style="height:120px;"></div>
 
     </div>
-
-	 <p>Check other algorithms that are written for linked lists: </p>
-	 <ul>
-	<li>
-		<strong>Find the length of a linked list. </strong> <a href="lengthOfALinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Append an item at the end of the linked list. </strong> <a href="appendAnItemOnTheLinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Remove duplicates from a linked list. </strong> <a href="removeDuplicatesOnAlinkedList.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Compare two linked lists and check if they are equal. </strong> <a href="checkIfTwoLinkedListAreEqual.html">Go the page</a>
-	</li>
-	<li>
-		<strong>Compare two linked lists and check if each item in the first list is greater than other list correspondingly. </strong> <a href="compareLinkedListCheckOneIsGreater.html">Go the page</a>
-	</li>
-</ul>
 
      <hr>
      <br><br>

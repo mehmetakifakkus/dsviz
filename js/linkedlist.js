@@ -609,7 +609,7 @@ function processOneItem(item){
 		}
 		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x
 		{
-			eval(item.lhs + ' = '+ item.rhs);
+			window.eval(item.lhs + ' = '+ item.rhs);
 			drawGraphics(item)
 		}
 		else{
