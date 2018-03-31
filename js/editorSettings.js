@@ -144,6 +144,8 @@ window.activeEditor = editor2.doc;
 var markedLine, markedLogic, logicals = [];
 function highlightLine(line, type, result) { // type is used for logical,  result is logical true or false
 
+	console.log(window.activeEditor)
+
   var ln = line.lineNumber-1;
 
   if(markedLine)

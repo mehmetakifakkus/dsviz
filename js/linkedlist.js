@@ -469,7 +469,15 @@ function drawGraphics(line, result){
 				window.eval("pointer_" + line.lhs + ".draw(" + line.rhs + ")");
 		}
 		else{
-			//window.eval(line.text);
+			window.eval(line.text);
+
+			if(eval('typeof text_'+line.lhs) != 'undefined')
+				window.eval('text_'+line.lhs + '.content = "'+line.lhs + ' = ' +eval(line.lhs) + '"');
+			else
+				{
+				myTempText = new PointText({ position: new Point(20, 530), fontSize: 18+"px", fillColor: "black", content: line.lhs + " = " + line.rhs});
+				window.eval('var text_'+line.lhs + '= myTempText;');
+			}
 		}
 	}
 	else if(line.type == 'logical')
@@ -589,7 +597,7 @@ function processOneItem(item){
 			drawGraphics(item, item.text);
 		}
 	}
-	if(item.type == 'declaration' || item.type == 'assignment')
+	if(item.type == 'declaration')
 	{
 		item['#evaluation']++;
 
@@ -617,6 +625,35 @@ function processOneItem(item){
 			drawGraphics(item);
 		}
 	}
+	if(item.type == 'assignment')
+	{
+		item['#evaluation']++;
+
+		if(item.rhs.type == 'node') 		//  x = new? Node(2)
+		{
+			var nodeItem = item.rhs;
+
+			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
+			window.eval(item.lhs + ".setName('" + item.lhs + "')");
+
+			drawGraphics(item);
+		}
+		else if(item.rhs == 'null')  // reference to null  // p1 = null
+		{
+			window.eval(item.lhs + " = null");
+			drawGraphics(item)
+		}
+		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x
+		{
+			window.eval(item.lhs + ' = '+ item.rhs);
+			drawGraphics(item)
+		}
+		else{
+			//window.eval(item.text);
+			drawGraphics(item);
+		}
+
+	}
 	if(item.type == 'expression')
 	{
 		window.eval(item.text);
@@ -625,6 +662,9 @@ function processOneItem(item){
 		console.log('['+ item.type + '] text:'+ item.text +' line '+item.lineNumber +' is getting processed, result is: '+ eval(item.text));
 
 		drawGraphics(item, eval(item.text));
+
+		//window.eval('text_'+item.lhs + '.content = '+item.lhs + " = " +eval(item.lhs));
+
 	}
 	if(item.type == 'print')
 	{
@@ -772,6 +812,10 @@ function qsa(sel) {
     return Array.apply(null, document.querySelectorAll(sel));
 }
 
+function insertAfter(el, referenceNode) {
+    referenceNode.parentNode.insertBefore(el, referenceNode.nextSibling);
+}
+
 function setEditors(items){
 
 	//deneme ismindeki tüm editörler codemirror editorü olacak
@@ -805,7 +849,24 @@ function setEditors(items){
 	}
 	editor.addKeyMap(map);
 
-	//editor.on("focus", function() { console.log(editor.doc); window.activeEditor = editor.doc })
+		console.error(editor)
+// 1. Create the button
+var button = document.createElement("button");
+button.innerHTML = '<span class="glyphicon glyphicon-play icon-white"></span>';
+button.classList = "btn-round btn-lg";
+button.style = "background-color: #0d47a1; display: inline-block; position: relative; float: left; margin-top: -50px; z-index:2; margin-left: calc(100% - 78px);";
+
+// 2. Append somewhere
+var body = document.getElementsByTagName("body")[0];
+insertAfter(button, editor.getWrapperElement())
+
+// 3. Add event handler
+button.addEventListener ("click", function() {
+  	parse(editor.getValue());
+	window.activeEditor = editor.doc
+});
+
+	editor.on("focus", function() { console.log(editor.doc); window.activeEditor = editor.doc })
 
 	});
 }
@@ -828,3 +889,6 @@ window.addEditor  = function() {
 	 ) ;
 	setEditors(qsa(".addedEditor"+editorNo));
 }
+
+
+var text = new PointText({ position: new Point(20, 500), fontSize: 18+'px', fillColor: 'black', content:'======= Variables ====='});
