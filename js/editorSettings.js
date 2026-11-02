@@ -11,7 +11,6 @@ var commandHist = [], currHist = 0;
 editor2.setOption("extraKeys", {
 	Enter: function(cm) {
 	  evaluateCommand()
-	  console.log(editor2.getValue())
 	  commandHist.push(editor2.getValue())
 	  currHist = commandHist.length;
 
@@ -45,6 +44,7 @@ function evaluateCommand(){
 
 		if(command.length == 0) return null;
 
+		window.activeEditor = editor2.doc; // highlight the command prompt, not the last editor
 		var result = window.parse(command);
 
 		if(!result)
@@ -58,7 +58,7 @@ function evaluateCommand(){
 		document.getElementById("resultSign").className = "label label-success";
 	}
 	catch (err) {
-		document.getElementById("result").textContent = err.toString();
+		document.getElementById("output").textContent = err.toString();
 		document.getElementById("resultSign").innerHTML = "Error!";
 		document.getElementById("resultSign").className = "label label-warning";
 	}
@@ -121,7 +121,7 @@ function evaluateCommand(){
 	if(res.type == 'node')
 	{
 		window.eval("var temp_node = new Node(" + res.data + ");");
-		window.eval("if(!temp_node.boxDraw) temp_node.drawNodeSomewhere();");
+		window.showNode(window.temp_node);
 
 		//console.error(item.lhs + str + prop + ' = temp_node')
 
@@ -133,38 +133,4 @@ function evaluateCommand(){
 }
 
 
-/*
-*
-*	#######################      	Editor Functions   	  #######################
-*
-*/
-
 window.activeEditor = editor2.doc;
-
-var markedLine, markedLogic, logicals = [];
-function highlightLine(line, type, result) { // type is used for logical,  result is logical true or false
-
-	console.log(window.activeEditor)
-
-  var ln = line.lineNumber-1;
-
-  if(markedLine)
-    markedLine.clear();
-
-	if(type == 'logical')
-	if(result)
-		markedLogic = window.activeEditor.markText({line: ln, ch: line.start}, {line: ln, ch: line.end}, {className: "styled-background-logical-true"});
-	else
-		markedLogic = window.activeEditor.markText({line: ln, ch: line.start}, {line: ln, ch: line.end}, {className: "styled-background-logical-false"});
-
-	logicals.push(markedLogic);
-
-	markedLine = window.activeEditor.markText({line: ln, ch: 0}, {line: ln, ch: 50}, {className: "styled-background-normal"});
-}
-
-function deleteLastLine(){
-	if(markedLine)
-    	markedLine.clear();
-	//console.log('deleteLastLine')
-}
-

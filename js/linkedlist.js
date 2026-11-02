@@ -1,559 +1,818 @@
-nodes = [];
-pointers = [];
+/*
+ * Linked list visualisation engine (PaperScript, runs on canvas "myCanvas0").
+ *
+ * How it works
+ * ------------
+ * 1. parse() turns the code of an editor into a list of statements (grammer.pegjs).
+ * 2. processOneItem() EXECUTES every statement immediately (window.eval) and hands a
+ *    snapshot of everything the drawing needs to drawGraphics().
+ * 3. drawGraphics() does not draw: it pushes a "step" into the player queue. The player
+ *    runs the steps one by one (play / pause / step forward / step back / speed).
+ *
+ * Because the program runs ahead of the animation, the drawing never reads the program
+ * state (node.next, variables). It keeps its own visual state instead: node.shown,
+ * node.visualNext, node.shownData and the pointers. Step back = reset that visual state
+ * and replay the first k-1 steps instantly.
+ *
+ * The code is ES5 on purpose: PaperScript in paper.js 0.9.25 does not accept ES6.
+ */
 
-//////////////////////////////////////////  ClearAll  ////////////////////////////////////
+var allNodes = [];   // every Node ever created (only the shown ones are drawn)
+var pointers = [];   // every Pointer (a named arrow that points to a node)
 
-function intersectsNode(list, path){
-	list = list.next;
-	var total = 0;
+//////////////////////////////////////////  Helpers  //////////////////////////////////////
 
-	while(list){
-		if(list.boxDraw){
-			var cross = path.getIntersections(list.boxDraw.children[1]);
-			total+= cross.length;
-		}
-		list = list.next;
-	}
-	return total >= 1;
+function isNode(v){
+	return v !== null && typeof v === 'object' && v.constructor && v.constructor.name === 'Node';
 }
 
-function clearDrawables(list){
-	list = list.next;
-
-	while(list){
-		if(list.boxDraw)
-			list.boxDraw.remove();
-
-		if(list.next && list.arrowDraw)
-			list.arrowDraw.remove();
-
-		list = list.next;
-	}
-	for(var i=0; i<pointers.length; i++)
-		pointers[i].drawing.remove();
+function safeEval(code){
+	if(code === undefined || code === null || typeof code !== 'string')
+		return code;
+	try { return window.eval(code); }
+	catch(e) { return undefined; }
 }
 
-//////////////////////////////////////  Math Functions  //////////////////////////////////
-
-function getRandomFloat(min, max) {
-	return Math.random() * (max - min) + min;
+function propertyPath(property){ // [[".","next"],[".","next"]] -> ".next.next"
+	var str = '';
+	for(var i=0; i < property.length; i++)
+		str += property[i].join('');
+	return str;
 }
 
-function createRandom2D(minX, maxX, minY, maxY) {
-
-	var x_ = maxX || view.size.width;
-	var y_ = maxY || view.size.height;
-
-	var x = getRandomFloat(minX || 0.1 * x_, 0.9 * x_);
-	var y = getRandomFloat(minY || 0.1 * y_, 0.9 * y_);
-
-	return new Point(x,y);
+function rhsCode(rhs){ // rhs may be a name (string), an Integer object or a node object
+	if(rhs === null || rhs === undefined) return 'null';
+	if(typeof rhs === 'string') return rhs;
+	return rhs.text;
 }
 
 ////////////////////////////////////////// Linked List Node //////////////////////////////
 
-var initialPositionX = 80, initialPositionY = 150;
+var NODE_W = 50, NODE_H = 25;
+
 function Node(content, next){
 
-	if(typeof Node.counter == undefined || content == undefined)
-        Node.counter = 0;
+	Node.counter = (Node.counter || 0) + 1;
+	this.id = Node.counter; // newly created node will have a different id
 
-    this.id = Node.counter++; // newly created vertex will have different id
-
-	this.data = content || '';
+	this.data = (content === undefined || content === null) ? '' : content;
 	this.next = next || null;
+
+	// visual state (see the comment at the top of the file)
+	this.shown = false;
+	this.visualNext = null;
+	this.shownData = this.data;
+	this.cell = null;      // {row, col} on the layout grid
+	this.position = null;  // top left corner of the box
+	this.boxDraw = null;
+	this.arrowDraw = null;
 
 	var self = this;
 
-	// draw a node at location p
-	this.drawNode = function(p){
-		self.position = p || initialPosition;
+	this.render = function(){
+		if(self.boxDraw)
+			self.boxDraw.remove();
 
-		var rect = new Path.Rectangle({ point: [p.x, p.y],  size: [50, 25],  strokeColor: 'black', strokeWidth: 2});
-		var line = new Path.Line({from: [p.x + 30, p.y], to: [p.x + 30, p.y + 25], strokeColor: 'black', strokeWidth: 2});
+		var p = self.position;
+		var rect = new Path.Rectangle({ point: [p.x, p.y],  size: [NODE_W, NODE_H],  strokeColor: 'black', strokeWidth: 2, fillColor: 'white'});
+		var line = new Path.Line({from: [p.x + 30, p.y], to: [p.x + 30, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2});
 		var circle = new Path.Circle( { radius:4, fillColor: 'black', center: [p.x + 40, p.y + 12]});
-
-		var text = new PointText({ position: new Point(self.data >= 10 ? p.x+5 : p.x+10, p.y+19), fontSize: 18+'px', fillColor: 'black', content:''+ self.data});
+		var text = new PointText({ point: [p.x + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: 'black', content:''+ self.shownData});
 
 		self.boxDraw = new Group([rect, line, circle, text]);
 	}
 
-	// draw randomly on the stage
-	this.drawNodeSomewhere = function(){
-
-		var normalized;
-
-		while(true){
-			normalized = createRandom2D() - [25,12];
-
-			var hitResult = project.hitTest(normalized, {fill:true, tolerance:75});
-			if (!hitResult) // if random point hits create a new one
-				break;
-		}
-		self.drawNode(normalized);
+	this.moveTo = function(p){
+		if(self.boxDraw && self.position)
+			self.boxDraw.translate(p - self.position);
+		self.position = p;
 	}
 
-	this.drawNodeNearby = function(){
-
-		var normalized;
-
-		while(true){
-			normalized = createRandom2D(initialPositionX, initialPositionX + 30, initialPositionY - 80, initialPositionY + 80) - [25,12];
-
-			var hitResult = project.hitTest(normalized, {fill:true, tolerance:75});
-			if (!hitResult) // if random point hits create a new one
-				break;
-		}
-		self.drawNode(normalized);
-		initialPositionX += 100;
-	}
-
-	// re-draw a node with old position
-	this.redraw = function(){
-		self.drawNode(self.position);
-	}
-
-
-	// delete the old one, redraw it
-	this.drawArrow = function(obj){ // obj is the node that this node points
+	this.hide = function(){
+		self.shown = false;
+		self.cell = null;
+		self.position = null;
+		if(self.boxDraw)
+			self.boxDraw.remove();
 		if(self.arrowDraw)
 			self.arrowDraw.remove();
-
-		if(self != obj && obj != null) //
-			self.arrowDraw = Arrow(self, obj);
+		self.boxDraw = self.arrowDraw = null;
 	}
 
 	this.setName = function(name){
 		self.name = name;
-		//self.draw(self.points);
 	}
 
-	if(self.next)
-	{
-		self.drawNodeSomewhere();
-		self.drawArrow(self.next);
+	allNodes.push(this);
+}
+
+window.Node = Node;
+
+//////////////////////////////////////////  Arrows  //////////////////////////////////////
+
+function arrowTip(end, angle, color){
+	var tip = new Path({segments: [end + [-9, -5], end, end + [-9, 5]], strokeColor: color || 'black', strokeWidth: 2});
+	tip.rotate(angle, end);
+	return tip;
+}
+
+// the "next" arrow of a node
+function nodeArrow(from, to){
+	var a = from.position, b = to.position;
+	var start = a + [40, 12];
+	var line, angle, end;
+
+	var sameRow = Math.abs(a.y - b.y) < 1;
+	var dx = b.x - a.x;
+
+	if(sameRow && dx > 0 && dx <= colWidth + 1) {        // the neighbour on the right: straight
+		end = b + [0, 12];
+		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
+		angle = (end - start).angle;
+	}
+	else if(sameRow) {                                    // to the left or skipping nodes: an arc above
+		end = b + [NODE_W / 2, 0];
+		var through = new Point((start.x + end.x) / 2, a.y - 18 - Math.abs(dx) * 0.1);
+		line = new Path({segments: [start], strokeColor: 'black', strokeWidth: 2});
+		line.arcTo(through, end);
+		angle = line.getTangentAt(line.length).angle;
+	}
+	else {                                                // another row: straight to the top or bottom edge
+		end = b + [NODE_W / 2, b.y > a.y ? 0 : NODE_H];
+		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
+		angle = (end - start).angle;
+	}
+
+	return new Group([line, arrowTip(end, angle)]);
+}
+
+function redrawArrows(){
+	for(var i=0; i < allNodes.length; i++){
+		var n = allNodes[i];
+
+		if(n.arrowDraw)
+			n.arrowDraw.remove();
+		n.arrowDraw = null;
+
+		if(n.shown && n.visualNext && n.visualNext.shown && n.visualNext !== n)
+			n.arrowDraw = nodeArrow(n, n.visualNext);
 	}
 }
+
+//////////////////////////////////////////  Layout  //////////////////////////////////////
+//
+// Nodes live on a grid. A chain (head -> ... -> tail, following visualNext) is drawn on
+// one row. The layout is stable: the longest part of a chain that is already drawn in
+// order (left to right OR right to left) keeps its cells and the other nodes of the chain
+// are placed around it. So reversing a list only flips arrows, inserting at the head
+// shifts the list right, and a node that is cut out of a list drops to the next row.
+
+var ROW_Y0 = 110, ROW_H = 160, COL_X0 = 60, COL_W = 100;
+var colWidth = COL_W;
+var lastPlaced = null;
+
+function chainsOf(shown){
+	var indeg = {}, visited = {}, chains = [];
+	var i, n;
+
+	for(i=0; i < shown.length; i++)
+		if(shown[i].visualNext && shown[i].visualNext.shown)
+			indeg[shown[i].visualNext.id] = (indeg[shown[i].visualNext.id] || 0) + 1;
+
+	// placed nodes first (top to bottom, left to right), then new nodes in creation order
+	var ordered = shown.slice().sort(function(a, b){
+		if(a.cell && b.cell) return a.cell.row - b.cell.row || a.cell.col - b.cell.col;
+		if(a.cell) return -1;
+		if(b.cell) return 1;
+		return a.id - b.id;
+	});
+
+	function walk(start){
+		var chain = [];
+		for(n = start; n && n.shown && !visited[n.id]; n = n.visualNext){
+			visited[n.id] = true;
+			chain.push(n);
+		}
+		chains.push(chain);
+	}
+
+	for(i=0; i < ordered.length; i++)          // chains that start at a head
+		if(!indeg[ordered[i].id] && !visited[ordered[i].id])
+			walk(ordered[i]);
+
+	for(i=0; i < ordered.length; i++)          // what is left belongs to cycles
+		if(!visited[ordered[i].id])
+			walk(ordered[i]);
+
+	return chains;
+}
+
+// the longest run of a chain that is already drawn on one row in consecutive cells
+function keptRun(chain){
+	var best = null;
+
+	for(var i=0; i < chain.length; i++){
+		if(!chain[i].cell)
+			continue;
+
+		for(var d = 1; d >= -1; d -= 2){
+			var j = i;
+			while(j + 1 < chain.length && chain[j+1].cell &&
+			      chain[j+1].cell.row === chain[i].cell.row &&
+			      chain[j+1].cell.col - chain[j].cell.col === d)
+				j++;
+
+			if(!best || j - i + 1 > best.length)
+				best = {start: i, length: j - i + 1, dir: d, row: chain[i].cell.row, col: chain[i].cell.col};
+		}
+	}
+	return best;
+}
+
+function isIsolated(node, shown){
+	if(node.visualNext && node.visualNext.shown)
+		return false;
+	for(var i=0; i < shown.length; i++)
+		if(shown[i].visualNext === node)
+			return false;
+	return true;
+}
+
+function layout(){
+	var shown = allNodes.filter(function(n){ return n.shown; });
+	var chains = chainsOf(shown);
+	var occupied = {};
+	var i, k;
+
+	var plans = chains.map(function(chain, index){ return {chain: chain, run: keptRun(chain), index: index}; });
+
+	// keep the biggest already-drawn chains first, new chains last
+	plans.sort(function(a, b){
+		var la = a.run ? a.run.length : 0, lb = b.run ? b.run.length : 0;
+		return lb - la || a.index - b.index;
+	});
+
+	var maxRow = -1;
+	for(i=0; i < shown.length; i++)
+		if(shown[i].cell)
+			maxRow = Math.max(maxRow, shown[i].cell.row);
+
+	plans.forEach(function(plan){
+		var chain = plan.chain, run = plan.run;
+		var row, firstCol, dir;
+
+		if(run){
+			row = run.row;
+			dir = run.dir;
+			firstCol = run.col - run.start * dir;
+		}
+		else if(chain.length === 1 && lastPlaced && lastPlaced.shown && lastPlaced.cell && isIsolated(lastPlaced, shown)){
+			row = lastPlaced.cell.row;          // x, y, z created one after another: same row
+			firstCol = lastPlaced.cell.col + 1;
+			dir = 1;
+		}
+		else {
+			row = maxRow + 1;                   // a new list: a new row
+			firstCol = 0;
+			dir = 1;
+		}
+
+		function fits(r){
+			for(var k=0; k < chain.length; k++)
+				if(occupied[r + ',' + (firstCol + k * dir)])
+					return false;
+			return true;
+		}
+
+		while(!fits(row))
+			row++;
+
+		for(k=0; k < chain.length; k++){
+			var n = chain[k];
+			if(!n.cell)
+				lastPlaced = n;
+			n.cell = {row: row, col: firstCol + k * dir};
+			occupied[row + ',' + n.cell.col] = true;
+		}
+		maxRow = Math.max(maxRow, row);
+	});
+
+	// grid cells -> canvas positions (the leftmost column and the top row start at the origin)
+	var minCol = Infinity, maxCol = -Infinity, minRow = Infinity;
+	for(i=0; i < shown.length; i++){
+		minCol = Math.min(minCol, shown[i].cell.col);
+		maxCol = Math.max(maxCol, shown[i].cell.col);
+		minRow = Math.min(minRow, shown[i].cell.row);
+	}
+
+	var visibleWidth = Math.max(500, Math.min(view.size.width, window.innerWidth * 0.6) - COL_X0 - 40);
+	colWidth = maxCol > minCol ? Math.max(75, Math.min(COL_W, visibleWidth / (maxCol - minCol))) : COL_W;
+
+	var moves = [], fades = [];
+	for(i=0; i < shown.length; i++){
+		var node = shown[i];
+		var target = new Point(COL_X0 + (node.cell.col - minCol) * colWidth, ROW_Y0 + (node.cell.row - minRow) * ROW_H);
+
+		if(!node.boxDraw){                     // a new node: appears in place
+			node.position = target;
+			node.render();
+			fades.push(node);
+		}
+		else if(node.position.getDistance(target) > 0.5)
+			moves.push({node: node, from: node.position, to: target});
+	}
+
+	animate(moves, fades);
+}
+
+////////////////////////////////////////  Animation  /////////////////////////////////////
+
+var tween = null;
+
+function easeInOut(t){ return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+function applyTween(t){
+	var e = easeInOut(t);
+	for(var i=0; i < tween.moves.length; i++){
+		var m = tween.moves[i];
+		m.node.moveTo(m.from + (m.to - m.from) * e);
+	}
+	for(var j=0; j < tween.fades.length; j++)
+		if(tween.fades[j].boxDraw)
+			tween.fades[j].boxDraw.opacity = e;
+
+	redrawArrows();
+	redrawPointers();
+}
+
+function finishTween(){
+	if(!tween) return;
+	applyTween(1);
+	tween = null;
+}
+
+function animate(moves, fades){
+	finishTween();
+	tween = {moves: moves, fades: fades, start: Date.now(), duration: Math.min(350, player.delay() * 0.7)};
+
+	if(!player.animating || tween.duration < 80)
+		finishTween();
+	else
+		applyTween(0);
+}
+
+function onFrame(){
+	if(!tween) return;
+
+	var t = (Date.now() - tween.start) / tween.duration;
+	if(t >= 1)
+		finishTween();
+	else
+		applyTween(t);
+}
+
+//////////////////////////////////////////  Pointers  //////////////////////////////////////
 
 function Pointer(node, name, color, direction){
 	this.name = name || '';
 	this.points = node;
-
-	var color = color || 'red';
-	var direction = direction || 'down';
-
-	if(typeof Pointer.counter == undefined || content == undefined)
-        Pointer.counter = 0;
-
-    this.id = Node.counter++; // newly created vertex will have different id
-
+	this.color = color || 'red';
+	this.direction = direction || 'down';
+	this.active = false;
 
 	var self = this;
 
-	this.draw = function(points){
-
-		var start, textPos;
-		self.points = points || self.points;
-
-
-		if(direction == 'up')
-		{
-			start = self.points.position + [-10, -30];
-			textPos = start + [-15, -6];
-		}
-		else if(direction == 'down')
-		{
-			start = self.points.position + [-10, 50];
-			textPos = start + [-15, 12];
-		}
-		var text = new PointText({ position: textPos, fontSize: 22+'px', fillColor: color, content:''+ self.name});
-		var arrow = Arrow(start, self.points, color);
-
-
-		if(self.drawing != undefined) // p1 = p1.next ( delete the old one belongs to this pointer)
-			self.drawing.remove();
-
-		self.drawing = new Group([text, arrow]);
-		//console.log('pointer '+self.name+' is drawn.')
-		view.update();
-	}
-
-	this.setName = function(name){
-		self.name = name;
-		self.draw();
-		view.update();
-	}
-
-	this.remove = function(){
-		if(self.drawing != undefined)
-			self.drawing.remove();
-
-		//var text = new PointText({ position: [20 + 40*self.id, 20], fontSize: 22+'px', fillColor: color, content:''+ self.name});
-		//self.drawing = text;
+	this.draw = function(node){
+		self.points = node || self.points;
+		self.active = true;
+		removeVariable(self.name); // it is not null any more
+		redrawPointers();
 	}
 
 	this.markNull = function(){
 		self.points = null;
-
-		if(self.drawing != undefined) // p1 = null
-			self.drawing.remove();
-
-		var text = new PointText({ position: [20 + 40*self.id, 20], fontSize: 22+'px', fillColor: color, content:''+ self.name});
-		self.drawing = text;
+		self.active = false;
+		showVariable(self.name, 'null', self.color); // listed in the variables area
+		redrawPointers();
 	}
 
-	if(self.name != '' && self.points != null)
-	{
-		self.draw();
-		view.update();
+	this.remove = function(){
+		self.active = false;
+		removeVariable(self.name);
+		redrawPointers();
 	}
 
 	pointers.push(this);
 }
 
-////////////////////////////////////////// Linked List Functions /////////////////////////
-
-function appendANode(list, value){
-	var tmp = list;
-	while(tmp.next) tmp = tmp.next;
-
-	var newNode = new Node(value);
-	newNode.next = null;
-	tmp.next = newNode;
-
-	console.log('append '+value+' length:'+length(list));
-}
-
-function length(list){
-	var count = 0;
-	list = list.next;
-	while(list){
-		count++;
-		list = list.next;
-	}
-	return count;
-}
-
-////////////////////////////////////////  Adjacency List Representation //////////////////
-
-function Arrow(from, to, color, char){ // from and to are instanceof Point, otherwise convert it with a proper way
-
-	// change 'from' and 'to' to Point objects
-	if(from instanceof Node && to instanceof Node)
-	{
-		from = from.position + [40, 12];
-
-		curve = to.boxDraw.children[0].getNearestLocation(from);
-
-		var p1 = curve._segment1.point;
-		var p2 = curve._segment2.point;
-
-		var to = new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2);
-
-		//var line = new Path.Line({from: event.point, to: avg, strokeColor: 'black', strokeWidth: 2});
-
-		//to = to.boxDraw.children[0].getNearestPoint(from);
-	}
-	else if(from.constructor.name == 'Point' && to instanceof Node)
-	{
-		if(from.y < to.position.y) // it points from upward, else from downward
-			to   = to.position + [10, -3];
-		else
-			to   = to.position + [10, 28];
-	}
-
-	var arrowTip = new Path({segments: [new Point(-9 + to.x, -5 + to.y), new Point(to.x, to.y), new Point(-9 + to.x, 5 + to.y)], strokeColor: 'black', strokeWidth: 2, strokeColor: color || 'black'});
-
-	var line = new Path.Line({from: from, to: to, strokeColor: color || 'black', strokeWidth: 2});
-
-	if(intersectsNode(list1, line)){  // if intersects change line to an arc
-		line.remove();
-		to   = to + [3, -14];
-		arrowTip.position += [3, -14];
-
-		line = new Path({segments: [from], strokeWidth: 2, strokeColor: color || 'black'});
-
-		// Draw an arc through the position of the through
-		var through = ((from + to) / 2) - [0, from.getDistance(to)/4.8];
-		line.arcTo(through, to);
-
-		var angleout = line.segments[line.segments.length-1].handleIn.angleInDegrees;
-		arrowTip.rotate(angleout-180, to);
-	}
-	else
-		arrowTip.rotate((to - from).angle, to);
-
-	return new Group([line, arrowTip]);
-}
-
-function drawLinkedList(list, i){
-	var pos = new Point(20, 60 + 80*i);
-	new PointText({position: new Point(pos.x, pos.y + 19), fontSize: 18+'px', fillColor: 'black', content:'list'+ i});
-	new Path.Rectangle({ point: [pos.x+40, pos.y],  size: [20, 25],  strokeColor: 'black', strokeWidth: 2});
-	new Path.Circle( { radius:4, fillColor: 'black', center: [70, pos.y+ 12]});
-
-	var prev;
-
-	if(list.id == 0)
-		list = list.next;
-
-	if(list){
-		list.drawNode(new Point(pos.x +90, pos.y));
-		Arrow(new Point(70, pos.y+12), new Point(110, pos.y+12));  // static arrow between list head and first node
-
-		prev = list;
-		list = list.next;
-	}
-
-	var k=1;
-	while(list)
-	{
-		list.drawNode(new Point(pos.x + 90 + 80*k, pos.y));
-		prev.drawArrow(list);
-		prev = list;
-		list = list.next;
-		k++;
-	}
-}
-
-var list1 = new Node(); // start with a dummy node to prevent that list is initially null (since we have to care differently)
-
-//appendANode(list1, 10);
-
-//var p = new Pointer(list1.next, 'p');
-//p.draw();
-
-window.Node = Node;
 window.Pointer = Pointer;
 
-//p.drawNext();
+// pointers that point to the same node in the same direction share one arrow: "prev, curr"
+var pointerDrawings = [];
+function redrawPointers(){
+	for(var i=0; i < pointerDrawings.length; i++)
+		pointerDrawings[i].remove();
+	pointerDrawings = [];
 
-//p.points.drawArrow(pointer1.points.next.next.next.next);
-//p.points.drawArrow(pointer1.points.next.next);
-
-//var q = new Pointer('q', list.next.next, 'red');
-//q.draw();
-
-/*
-
-setInterval(function(){
-	q.drawNext();
-	p.points.drawArrow(q.points);
-}, 1000);
-
-setInterval(function(){
-	temp = temp.next;
-	//pointer1.points.drawArrow(p);
-}, 1000);
-
-*/
-
-
-function onFrame(){
-
-}
-
-window.restart = function(){
-	clearDrawables(list1);
-	list1 = new Node();
-	window.list1 = list1;
-}
-
-window.redraw = function(){
-	clearDrawables(list1);
-	project.activeLayer.removeChildren();
-	drawLinkedList(list1, 1);
-
-	var p = new Pointer(list1.next);
-	p.setName('p')
-}
-
-window.next = function(){
-	p1.drawNext();
-}
-
-var newNode = null;
-
-var hitOptions = {fill:true, tolerance:50};
-function onMouseDown(event){
-
-
-	var normalized = event.point - [25,12];
-
-	var hitResult = project.hitTest(normalized, hitOptions);
-
-	if (!hitResult) // if random point hits create a new one
-	{
-		console.log('serbest')
-		newNode = new Node(1);
-		newNode.drawNode(normalized)
-	}
-	else{
-		var n = new Node();
-		n.drawNodeSomewhere();
-	}
-
-}
-
-function onMouseMove(event){
-
-	if(newNode){
-
-		curve = newNode.boxDraw.children[0].getNearestLocation(event.point);
-
-		if(curve){
-
-			var p1 = curve._segment1.point;
-			var p2 = curve._segment2.point;
-
-			var avg = new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2);
-
-			var line = new Path.Line({from: event.point, to: avg, strokeColor: 'black', strokeWidth: 2});
-
-			line.removeOnMove();
+	var groups = {}, order = [];
+	pointers.forEach(function(p){
+		if(!p.active || !p.points || !p.points.shown || !p.points.position)
+			return;
+		var key = p.points.id + p.direction;
+		if(!groups[key]){
+			groups[key] = [];
+			order.push(key);
 		}
+		groups[key].push(p);
+	});
 
-//		var line = new Path.Line({from: event.point, to: newNode.boxDraw.children[0].getNearestLocation(event.point).point, strokeColor: 'black', strokeWidth: 2});
+	order.forEach(function(key){
+		var group = groups[key];
+		var pos = group[0].points.position;
+		var up = group[0].direction === 'up';
 
+		var start = pos + (up ? [-10, -40] : [-10, 55]);
+		var end = pos + (up ? [10, -3] : [10, 28]);
+		var line = new Path.Line({from: start, to: end, strokeColor: group[0].color, strokeWidth: 2});
+		var items = [line, arrowTip(end, (end - start).angle, group[0].color)];
+
+		var labels = [], x = 0;
+		group.forEach(function(p, index){
+			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: p.color, content: p.name + (index < group.length - 1 ? ',' : '')});
+			x += label.bounds.width + 5;
+			labels.push(label);
+		});
+		var labelGroup = new Group(labels);
+		labelGroup.position = start + (up ? [-4, -14] : [-4, 14]);
+
+		items.push(labelGroup);
+		pointerDrawings.push(new Group(items));
+	});
+}
+
+// point the pointer called `name` to `node` (or mark it as null)
+function pointTo(name, node, color, direction){
+	var pointer = window['pointer_' + name];
+
+	if(!pointer){
+		pointer = new Pointer(node, name, color, direction);
+		window['pointer_' + name] = pointer;
+	}
+	if(node == null)
+		pointer.markNull();
+	else
+		pointer.draw(node);
+}
+
+//////////////////////////////////////  Variables area  ////////////////////////////////////
+
+var VARS_Y = 620;
+new PointText({ point: [20, VARS_Y], fontSize: 18+'px', fillColor: 'black', content:'======= Variables ====='});
+
+// show "name = value" in the variables area (also used for pointers that are null)
+var variableTexts = {}, variableOrder = [];
+function showVariable(name, value, color){
+	var content = name + ' = ' + value;
+
+	if(variableTexts[name]){
+		variableTexts[name].content = content;
+		variableTexts[name].fillColor = color || 'black';
+	}
+	else {
+		variableTexts[name] = new PointText({ point: [20, VARS_Y + 30 + 26 * variableOrder.length], fontSize: 18+'px', fillColor: color || 'black', content: content});
+		variableOrder.push(name);
 	}
 }
 
-/////////////////////  Some Useful Functions  //////////////////////
+function removeVariable(name){
+	if(!variableTexts[name])
+		return;
 
-Array.prototype.clear = function() {
-  while (this.length) {
-    this.pop();
-  }
+	variableTexts[name].remove();
+	delete variableTexts[name];
+	variableOrder.splice(variableOrder.indexOf(name), 1);
+
+	for(var i=0; i < variableOrder.length; i++) // close the gap
+		variableTexts[variableOrder[i]].point = new Point(20, VARS_Y + 30 + 26 * i);
+}
+
+////////////////////////////////////////  Line highlighting  ///////////////////////////////
+
+var lineMark = null, logicMarks = {}, docCounter = 0;
+
+function highlight(doc, line, type, result){
+	if(!doc || !line || !line.lineNumber)
+		return;
+
+	var ln = line.lineNumber - 1;
+
+	if(lineMark)
+		lineMark.clear();
+
+	if(type == 'logical'){
+		if(!doc.dsvId)
+			doc.dsvId = ++docCounter;
+
+		var key = doc.dsvId + ':' + ln + ':' + line.start;
+		if(logicMarks[key])
+			logicMarks[key].clear();
+
+		logicMarks[key] = doc.markText({line: ln, ch: line.start}, {line: ln, ch: line.end},
+			{className: result ? "styled-background-logical-true" : "styled-background-logical-false"});
+	}
+
+	lineMark = doc.markText({line: ln, ch: 0}, {line: ln, ch: (doc.getLine(ln) || '').length}, {className: "styled-background-normal"});
+}
+
+function clearHighlights(all){
+	if(lineMark)
+		lineMark.clear();
+	lineMark = null;
+
+	if(all){
+		for(var key in logicMarks)
+			logicMarks[key].clear();
+		logicMarks = {};
+	}
+}
+
+//////////////////////////////////////////  Player  //////////////////////////////////////
+//
+// The steps of all runs on the page are kept, so the user can go back and forth.
+
+var ICONS = {
+	back:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2h2v12H3zM14 2v12L6 8z" fill="currentColor"/></svg>',
+	play:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>',
+	pause: '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2h4v12H3zM9 2h4v12H9z" fill="currentColor"/></svg>',
+	next:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M11 2h2v12h-2zM2 2v12l8-6z" fill="currentColor"/></svg>',
+	end:   '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2v12l6-6zM7 2v12l6-6zM13 2h2v12h-2z" fill="currentColor"/></svg>'
 };
 
+var SPEEDS = [1400, 900, 550, 300, 120]; // ms per step
+
+var player = {
+	steps: [],
+	cursor: 0,         // index of the next step
+	playing: true,
+	animating: true,   // false while replaying (step back)
+	speed: 2,
+	timer: null,
+	lastStep: 0,
+
+	delay: function(){ return SPEEDS[player.speed]; },
+
+	add: function(step){
+		player.steps.push(step);
+		player.schedule();
+		player.updateUI();
+	},
+
+	schedule: function(){
+		if(player.timer || !player.playing || player.cursor >= player.steps.length)
+			return;
+		var wait = Math.max(0, player.delay() - (Date.now() - player.lastStep));
+		player.timer = setTimeout(player.tick, wait);
+	},
+
+	tick: function(){
+		player.timer = null;
+		if(!player.playing)
+			return;
+		player.forward();
+		player.schedule();
+	},
+
+	forward: function(){
+		if(player.cursor >= player.steps.length)
+			return false;
+
+		finishTween();
+		player.steps[player.cursor++]();
+		player.lastStep = Date.now();
+
+		if(player.cursor === player.steps.length)
+			clearHighlights(false);
+
+		player.updateUI();
+		return true;
+	},
+
+	back: function(){
+		player.pause();
+		if(player.cursor > 0)
+			player.replayTo(player.cursor - 1);
+	},
+
+	toEnd: function(){
+		finishTween();
+		player.animating = false;
+		while(player.forward());
+		player.animating = true;
+	},
+
+	replayTo: function(k){
+		finishTween();
+		resetVisuals();
+
+		player.animating = false;
+		player.cursor = 0;
+		while(player.cursor < k)
+			player.steps[player.cursor++]();
+		player.animating = true;
+
+		if(player.cursor === player.steps.length)
+			clearHighlights(false);
+		player.updateUI();
+	},
+
+	play: function(){ // also called right before a run adds its steps, so the queue may still be empty
+		player.playing = true;
+		player.lastStep = 0;
+		player.schedule();
+		player.updateUI();
+	},
+
+	pause: function(){
+		player.playing = false;
+		clearTimeout(player.timer);
+		player.timer = null;
+		player.updateUI();
+	},
+
+	updateUI: function(){
+		if(!player.ui) return;
+		var ui = player.ui;
+		var running = player.playing && player.cursor < player.steps.length;
+		ui.play.innerHTML = running ? ICONS.pause : ICONS.play;
+		ui.play.title = running ? 'Pause' : 'Play';
+		ui.counter.textContent = 'Step ' + player.cursor + ' / ' + player.steps.length;
+		ui.back.disabled = player.cursor === 0;
+		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
+	}
+};
+
+// forget everything that was drawn (the program state is not touched)
+function resetVisuals(){
+	allNodes.forEach(function(n){
+		n.hide();
+		n.visualNext = null;
+		n.shownData = n.data;
+	});
+	lastPlaced = null;
+
+	pointers.forEach(function(p){ delete window['pointer_' + p.name]; });
+	pointers = [];
+	redrawPointers();
+
+	for(var name in variableTexts)
+		variableTexts[name].remove();
+	variableTexts = {};
+	variableOrder = [];
+
+	clearHighlights(true);
+
+	var output = document.getElementById("output");
+	if(output)
+		output.textContent = '';
+}
+
+function createPlayerUI(){
+	var canvas = document.getElementById('myCanvas0');
+	if(!canvas)
+		return;
+
+	var bar = document.createElement('div');
+	bar.className = 'dsv-player';
+
+	function button(icon, title, onClick){
+		var b = document.createElement('button');
+		b.className = 'dsv-btn';
+		b.innerHTML = icon;
+		b.title = title;
+		b.addEventListener('click', onClick);
+		bar.appendChild(b);
+		return b;
+	}
+
+	var ui = {};
+	ui.back = button(ICONS.back, 'Step back', player.back);
+	ui.play = button(ICONS.pause, 'Pause', function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
+	ui.next = button(ICONS.next, 'Step forward', function(){ player.pause(); player.forward(); });
+	ui.end  = button(ICONS.end, 'Skip to the end', function(){ player.pause(); player.toEnd(); });
+
+	var speedLabel = document.createElement('label');
+	speedLabel.className = 'dsv-speed';
+	speedLabel.innerHTML = 'Speed <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
+	speedLabel.querySelector('input').addEventListener('input', function(e){ player.speed = +e.target.value; });
+	bar.appendChild(speedLabel);
+
+	ui.counter = document.createElement('span');
+	ui.counter.className = 'dsv-counter';
+	bar.appendChild(ui.counter);
+
+	canvas.parentNode.insertBefore(bar, canvas);
+	player.ui = ui;
+	player.updateUI();
+}
+
+createPlayerUI();
 
 /////////////////////  Draw the Graphics Part  /////////////////////
 
-var time = 0.3, speed = 500;
 function drawGraphics(line, result){
 
 	var res = result;
-	var lhs_temp = window.eval(line.lhs || line.text);
-	var rhs_temp = window.eval(line.rhs);
+	var doc = window.activeEditor;                  // the editor that runs this code
+	var lhs_temp = safeEval(line.lhs || line.text); // snapshot of the left hand side
 
-  setTimeout(function(){
+	player.add(function(){
 
-	  console.log(line)
-
-  	if(line.type == 'declaration' || line.type == 'assignment')
-	{
-		highlightLine(line);
-
-		if(line.rhs.type == 'node') 		//  x = Node(2)
+		if(line.type == 'declaration' || line.type == 'assignment')
 		{
-			window.eval("if(!"+line.lhs+".boxDraw) "+line.lhs+".drawNodeNearby();");
+			highlight(doc, line);
 
-
-			if(eval('typeof pointer_' + line.lhs) != 'undefined') // daha oncekini sil,
-				window.eval("pointer_" + line.lhs + ".remove()");
-
-
-			// node isminde bir pointer oluştur, görsel amaçlı ('pointer_x' gibi)
-			window.eval("var pointer_" + line.lhs + " = new Pointer(" + line.lhs + ",'"+ line.lhs +"', 'blue', 'up')");
-		}
-
-		else if(line.rhs == 'null')  // reference to null  // p1 = null
-		{
-			window.eval("pointer_" + line.lhs + ".markNull()");
-		}
-		else if(eval(line.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x   // p1 = x.next
-		{
-			if(eval('typeof pointer_' + line.lhs) == 'undefined')
-				window.eval("var pointer_" + line.lhs + " = new Pointer(" + line.rhs + ",'"+ line.lhs + "')");
-			else
-				window.eval("pointer_" + line.lhs + ".draw(" + line.rhs + ")");
-		}
-		else{
-			window.eval(line.text);
-
-			if(eval('typeof text_'+line.lhs) != 'undefined')
-				window.eval('text_'+line.lhs + '.content = "'+line.lhs + ' = ' +eval(line.lhs) + '"');
-			else
-				{
-				myTempText = new PointText({ position: new Point(20, 530), fontSize: 18+"px", fillColor: "black", content: line.lhs + " = " + line.rhs});
-				window.eval('var text_'+line.lhs + '= myTempText;');
-			}
-		}
-	}
-	else if(line.type == 'logical')
-	{
-		highlightLine(line, 'logical', res);
-		console.log(res)
-	}
-	else if(line.type == 'print')
-	{
-		//highlightLine(line);
-//		insertText(res);
-	}
-	else if(line.type == 'node append')
-	{
-		appendANode(list1, eval(line.value));
-		//redraw();
-	}
-	if(line.type == 'object property left') // p.next = x;  p.next = Node(11)
-	{
-		highlightLine(line);
-
-		if(line.property[0][1] == 'next')
-		{
-			if(line.rhs.type == 'node')
+			if(line.rhs.type == 'node') 		//  x = Node(2)
 			{
-				window.eval("var temp_node = new Node(" + line.rhs.data + ");");
-				window.eval("if(!temp_node.boxDraw) temp_node.drawNodeNearby();");
+				res.shown = true;
+				layout();
 
-				window.eval(line.lhs + res.str + res.prop + ' = temp_node')
-				window.eval(line.lhs + res.str + '.drawArrow(temp_node)')
-				return;
+				if(window['pointer_' + line.lhs])  // a new node: replace the old pointer with a fresh one
+					window['pointer_' + line.lhs].remove();
+
+				window['pointer_' + line.lhs] = new Pointer(res, line.lhs, 'blue', 'up');
+				window['pointer_' + line.lhs].draw(res);
 			}
-			window.eval(line.lhs + res + '.drawArrow(' + line.rhs + ')')
+			else if(res === null || isNode(res))  // p1 = null  /  p1 = x  /  p1 = x.next
+				pointTo(line.lhs, res);
+			else                                  // a plain value: count = count + 1
+				showVariable(line.lhs, res);
 		}
-		else if(line.property[0][1] == 'data')
+		else if(line.type == 'logical')
 		{
-			//window.eval(line.lhs+".boxDraw.remove()");
-			//window.eval(line.lhs+".redraw()");
-
-			console.log(lhs_temp)
-
-			lhs_temp.boxDraw.remove();
-			lhs_temp.redraw();
+			highlight(doc, line, 'logical', res);
 		}
-	}
-	if(line.type == 'object property right') // p1 = p1.next
-	{
-		highlightLine(line);
-
-		if(res == null)
-			window.eval("pointer_" + line.lhs + ".markNull()");
-		else{
-			tempNode = res;
-			window.eval("pointer_"+line.lhs +".draw(tempNode)"); // draw it on the next position
+		else if(line.type == 'print')
+		{
+			highlight(doc, line);
+			var output = document.getElementById("output");
+			if(output)
+				output.textContent += res + '\n';
 		}
-	}
-	if(line.type == 'free object') // removes the object // free p1 / free p1.next
-	{
-		lhs_temp.boxDraw.remove()
-		lhs_temp.arrowDraw.remove()
-	}
-	if(line.type == 'object property left-right') // p.next = x.next
-	{
-		eval('lhs_temp' + res.strLeft + '.drawArrow(' + 'rhs_temp' + res.strRight + ')')
-	}
-	else
-	{
-		//var result = window.eval(line.text);
-		//highlightLine(line);
-	}
+		else if(line.type == 'object property left') // p.next = x;  p.next = Node(11);  p.data = 5
+		{
+			highlight(doc, line);
 
-   }, speed * time)
+			if(res.prop == '.next')
+			{
+				if(res.newNode)
+					res.newNode.shown = true;
 
-time++;
+				res.target.visualNext = res.value;
+				layout();
+			}
+			else if(res.prop == '.data' && res.target.boxDraw)
+			{
+				res.target.shownData = res.value;
+				res.target.render();
+			}
+		}
+		else if(line.type == 'object property right') // p1 = p1.next
+		{
+			highlight(doc, line);
+			pointTo(line.lhs, res);
+		}
+		else if(line.type == 'object property left-right') // p.next = x.next
+		{
+			highlight(doc, line);
+
+			if(res.prop == '.next'){
+				res.target.visualNext = res.value;
+				layout();
+			}
+		}
+		else if(line.type == 'free object') // removes the object // free p1 / free p1.next
+		{
+			highlight(doc, line);
+
+			if(isNode(lhs_temp)){
+				lhs_temp.hide();
+				layout();
+			}
+		}
+		else if(line.type == 'expression')
+		{
+			highlight(doc, line);
+		}
+	});
 }
 
+// show a node that was created from the command prompt (Node(5))
+window.showNode = function(node){
+	player.add(function(){
+		node.shown = true;
+		layout();
+	});
+}
 
 
 ///////////////////  Parse the code   //////////////////////////////
@@ -562,185 +821,100 @@ function processOneItem(item){
 
 	if(item.type == 'logical')
 	{
-		console.log('[logical] line '+item.lineNumber +' is getting processed, text is: '+ item.text);
-
 		if(item.mainType == 'if')
 		{
-			drawGraphics(item, eval(item.text));
+			var condition = window.eval(item.text);
+			drawGraphics(item, condition);
 
-			if(eval(item.text))
+			if(condition)
 				recursivelyProcess(item.truePart)
-			else
-				if(item.falsePart)
-					recursivelyProcess(item.falsePart)
+			else if(item.falsePart)
+				recursivelyProcess(item.falsePart)
 		}
 		else if(item.mainType == 'while')
 		{
-			while(eval(item.text)){
-				drawGraphics(item, eval(item.text));
+			var guard = 0;
+			while(window.eval(item.text)){
+				drawGraphics(item, true);
+				recursivelyProcess(item.statements)
 
-				if(eval(item.text))
-					recursivelyProcess(item.statements)
+				if(++guard > 1000)
+					throw new Error('The loop at line ' + item.lineNumber + ' ran more than 1000 times. Is it an infinite loop?');
 			}
-			drawGraphics(item, eval(item.text));
-		}
-		else if(item.mainType == 'for')
-		{
-			while(eval(item.text)){
-				if(eval(item.text))
-					recursivelyProcess(items.slice(1))
-				drawGraphics(item, eval(item.text));
-			}
-			drawGraphics(item, eval(item.text));
+			drawGraphics(item, false);
 		}
 		else{ // there is no type, only logical expression
-			drawGraphics(item, item.text);
+			drawGraphics(item, window.eval(item.text));
 		}
 	}
-	if(item.type == 'declaration')
+	else if(item.type == 'declaration' || item.type == 'assignment')
 	{
 		item['#evaluation']++;
 
 		if(item.rhs.type == 'node') 		//  x = new? Node(2)
 		{
-			var nodeItem = item.rhs;
-
-			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
+			window.eval(item.lhs + " = new Node(" + item.rhs.data + ");");
 			window.eval(item.lhs + ".setName('" + item.lhs + "')");
+		}
+		else
+			window.eval(item.lhs + ' = ' + item.rhs);
 
-			drawGraphics(item);
-		}
-		else if(item.rhs == 'null')  // reference to null  // p1 = null
-		{
-			window.eval(item.lhs + " = null");
-			drawGraphics(item)
-		}
-		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x
-		{
-			window.eval(item.lhs + ' = '+ item.rhs);
-			drawGraphics(item)
-		}
-		else{
-			window.eval(item.text);
-			drawGraphics(item);
-		}
+		drawGraphics(item, window.eval(item.lhs));
 	}
-	if(item.type == 'assignment')
+	else if(item.type == 'expression')
 	{
 		item['#evaluation']++;
-
-		if(item.rhs.type == 'node') 		//  x = new? Node(2)
-		{
-			var nodeItem = item.rhs;
-
-			window.eval("var " + item.lhs + " = new Node(" + nodeItem.data + ");");
-			window.eval(item.lhs + ".setName('" + item.lhs + "')");
-
-			drawGraphics(item);
-		}
-		else if(item.rhs == 'null')  // reference to null  // p1 = null
-		{
-			window.eval(item.lhs + " = null");
-			drawGraphics(item)
-		}
-		else if(eval(item.rhs).constructor.name == 'Node')  // reference to a node (by assigning it) // p1 = x
-		{
-			window.eval(item.lhs + ' = '+ item.rhs);
-			drawGraphics(item)
-		}
-		else{
-			//window.eval(item.text);
-			drawGraphics(item);
-		}
-
+		drawGraphics(item, window.eval(item.text));
 	}
-	if(item.type == 'expression')
-	{
-		window.eval(item.text);
-		item['#evaluation']++;
-
-		console.log('['+ item.type + '] text:'+ item.text +' line '+item.lineNumber +' is getting processed, result is: '+ eval(item.text));
-
-		drawGraphics(item, eval(item.text));
-
-		//window.eval('text_'+item.lhs + '.content = '+item.lhs + " = " +eval(item.lhs));
-
-	}
-	if(item.type == 'print')
+	else if(item.type == 'print')
 	{
 		var resu = '';
 		for(var i=0; i < item.list.length; i++)
-			resu += item.list[i].subtype == 'var' ? eval(item.list[i].text) : item.list[i].text;
+			resu += item.list[i].subtype == 'var' ? window.eval(item.list[i].text) : item.list[i].text;
 
-		console.log(resu)
 		drawGraphics(item, resu);
 	}
-	if(item.type == 'node append')
-		drawGraphics(item, false);
-
-	if(item.type == 'object property left') // p.next = x;  p.next = Node(11)
+	else if(item.type == 'object property left') // p.next = x;  p.next = Node(11);  p.data = 5
 	{
 		item['#evaluation']++;
 
-		var str = ''
-
-		var i=0;
-		for(; i < item.property.length-1; i++){  // önceki property ler seçim yapmak için
-			str += item.property[i].join('')
-		}
-
-		var prop = item.property[i].join(''); // son property
+		var path = propertyPath(item.property);
+		var last = item.property[item.property.length-1].join(''); // ".next" or ".data"
+		var target = window.eval(item.lhs + path.slice(0, path.length - last.length));
+		var newNode = null;
 
 		if(item.rhs.type == 'node')
 		{
-			//window.eval(item.lhs+".next=" + item.rhs);
-			drawGraphics(item, {str: str, prop:prop})
-			return;
+			newNode = new Node(item.rhs.data);
+			target[last.slice(1)] = newNode;
 		}
-		else if(item.property[0][1] == 'data')
-			window.eval(item.lhs+".data=" + item.rhs.text);
 		else
-			window.eval(item.lhs+".next=" + item.rhs);
+			window.eval(item.lhs + path + ' = ' + rhsCode(item.rhs));
 
-		drawGraphics(item, str)
+		drawGraphics(item, {target: target, prop: last, value: target[last.slice(1)], newNode: newNode});
 	}
-
-	if(item.type == 'object property right') // p1 = p1.next
+	else if(item.type == 'object property right') // p1 = p1.next
 	{
 		item['#evaluation']++;
 
-		var str = ''
-		item.property.forEach(function(el){ // p1 = p1.next.next
-			str += el.join('')
-		});
-		item.text = item.lhs +' = '+item.rhs + str;
+		item.text = item.lhs + ' = ' + item.rhs + propertyPath(item.property);
+		window.eval(item.text);
 
-		window.eval(item.text)
-		drawGraphics(item, eval(item.lhs))
+		drawGraphics(item, window.eval(item.lhs));
 	}
-
-	if(item.type == 'object property left-right') // p.next = x.next
+	else if(item.type == 'object property left-right') // p.next = x.next
 	{
-		var strLeft = '', strRight = '';
+		item['#evaluation']++;
 
-		var i=0;
-		for(; i < item.propertyLeft.length-1; i++){  // önceki property ler seçim yapmak için
-			strLeft += item.propertyLeft[i].join('')
-		}
+		var pathLeft = propertyPath(item.propertyLeft);
+		var lastLeft = item.propertyLeft[item.propertyLeft.length-1].join('');
+		var targetLeft = window.eval(item.lhs + pathLeft.slice(0, pathLeft.length - lastLeft.length));
 
-		var propLeft = item.propertyLeft[i].join(''); // son property
+		window.eval(item.lhs + pathLeft + ' = ' + item.rhs + propertyPath(item.propertyRight));
 
-
-		item.propertyRight.forEach(function(el){ // p1 = p1.next.next
-			strRight += el.join('')
-		});
-
-		console.error(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
-		window.eval(item.lhs + strLeft + propLeft + ' = ' + item.rhs + strRight)
-		drawGraphics(item, {strLeft: strLeft, propLeft:propLeft, strRight:strRight})
+		drawGraphics(item, {target: targetLeft, prop: lastLeft, value: targetLeft[lastLeft.slice(1)]});
 	}
-
-	if(item.type == 'free object') // removes the object // free p1 / free p1.next
+	else if(item.type == 'free object') // removes the object // free p1 / free p1.next
 	{
 		drawGraphics(item);
 	}
@@ -751,52 +925,35 @@ function recursivelyProcess(items){
 	if(items instanceof Array)
 	{
 		for(var i=0; i < items.length; i++)
-		{
-			var item = items[i];
-			processOneItem(item);
-		}
+			processOneItem(items[i]);
 	}
 	else
 		processOneItem(items);
-
-	setTimeout(function(){ // delete the last line after all operations done
-		  deleteLastLine();
-	}, speed * time)
-	time++;
 }
 
-
-//console.log(PARSER.parse('{var aaa = 123 //deneme}'));
 
 var grammer = null, parser = null;
 
 $.get("grammer.pegjs", function(response) {
 	grammer = response;
  	parser = PEG.buildParser(grammer);
-	//console.log(response)
 });
-
-restart();
 
 window.parse = function(text) {
 
-	//initialPositionX = 80;
-	//project.activeLayer.removeChildren(); // clears all including background
-	time = 0.3
+	var output = document.getElementById("output");
+	if(output)
+		output.textContent = '';
 
 	try {
 		var text = text || editor.getValue();
-
-		//var result = PARSER.parse(grammer); // normalde parser.js derleyip ekledigimiz zaman direk PARSER. diyerek kullanabiliriz. Su an grammer i ekleyerek calisacagiz
 		var result = parser.parse(text);
-		console.log(result)
 
 		if(!result)
 			return null;
 
+		player.play();
 		recursivelyProcess(result);
-
-		//document.getElementById("output").textContent = JSON.stringify(result, null, 3); // parse result output kismina yaziliyor
 
 		return result;
 	} catch (err) {
@@ -804,8 +961,6 @@ window.parse = function(text) {
 		return null;
 	}
 }
-
-
 
 
 function qsa(sel) {
@@ -818,70 +973,50 @@ function insertAfter(el, referenceNode) {
 
 function setEditors(items){
 
-	//deneme ismindeki tüm editörler codemirror editorü olacak
+	// every textarea with the class "deneme" becomes a CodeMirror editor with a run button
 	items.forEach(function (editorEl) {
 
-	//console.log(editorEl)
+		var editor = CodeMirror.fromTextArea(editorEl, {
+			mode: "javascript",
+			extraKeys: {"Ctrl-Space": "autocomplete"},
+			styleActiveLine: true,
+			lineNumbers: true,
+			lineWrapping: true,
+			autoCloseBrackets: true,
+			autoCloseTags: true,
+			theme: 'eclipse',
+			viewportMargin: Infinity
+		});
 
-	 var editor = CodeMirror.fromTextArea(editorEl, {
-	  mode: "javascript",
-	  extraKeys: {"Ctrl-Space": "autocomplete"},
-	  styleActiveLine: true,
-	  lineNumbers: true,
-	  lineWrapping: true,
-	  autoCloseBrackets: true,
-	  autoCloseTags: true,
-	  theme: 'eclipse',
-	  viewportMargin: Infinity
-	});
-
-	//editor.setSize(450, 160);
-
-	var map = {
-		"Ctrl-Enter": function(){
+		function run(){
+			window.activeEditor = editor.doc; // set it before parsing: the steps remember it
 			parse(editor.getValue());
-			window.activeEditor = editor.doc
-		},
-		"Cmd-Enter": function(){
-			parse(editor.getValue());
-			window.activeEditor = editor.doc
 		}
-	}
-	editor.addKeyMap(map);
 
-		console.error(editor)
-// 1. Create the button
-var button = document.createElement("button");
-button.innerHTML = '<span class="glyphicon glyphicon-play icon-white"></span>';
-button.classList = "btn-round btn-lg";
-button.style = "background-color: #0d47a1; display: inline-block; position: relative; float: left; margin-top: -50px; z-index:2; margin-left: calc(100% - 78px);";
+		editor.addKeyMap({"Ctrl-Enter": run, "Cmd-Enter": run});
 
-// 2. Append somewhere
-var body = document.getElementsByTagName("body")[0];
-insertAfter(button, editor.getWrapperElement())
+		var button = document.createElement("button");
+		button.innerHTML = ICONS.play;
+		button.title = 'Run (Ctrl+Enter)';
+		button.className = "btn-round btn-lg dsv-run";
+		insertAfter(button, editor.getWrapperElement());
+		button.addEventListener("click", run);
 
-// 3. Add event handler
-button.addEventListener ("click", function() {
-  	parse(editor.getValue());
-	window.activeEditor = editor.doc
-});
-
-	editor.on("focus", function() { console.log(editor.doc); window.activeEditor = editor.doc })
-
+		editor.on("focus", function() { window.activeEditor = editor.doc });
 	});
 }
 
 setEditors(qsa(".deneme"));
 
 // add editor
-editorNo = 0;
+var editorNo = 0;
 window.addEditor  = function() {
 
 	editorNo++;
 
 	$( "#addElement" ).before(
 	'<br>'+
-	'<textarea class = "addedEditor'+editorNo+'" onClick = window.>'+
+	'<textarea class = "addedEditor'+editorNo+'">'+
 	'var list2 = Node(3);\n'+
 	'list2.next = Node(4);\n'+
 	'list2.next.next = Node(8);\n'+
@@ -889,6 +1024,3 @@ window.addEditor  = function() {
 	 ) ;
 	setEditors(qsa(".addedEditor"+editorNo));
 }
-
-
-var text = new PointText({ position: new Point(20, 500), fontSize: 18+'px', fillColor: 'black', content:'======= Variables ====='});
