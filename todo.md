@@ -16,13 +16,10 @@
 
 ## Görselleştirme ve arayüz
 
-- [ ] Arayüzün modernleştirilmesi (alternatifler değerlendiriliyor).
 - [ ] Bir kod bloğu ikinci kez çalıştırılınca eski çizimler kalıyor ve listenin ikinci bir kopyası çiziliyor; blok tekrar çalışınca onun önceki çizimleri temizlenmeli.
-- [ ] Değişkenler alanı tuvalin içine çizilen metin; HTML bir tablo/panel olursa okunması ve kopyalanması kolaylaşır.
-- [ ] Uzun listeler tuvalin dışına taşıyor: yakınlaştırma/sığdırma (zoom to fit) ya da kaydırma.
-- [ ] Mobil uyum: tuval sabit 1200x900 ve `position: fixed`.
-- [ ] Koyu tema.
 - [ ] Kodu bağlantı ile paylaşma (kod URL'de saklanır).
+- [ ] İsteğe bağlı "ders modu": blokları tek tek gösteren, Önceki/Sonraki ile ilerleyen görünüm (değerlendirilen alternatiflerden B).
+- [ ] Telefonda görselleştirme kartı ekranın yarısını kaplıyor; değişkenler ve çıktı bölümü katlanabilir olabilir.
 
 ## Yeni konular
 
@@ -35,9 +32,6 @@
 
 - [ ] Tarayıcı testlerini (Playwright) repoya eklemek ve GitHub Actions'ta her PR'da çalıştırmak: her sayfa hatasız çalışmalı ve beklenen son durumu vermeli.
 - [ ] Grameri önceden derlemek: şu an `grammer.pegjs` her sayfa açılışında tarayıcıda derleniyor.
-- [ ] Kullanılmayan dosyaları kaldırmak: `js/index.js`, `js/backup/`, `js/custom-mode.js`, `js/mode/codemirror.js` (yerine `vendor/` kullanılıyor), `css/mdb.min.css` (yalnızca yorum satırında). `js/mode/css.js`, `js/mode/simple.js` ve `js/bootstrap.min.js` yükleniyor ama kullanılmıyor.
-- [ ] `faq.txt` içeriğini README'ye taşımak.
-- [ ] jQuery 2 ve Bootstrap 3 bağımlılıklarından kurtulmak (yalnızca `$.get` ve ızgara sınıfları kullanılıyor).
 
 ## Bilinen sorunlar
 
@@ -53,3 +47,7 @@
 - [x] `for`, `break`, `continue`, `i++`, `i += n`, `new Node(ifade)`.
 - [x] Çift yönlü liste, yığın, kuyruk ve toplam 19 örnek sayfa.
 - [x] CodeMirror repoya alındı; site dış CDN'e bağlı değil.
+- [x] Modern arayüz: üst çubuk, örnek menüsü, sabit görselleştirme kartı, önceki/sonraki bağlantıları; sayfalar yalnızca içerik taşıyor, iskelet `js/layout.js`'den kuruluyor.
+- [x] Değişkenler HTML panelinde; tuval kartın genişliğine uyuyor, yüksekliği çizime göre ayarlanıyor, uzun listeler sığacak şekilde küçültülüyor.
+- [x] Koyu tema (sistem ayarına uyar, elle değiştirilebilir) ve mobil uyum.
+- [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.

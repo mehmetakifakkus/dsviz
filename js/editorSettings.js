@@ -2,7 +2,7 @@
 var editor2 = CodeMirror.fromTextArea(document.getElementById('command'), {
   mode: "javascript",
   lineNumbers: false,
-  theme: 'eclipse'
+  theme: 'dsv'
 });
 
 //editor2.setSize(450, 45);

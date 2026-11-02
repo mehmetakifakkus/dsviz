@@ -50,6 +50,28 @@ function rhsCode(rhs){ // rhs may be a name (string), an Integer object or a nod
 
 var NODE_H = 25;
 
+// colors come from the --viz-* tokens in css/app.css, so the canvas follows the theme
+var PAL = palette();
+function palette(){
+	var cs = window.getComputedStyle(document.documentElement);
+	function token(name, fallback){ return (cs.getPropertyValue(name) || '').trim() || fallback; }
+	return {
+		node: token('--viz-node', '#ffffff'),
+		stroke: token('--viz-stroke', '#1f2937'),
+		text: token('--viz-text', '#111827'),
+		named: token('--viz-named', '#2563eb'),
+		pointer: token('--viz-pointer', '#dc2626')
+	};
+}
+
+// called by js/layout.js after the theme changed
+window.dsvApplyTheme = function(){
+	PAL = palette();
+	allNodes.forEach(function(n){ if(n.shown && n.position) n.render(); });
+	redrawArrows();
+	redrawPointers();
+};
+
 // A page switches to doubly linked nodes [prev | data | next] the first time its code
 // uses ".prev". The switch happens inside a step, so stepping back undoes it too.
 var doublyMode = false;      // drawn state
@@ -89,17 +111,17 @@ function Node(content, next){
 			self.boxDraw.remove();
 
 		var p = self.position, g = geometry();
-		var items = [new Path.Rectangle({ point: [p.x, p.y],  size: [g.width, NODE_H],  strokeColor: 'black', strokeWidth: 2, fillColor: 'white'})];
+		var items = [new Path.Rectangle({ point: [p.x, p.y],  size: [g.width, NODE_H],  strokeColor: PAL.stroke, strokeWidth: 2, fillColor: PAL.node})];
 
-		items.push(new Path.Line({from: [p.x + g.nextX, p.y], to: [p.x + g.nextX, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2}));
-		items.push(new Path.Circle({ radius: 4, fillColor: 'black', center: [p.x + g.nextX + 10, p.y + g.nextY]}));
+		items.push(new Path.Line({from: [p.x + g.nextX, p.y], to: [p.x + g.nextX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
+		items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: [p.x + g.nextX + 10, p.y + g.nextY]}));
 
 		if(doublyMode){
-			items.push(new Path.Line({from: [p.x + g.dataX, p.y], to: [p.x + g.dataX, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2}));
-			items.push(new Path.Circle({ radius: 4, fillColor: 'black', center: [p.x + 10, p.y + g.prevY]}));
+			items.push(new Path.Line({from: [p.x + g.dataX, p.y], to: [p.x + g.dataX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
+			items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: [p.x + 10, p.y + g.prevY]}));
 		}
 
-		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: 'black', content:''+ self.shownData}));
+		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: PAL.text, content:''+ self.shownData}));
 
 		self.boxDraw = new Group(items);
 	}
@@ -139,7 +161,7 @@ function enableDoublyMode(){
 //////////////////////////////////////////  Arrows  //////////////////////////////////////
 
 function arrowTip(end, angle, color){
-	var tip = new Path({segments: [end + [-9, -5], end, end + [-9, 5]], strokeColor: color || 'black', strokeWidth: 2});
+	var tip = new Path({segments: [end + [-9, -5], end, end + [-9, 5]], strokeColor: color || PAL.stroke, strokeWidth: 2});
 	tip.rotate(angle, end);
 	return tip;
 }
@@ -159,20 +181,20 @@ function nodeArrow(from, to, kind){
 
 	if(neighbour) {                                       // straight to the neighbour
 		end = isNext ? b + [0, g.nextY] : b + [g.width, g.prevY];
-		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
+		line = new Path.Line({from: start, to: end, strokeColor: PAL.stroke, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
 	else if(sameRow) {                                    // backwards or skipping nodes: an arc
 		end = b + [g.width / 2, isNext ? 0 : NODE_H];
 		var bulge = 18 + Math.abs(dx) * 0.1;
 		var through = new Point((start.x + end.x) / 2, isNext ? a.y - bulge : a.y + NODE_H + bulge);
-		line = new Path({segments: [start], strokeColor: 'black', strokeWidth: 2});
+		line = new Path({segments: [start], strokeColor: PAL.stroke, strokeWidth: 2});
 		line.arcTo(through, end);
 		angle = line.getTangentAt(line.length).angle;
 	}
 	else {                                                // another row: straight to the top or bottom edge
 		end = b + [g.width / 2, b.y > a.y ? 0 : NODE_H];
-		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
+		line = new Path.Line({from: start, to: end, strokeColor: PAL.stroke, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
 
@@ -206,7 +228,7 @@ function redrawArrows(){
 // are placed around it. So reversing a list only flips arrows, inserting at the head
 // shifts the list right, and a node that is cut out of a list drops to the next row.
 
-var ROW_Y0 = 110, ROW_H = 160, COL_X0 = 60;
+var ROW_Y0 = 80, ROW_H = 150, COL_X0 = 50;
 var colWidth = 100;
 
 function maxColWidth(){ return doublyMode ? 125 : 100; }
@@ -354,9 +376,17 @@ function layout(){
 		minRow = Math.min(minRow, shown[i].cell.row);
 	}
 
-	var visibleWidth = Math.max(500, Math.min(view.size.width, window.innerWidth * 0.6) - COL_X0 - 40);
+	var visibleWidth = Math.max(300, canvasHolderWidth() - COL_X0 - geometry().width - 30);
 	var widest = maxColWidth(), narrowest = geometry().width + 25;
 	colWidth = maxCol > minCol ? Math.max(narrowest, Math.min(widest, visibleWidth / (maxCol - minCol))) : widest;
+
+	// the size the drawing needs; fitCanvas() scales it down when the card is narrower
+	var maxRowUsed = -Infinity;
+	for(i=0; i < shown.length; i++)
+		maxRowUsed = Math.max(maxRowUsed, shown[i].cell.row);
+	extent = shown.length
+		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * ROW_H + NODE_H + 85}
+		: null;
 
 	var moves = [], fades = [];
 	for(i=0; i < shown.length; i++){
@@ -379,8 +409,37 @@ function layout(){
 			shown[i].visualNext.everLinked = true;
 		}
 
+	fitCanvas();
 	animate(moves, fades);
 }
+
+///////////////////////////////////////  Canvas size  //////////////////////////////////////
+//
+// The canvas takes the width of its card. Its height follows the drawing; a drawing that
+// is wider than the card is scaled down (view.zoom) instead of being cut off.
+
+var extent = null; // {width, height} the drawing needs, set by layout()
+var MIN_HEIGHT = 160; // empty canvas; with nodes the height follows the drawing
+
+function canvasHolderWidth(){
+	var holder = view.element.parentNode;
+	return (holder && holder.clientWidth) || view.viewSize.width;
+}
+
+function fitCanvas(){
+	var width = canvasHolderWidth();
+	var need = extent || {width: width, height: MIN_HEIGHT};
+	var zoom = Math.min(1, width / need.width);
+	var height = Math.max(MIN_HEIGHT, Math.ceil(need.height * zoom));
+
+	if(view.viewSize.width !== width || view.viewSize.height !== height)
+		view.viewSize = new Size(width, height);
+	view.zoom = zoom;
+	view.center = new Point(width / (2 * zoom), height / (2 * zoom)); // keep the origin at the top left
+}
+
+window.addEventListener('resize', fitCanvas);
+fitCanvas();
 
 ////////////////////////////////////////  Animation  /////////////////////////////////////
 
@@ -433,7 +492,7 @@ function onFrame(){
 function Pointer(node, name, color, direction){
 	this.name = name || '';
 	this.points = node;
-	this.color = color || 'red';
+	this.kind = (color === 'blue' || color === 'named') ? 'named' : 'pointer'; // the color comes from the theme
 	this.direction = direction || 'down';
 	this.active = false;
 
@@ -449,7 +508,7 @@ function Pointer(node, name, color, direction){
 	this.markNull = function(){
 		self.points = null;
 		self.active = false;
-		showVariable(self.name, 'null', self.color); // listed in the variables area
+		showVariable(self.name, 'null', true); // listed in the variables area
 		redrawPointers();
 	}
 
@@ -491,12 +550,13 @@ function redrawPointers(){
 		var dx = geometry().dataX; // aim at the data cell
 		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
 		var end = pos + (up ? [dx + 10, -3] : [dx + 10, 28]);
-		var line = new Path.Line({from: start, to: end, strokeColor: group[0].color, strokeWidth: 2});
-		var items = [line, arrowTip(end, (end - start).angle, group[0].color)];
+		var color = PAL[group[0].kind];
+		var line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
+		var items = [line, arrowTip(end, (end - start).angle, color)];
 
 		var labels = [], x = 0;
 		group.forEach(function(p, index){
-			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: p.color, content: p.name + (index < group.length - 1 ? ',' : '')});
+			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.name + (index < group.length - 1 ? ',' : '')});
 			x += label.bounds.width + 5;
 			labels.push(label);
 		});
@@ -524,34 +584,40 @@ function pointTo(name, node, color, direction){
 
 //////////////////////////////////////  Variables area  ////////////////////////////////////
 
-var VARS_Y = 620;
-new PointText({ point: [20, VARS_Y], fontSize: 18+'px', fillColor: 'black', content:'======= Değişkenler ====='});
+// the #variables list next to the canvas (built by js/layout.js): "name = value".
+// Pointers that are null are listed here too (isNull), because they have no arrow.
+var variableItems = {};
 
-// show "name = value" in the variables area (also used for pointers that are null)
-var variableTexts = {}, variableOrder = [];
-function showVariable(name, value, color){
-	var content = name + ' = ' + value;
+function escapeHTML(text){
+	return String(text).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; });
+}
 
-	if(variableTexts[name]){
-		variableTexts[name].content = content;
-		variableTexts[name].fillColor = color || 'black';
+function showVariable(name, value, isNull){
+	var list = document.getElementById('variables');
+	if(!list)
+		return;
+
+	var item = variableItems[name];
+	if(!item){
+		item = variableItems[name] = document.createElement('li');
+		list.appendChild(item);
 	}
-	else {
-		variableTexts[name] = new PointText({ point: [20, VARS_Y + 30 + 26 * variableOrder.length], fontSize: 18+'px', fillColor: color || 'black', content: content});
-		variableOrder.push(name);
+	var html = '<span class="name">' + escapeHTML(name) + ' =</span><span class="value">' + escapeHTML(value) + '</span>';
+	if(item.innerHTML !== html){
+		item.innerHTML = html;
+		item.className = isNull ? 'is-null' : '';
+		if(player.animating){ // flash the changed value
+			void item.offsetWidth;
+			item.className += ' changed';
+		}
 	}
 }
 
 function removeVariable(name){
-	if(!variableTexts[name])
+	if(!variableItems[name])
 		return;
-
-	variableTexts[name].remove();
-	delete variableTexts[name];
-	variableOrder.splice(variableOrder.indexOf(name), 1);
-
-	for(var i=0; i < variableOrder.length; i++) // close the gap
-		variableTexts[variableOrder[i]].point = new Point(20, VARS_Y + 30 + 26 * i);
+	variableItems[name].remove();
+	delete variableItems[name];
 }
 
 ////////////////////////////////////////  Line highlighting  ///////////////////////////////
@@ -724,10 +790,11 @@ function resetVisuals(){
 	pointers = [];
 	redrawPointers();
 
-	for(var name in variableTexts)
-		variableTexts[name].remove();
-	variableTexts = {};
-	variableOrder = [];
+	for(var name in variableItems)
+		variableItems[name].remove();
+	variableItems = {};
+	extent = null;
+	fitCanvas();
 
 	clearHighlights(true);
 
@@ -1081,10 +1148,15 @@ window.explainError = explainError;
 
 var grammer = null, parser = null;
 
-$.get("grammer.pegjs", function(response) {
-	grammer = response;
- 	parser = PEG.buildParser(grammer);
-});
+(function(){
+	var request = new XMLHttpRequest();
+	request.open('GET', 'grammer.pegjs');
+	request.onload = function(){
+		grammer = request.responseText;
+		parser = PEG.buildParser(grammer);
+	};
+	request.send();
+})();
 
 window.parse = function(text) {
 
@@ -1136,7 +1208,7 @@ function setEditors(items){
 			lineWrapping: true,
 			autoCloseBrackets: true,
 			autoCloseTags: true,
-			theme: 'eclipse',
+			theme: 'dsv',
 			viewportMargin: Infinity
 		});
 
@@ -1159,20 +1231,3 @@ function setEditors(items){
 }
 
 setEditors(qsa(".deneme"));
-
-// add editor
-var editorNo = 0;
-window.addEditor  = function() {
-
-	editorNo++;
-
-	$( "#addElement" ).before(
-	'<br>'+
-	'<textarea class = "addedEditor'+editorNo+'">'+
-	'var list2 = Node(3);\n'+
-	'list2.next = Node(4);\n'+
-	'list2.next.next = Node(8);\n'+
-	'</textarea>'
-	 ) ;
-	setEditors(qsa(".addedEditor"+editorNo));
-}
