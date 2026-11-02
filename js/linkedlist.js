@@ -776,10 +776,14 @@ function drawGraphics(line, result){
 				res.target.render();
 			}
 		}
-		else if(line.type == 'object property right') // p1 = p1.next
+		else if(line.type == 'object property right') // p1 = p1.next  /  max = p.data
 		{
 			highlight(doc, line);
-			pointTo(line.lhs, res);
+
+			if(res === null || isNode(res))
+				pointTo(line.lhs, res);
+			else
+				showVariable(line.lhs, res);
 		}
 		else if(line.type == 'object property left-right') // p.next = x.next
 		{

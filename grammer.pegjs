@@ -18,15 +18,12 @@ statement
   
 
 if_statement "if"
-  = _ ('if' / 'eğer') _ '(' _ los:logical_statement  _ ')' _ nl
+  = _ ('if' / 'eğer') !idChar _ '(' _ los:logical_statement  _ ')' _ nl
   		_ lines1:(compound_statement / block_item) _ nl
-  lines2:( _ ('else' / 'değilse') _ nl 
-  		_ (compound_statement / block_item) )? nl
-{      
+  lines2:( _ ('else' / 'değilse') !idChar _ nl
+  		_ body:(compound_statement / block_item) { return body; } )? nl
+{
   los.mainType = 'if';
-  
-  if(lines2 && typeof(lines2[5]) != "undefined")
-     lines2 = lines2[5] 
 		
 	return {'type': 'logical', 
 			'mainType': 'if',
@@ -102,7 +99,7 @@ null_statement
 
 
 declaration
- =  _ 'var' _ dec:init_declarator_list {
+ =  _ 'var' !idChar _ dec:init_declarator_list {
 	return {'type': 'declaration', '#evaluation': 0, 'text':'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
  }
  /
@@ -261,12 +258,15 @@ mutlakDeger
 name = l:letter i:integer {return l+i}
      / l:letter {return l;} 
 
-dogru = 'doğru' {return true;}
-yanlis = 'yanlış' {return false;}
+dogru = 'doğru' !idChar {return true;}
+yanlis = 'yanlış' !idChar {return false;}
 
 
 letter "letter" 
   = [a-zA-Z_şğçöüıŞĞÇÖÜİ]+ {return text()}
+
+// a keyword must not be followed by a letter or a digit: "settle" is not "se" + "ttle"
+idChar = [a-zA-Z0-9_şğçöüıŞĞÇÖÜİ]
 
 StringLiteral "string"
   = '"' chars:DoubleStringCharacter* '"' {
@@ -335,20 +335,20 @@ logical_operator
   = logical_operator_text / logical_operator_symbol
   
 logical_operator_text
-  = "and"					{ return "&&"; }
-	/ "or"					{ return "||"; }
+  = "and" !idChar			{ return "&&"; }
+	/ "or" !idChar			{ return "||"; }
     
 logical_operator_symbol
   = "&&"					{ return text(); }
 	/ "||"					{ return text(); }    
 
 operator_text
-  =  "ge" 					{ return ">="; }
-	/ "se"					{ return "<="; }
-	/ "smaller"				{ return "<"; }
-	/ "greater"	 			{ return ">"; }
-	/ "notequal"			{ return "!="; }  
-	/ "equal"				{ return "=="; }
+  =  "ge" !idChar			{ return ">="; }
+	/ "se" !idChar			{ return "<="; }
+	/ "smaller" !idChar		{ return "<"; }
+	/ "greater" !idChar		{ return ">"; }
+	/ "notequal" !idChar		{ return "!="; }
+	/ "equal" !idChar		{ return "=="; }
   
 operator_symbol
   = "<="					{ return text(); }
