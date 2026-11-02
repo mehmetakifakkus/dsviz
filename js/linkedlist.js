@@ -48,7 +48,19 @@ function rhsCode(rhs){ // rhs may be a name (string), an Integer object or a nod
 
 ////////////////////////////////////////// Linked List Node //////////////////////////////
 
-var NODE_W = 50, NODE_H = 25;
+var NODE_H = 25;
+
+// A page switches to doubly linked nodes [prev | data | next] the first time its code
+// uses ".prev". The switch happens inside a step, so stepping back undoes it too.
+var doublyMode = false;      // drawn state
+var doublyRequested = false; // program state: some code on this page used .prev
+
+function geometry(){
+	return doublyMode
+		? {width: 70, dataX: 20, nextX: 50, nextY: 8,  prevY: 17}  // [prev 20 | data 30 | next 20]
+		: {width: 50, dataX: 0,  nextX: 30, nextY: 12, prevY: 12}; // [data 30 | next 20]
+	// nextY / prevY: height of the dots, so next and prev arrows run as two parallel lines
+}
 
 function Node(content, next){
 
@@ -57,15 +69,18 @@ function Node(content, next){
 
 	this.data = (content === undefined || content === null) ? '' : content;
 	this.next = next || null;
+	this.prev = null;
 
 	// visual state (see the comment at the top of the file)
 	this.shown = false;
 	this.visualNext = null;
+	this.visualPrev = null;
 	this.shownData = this.data;
 	this.cell = null;      // {row, col} on the layout grid
 	this.position = null;  // top left corner of the box
 	this.boxDraw = null;
 	this.arrowDraw = null;
+	this.prevArrowDraw = null;
 
 	var self = this;
 
@@ -73,13 +88,20 @@ function Node(content, next){
 		if(self.boxDraw)
 			self.boxDraw.remove();
 
-		var p = self.position;
-		var rect = new Path.Rectangle({ point: [p.x, p.y],  size: [NODE_W, NODE_H],  strokeColor: 'black', strokeWidth: 2, fillColor: 'white'});
-		var line = new Path.Line({from: [p.x + 30, p.y], to: [p.x + 30, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2});
-		var circle = new Path.Circle( { radius:4, fillColor: 'black', center: [p.x + 40, p.y + 12]});
-		var text = new PointText({ point: [p.x + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: 'black', content:''+ self.shownData});
+		var p = self.position, g = geometry();
+		var items = [new Path.Rectangle({ point: [p.x, p.y],  size: [g.width, NODE_H],  strokeColor: 'black', strokeWidth: 2, fillColor: 'white'})];
 
-		self.boxDraw = new Group([rect, line, circle, text]);
+		items.push(new Path.Line({from: [p.x + g.nextX, p.y], to: [p.x + g.nextX, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2}));
+		items.push(new Path.Circle({ radius: 4, fillColor: 'black', center: [p.x + g.nextX + 10, p.y + g.nextY]}));
+
+		if(doublyMode){
+			items.push(new Path.Line({from: [p.x + g.dataX, p.y], to: [p.x + g.dataX, p.y + NODE_H], strokeColor: 'black', strokeWidth: 2}));
+			items.push(new Path.Circle({ radius: 4, fillColor: 'black', center: [p.x + 10, p.y + g.prevY]}));
+		}
+
+		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: 'black', content:''+ self.shownData}));
+
+		self.boxDraw = new Group(items);
 	}
 
 	this.moveTo = function(p){
@@ -92,11 +114,8 @@ function Node(content, next){
 		self.shown = false;
 		self.cell = null;
 		self.position = null;
-		if(self.boxDraw)
-			self.boxDraw.remove();
-		if(self.arrowDraw)
-			self.arrowDraw.remove();
-		self.boxDraw = self.arrowDraw = null;
+		[self.boxDraw, self.arrowDraw, self.prevArrowDraw].forEach(function(item){ if(item) item.remove(); });
+		self.boxDraw = self.arrowDraw = self.prevArrowDraw = null;
 	}
 
 	this.setName = function(name){
@@ -108,6 +127,14 @@ function Node(content, next){
 
 window.Node = Node;
 
+function enableDoublyMode(){
+	if(doublyMode)
+		return;
+	doublyMode = true;
+	allNodes.forEach(function(n){ if(n.shown && n.position) n.render(); });
+	layout(); // wider nodes need wider columns
+}
+
 //////////////////////////////////////////  Arrows  //////////////////////////////////////
 
 function arrowTip(end, angle, color){
@@ -116,29 +143,34 @@ function arrowTip(end, angle, color){
 	return tip;
 }
 
-// the "next" arrow of a node
-function nodeArrow(from, to){
-	var a = from.position, b = to.position;
-	var start = a + [40, 12];
+// the "next" (kind = 'next') or "prev" (kind = 'prev') arrow of a node.
+// next leaves the right cell and goes over the row, prev leaves the left cell and goes under it,
+// so the two arrows between neighbours never lie on top of each other.
+function nodeArrow(from, to, kind){
+	var a = from.position, b = to.position, g = geometry();
+	var isNext = kind !== 'prev';
+	var start = a + (isNext ? [g.nextX + 10, g.nextY] : [10, g.prevY]);
 	var line, angle, end;
 
 	var sameRow = Math.abs(a.y - b.y) < 1;
 	var dx = b.x - a.x;
+	var neighbour = sameRow && (isNext ? dx > 0 : dx < 0) && Math.abs(dx) <= colWidth + 1;
 
-	if(sameRow && dx > 0 && dx <= colWidth + 1) {        // the neighbour on the right: straight
-		end = b + [0, 12];
+	if(neighbour) {                                       // straight to the neighbour
+		end = isNext ? b + [0, g.nextY] : b + [g.width, g.prevY];
 		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
 		angle = (end - start).angle;
 	}
-	else if(sameRow) {                                    // to the left or skipping nodes: an arc above
-		end = b + [NODE_W / 2, 0];
-		var through = new Point((start.x + end.x) / 2, a.y - 18 - Math.abs(dx) * 0.1);
+	else if(sameRow) {                                    // backwards or skipping nodes: an arc
+		end = b + [g.width / 2, isNext ? 0 : NODE_H];
+		var bulge = 18 + Math.abs(dx) * 0.1;
+		var through = new Point((start.x + end.x) / 2, isNext ? a.y - bulge : a.y + NODE_H + bulge);
 		line = new Path({segments: [start], strokeColor: 'black', strokeWidth: 2});
 		line.arcTo(through, end);
 		angle = line.getTangentAt(line.length).angle;
 	}
 	else {                                                // another row: straight to the top or bottom edge
-		end = b + [NODE_W / 2, b.y > a.y ? 0 : NODE_H];
+		end = b + [g.width / 2, b.y > a.y ? 0 : NODE_H];
 		line = new Path.Line({from: start, to: end, strokeColor: 'black', strokeWidth: 2});
 		angle = (end - start).angle;
 	}
@@ -152,10 +184,16 @@ function redrawArrows(){
 
 		if(n.arrowDraw)
 			n.arrowDraw.remove();
-		n.arrowDraw = null;
+		if(n.prevArrowDraw)
+			n.prevArrowDraw.remove();
+		n.arrowDraw = n.prevArrowDraw = null;
 
-		if(n.shown && n.visualNext && n.visualNext.shown && n.visualNext !== n)
-			n.arrowDraw = nodeArrow(n, n.visualNext);
+		if(!n.shown)
+			continue;
+		if(n.visualNext && n.visualNext.shown && n.visualNext !== n)
+			n.arrowDraw = nodeArrow(n, n.visualNext, 'next');
+		if(n.visualPrev && n.visualPrev.shown && n.visualPrev !== n)
+			n.prevArrowDraw = nodeArrow(n, n.visualPrev, 'prev');
 	}
 }
 
@@ -167,8 +205,10 @@ function redrawArrows(){
 // are placed around it. So reversing a list only flips arrows, inserting at the head
 // shifts the list right, and a node that is cut out of a list drops to the next row.
 
-var ROW_Y0 = 110, ROW_H = 160, COL_X0 = 60, COL_W = 100;
-var colWidth = COL_W;
+var ROW_Y0 = 110, ROW_H = 160, COL_X0 = 60;
+var colWidth = 100;
+
+function maxColWidth(){ return doublyMode ? 125 : 100; }
 var lastPlaced = null;
 
 function chainsOf(shown){
@@ -306,7 +346,8 @@ function layout(){
 	}
 
 	var visibleWidth = Math.max(500, Math.min(view.size.width, window.innerWidth * 0.6) - COL_X0 - 40);
-	colWidth = maxCol > minCol ? Math.max(75, Math.min(COL_W, visibleWidth / (maxCol - minCol))) : COL_W;
+	var widest = maxColWidth(), narrowest = geometry().width + 25;
+	colWidth = maxCol > minCol ? Math.max(narrowest, Math.min(widest, visibleWidth / (maxCol - minCol))) : widest;
 
 	var moves = [], fades = [];
 	for(i=0; i < shown.length; i++){
@@ -431,8 +472,9 @@ function redrawPointers(){
 		var pos = group[0].points.position;
 		var up = group[0].direction === 'up';
 
-		var start = pos + (up ? [-10, -40] : [-10, 55]);
-		var end = pos + (up ? [10, -3] : [10, 28]);
+		var dx = geometry().dataX; // aim at the data cell
+		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
+		var end = pos + (up ? [dx + 10, -3] : [dx + 10, 28]);
 		var line = new Path.Line({from: start, to: end, strokeColor: group[0].color, strokeWidth: 2});
 		var items = [line, arrowTip(end, (end - start).angle, group[0].color)];
 
@@ -656,9 +698,11 @@ function resetVisuals(){
 	allNodes.forEach(function(n){
 		n.hide();
 		n.visualNext = null;
+		n.visualPrev = null;
 		n.shownData = n.data;
 	});
 	lastPlaced = null;
+	doublyMode = false;
 
 	pointers.forEach(function(p){ delete window['pointer_' + p.name]; });
 	pointers = [];
@@ -724,8 +768,12 @@ function drawGraphics(line, result){
 	var res = result;
 	var doc = window.activeEditor;                  // the editor that runs this code
 	var lhs_temp = safeEval(line.lhs || line.text); // snapshot of the left hand side
+	var doubly = doublyRequested;
 
 	player.add(function(){
+
+		if(doubly && !doublyMode)
+			enableDoublyMode();
 
 		if(line.type == 'declaration' || line.type == 'assignment')
 		{
@@ -762,12 +810,12 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 
-			if(res.prop == '.next')
+			if(res.prop == '.next' || res.prop == '.prev')
 			{
 				if(res.newNode)
 					res.newNode.shown = true;
 
-				res.target.visualNext = res.value;
+				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
 				layout();
 			}
 			else if(res.prop == '.data' && res.target.boxDraw)
@@ -789,8 +837,8 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 
-			if(res.prop == '.next'){
-				res.target.visualNext = res.value;
+			if(res.prop == '.next' || res.prop == '.prev'){
+				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
 				layout();
 			}
 		}
@@ -1027,6 +1075,9 @@ window.parse = function(text) {
 
 		if(!result)
 			return null;
+
+		if(/\.prev\b/.test(text))
+			doublyRequested = true;
 
 		player.play();
 		recursivelyProcess(result);

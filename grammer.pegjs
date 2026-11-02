@@ -162,20 +162,21 @@ init_declarator
         return {'lhs': left, 'rhs': exp.text};        
 }   
 
-print_statement = _ "print" _ exp:( _  '+'? _ (math_functions / StringLiteral / expression_statement))+ _ comment? _ nl {
-	//console.log(exp)
-    var list = []
-    
-    for(var i=0; i < exp.length; i++)
-	{
-      if(exp[i][3].type == 'Literal')
-          list.push( {'subtype': 'string', 'text': exp[i][3].value, 'lineNumber': location().start.line}); 
-      else
-          list.push({ 'subtype': 'var', 'text': exp[i][3].text, 'lineNumber': location().start.line});        
-    }
-	
-    return {'type':'print', 'list': list, 'lineNumber': location().start.line}
+// print "toplam: " + sum     (the parts after the first one must be joined with +)
+print_statement = _ "print" !idChar _ first:print_item rest:( _ '+' _ print_item)* _ comment? _ nl {
+    var items = [first].concat(rest.map(function(r){ return r[3]; }));
+    var line = location().start.line;
+
+    var list = items.map(function(item){
+      return item.type == 'Literal'
+          ? {'subtype': 'string', 'text': item.value, 'lineNumber': line}
+          : {'subtype': 'var', 'text': item.text, 'lineNumber': line};
+    });
+
+    return {'type':'print', 'list': list, 'lineNumber': line}
 }
+
+print_item = math_functions / StringLiteral / expression_statement
 
 
 /////////////////////////			 Object reference 		////////////////
