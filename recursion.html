@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Özyineleme (recursion) | Bağlı Listeler</title>
+<script>
+  // apply the saved or the system theme before the page is drawn
+  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
+    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t); })();
+</script>
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1>Özyineleme (recursion)</h1>
+<p class="lead">Blokları sırayla çalıştırın. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p>Dört düğümlü bir liste oluşturalım.</p>
+<textarea id="text1" class="deneme">
+var x = new Node(1)
+var y = new Node(2)
+var z = new Node(3)
+var w = new Node(4)
+
+x.next = y
+y.next = z
+z.next = w
+</textarea>
+
+<p>Bir fonksiyon kendini çağırabilir; buna <em>özyineleme</em> denir. Bağlı liste özyinelemeye çok uygundur: bir liste ya boştur (<code>null</code>) ya da bir düğüm ve onun arkasındaki <em>daha kısa</em> bir listedir. <code>count</code> boş liste için 0 döndürür (durma koşulu), değilse 1 ile kalan listenin uzunluğunu toplar. Çağrı yığınında aynı fonksiyonun çağrılarını üst üste görebilirsiniz; her çağrının kendi <code>p</code>'si vardır (<code>p</code>, <code>p₂</code>, <code>p₃</code>…).</p>
+<textarea id="text2" class="deneme">
+function count(p)
+{
+  if(p == null)  // durma koşulu: boş liste
+    return 0
+  return 1 + count(p.next)
+}
+var n = count(x)
+</textarea>
+
+<p>Özyinelemeli çağrının <em>önündeki</em> ve <em>arkasındaki</em> işler farklı zamanlarda çalışır. Burada <code>print</code>, özyinelemeli çağrıdan <em>sonra</em> geldiği için önce en derindeki çağrı yazar: liste sondan başa yazılır. Aynı işi döngüyle yapmak için listeyi önce ters çevirmek gerekirdi.</p>
+<textarea id="text3" class="deneme">
+function printReverse(p)
+{
+  if(p == null)
+    return
+  printReverse(p.next)  // önce listenin geri kalanı
+  print p.data          // sonra bu düğüm
+}
+printReverse(x)
+</textarea>
+
+<p>İleri seviye: listeyi özyinelemeyle ters çevirme. <code>reverse(p.next)</code>, <code>p</code>'nin arkasındaki listeyi ters çevirip yeni başı döndürür. O listenin son düğümü <code>p.next</code>'tir; onun arkasına <code>p</code> bağlanır ve <code>p</code>'nin kendi bağı koparılır. Adım adım geri giderek her çağrının neyi değiştirdiğini izleyin.</p>
+<textarea id="text4" class="deneme">
+function reverse(p)
+{
+  if(p == null || p.next == null)
+    return p
+  var rest = reverse(p.next)  // geri kalanı ters çevir
+  p.next.next = p             // p'yi onun sonuna bağla
+  p.next = null
+  return rest
+}
+x = reverse(x)
+</textarea>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

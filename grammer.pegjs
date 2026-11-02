@@ -97,6 +97,33 @@ increment
 	return {'type': 'assignment', '#evaluation': 0, 'text': n + ' = ' + rhs, 'lhs': n, 'rhs': rhs, 'lineNumber': location().start.line};
  }
 
+// function push(v) { ... }   (or: fonksiyon push(v) { ... })
+function_declaration "function"
+ = _ ('function' / 'fonksiyon') !idChar _ n:name _ '(' _ params:param_list? _ ')' _ nl
+   _ '{' _ [ \n]* _ body:block_item_list _ end:closing_brace _ nl
+{
+	return {'type': 'function', 'name': n, 'params': params || [], 'body': body.filter(isItem),
+	        'lineNumber': location().start.line, 'endLine': end};
+}
+
+param_list
+ = first:name rest:(_ ',' _ name)* { return [first].concat(rest.map(function(r){ return r[3]; })); }
+
+closing_brace
+ = '}' { return location().start.line; }
+
+// return / return value   (or: döndür)
+return_statement "return"
+ = _ ('return' / 'döndür') !idChar _ value:(logical_statement / expression_statement)? _ ';'? _ nl
+{
+	return {'type': 'return', 'text': value ? value.text : null, 'lineNumber': location().start.line};
+}
+
+// count(p.next), push(5): a call inside an expression; the engine turns every user
+// function into a JavaScript function, so the call runs when the expression is evaluated
+call_expression
+ = n:name _ '(' _ args:(expression_statement (_ ',' _ expression_statement)*)? _ ')' { return text(); }
+
 compound_statement
  = nl _'{' _ [ \n]* _ b:block_item_list _ '}' _ nl _{  // block itemlar yerine bos da olabilir
  	return b.filter(isItem)
@@ -106,6 +133,8 @@ compound_statement
 
 block_item
 =	 [ \t\r] {return 'ws';}
+	/ function_declaration
+	/ return_statement
 	/ for_statement
 	/ loop_control
 	/ increment
@@ -240,6 +269,7 @@ Term
 
 Factor
   = "(" _ expr:expression_statement _ ")" { return expr; }
+  / c:call_expression { return c; }
   / op: object_poperty {return op.text;}
   / f:Float { return f.text;}
   / i:Integer { return i.text;}
