@@ -114,6 +114,7 @@ function Node(content, next){
 		self.shown = false;
 		self.cell = null;
 		self.position = null;
+		self.everLinked = false;
 		[self.boxDraw, self.arrowDraw, self.prevArrowDraw].forEach(function(item){ if(item) item.remove(); });
 		self.boxDraw = self.arrowDraw = self.prevArrowDraw = null;
 	}
@@ -209,7 +210,7 @@ var ROW_Y0 = 110, ROW_H = 160, COL_X0 = 60;
 var colWidth = 100;
 
 function maxColWidth(){ return doublyMode ? 125 : 100; }
-var lastPlaced = null;
+var lastPlaced = null, placementCounter = 0;
 
 function chainsOf(shown){
 	var indeg = {}, visited = {}, chains = [];
@@ -256,14 +257,20 @@ function keptRun(chain){
 			continue;
 
 		for(var d = 1; d >= -1; d -= 2){
-			var j = i;
+			var j = i, oldest = chain[i].placedOrder;
+			// a right-to-left run is kept only if its nodes were linked before (a list being
+			// reversed). Two fresh nodes linked right-to-left (a stack push) are rearranged.
 			while(j + 1 < chain.length && chain[j+1].cell &&
 			      chain[j+1].cell.row === chain[i].cell.row &&
-			      chain[j+1].cell.col - chain[j].cell.col === d)
+			      chain[j+1].cell.col - chain[j].cell.col === d &&
+			      (d === 1 || (chain[j].everLinked && chain[j+1].everLinked))){
 				j++;
+				oldest = Math.min(oldest, chain[j].placedOrder);
+			}
 
-			if(!best || j - i + 1 > best.length)
-				best = {start: i, length: j - i + 1, dir: d, row: chain[i].cell.row, col: chain[i].cell.col};
+			var length = j - i + 1;
+			if(!best || length > best.length || (length === best.length && oldest < best.oldest)) // ties: older nodes stay
+				best = {start: i, length: length, dir: d, row: chain[i].cell.row, col: chain[i].cell.col, oldest: oldest};
 		}
 	}
 	return best;
@@ -329,8 +336,10 @@ function layout(){
 
 		for(k=0; k < chain.length; k++){
 			var n = chain[k];
-			if(!n.cell)
+			if(!n.cell){
 				lastPlaced = n;
+				n.placedOrder = ++placementCounter;
+			}
 			n.cell = {row: row, col: firstCol + k * dir};
 			occupied[row + ',' + n.cell.col] = true;
 		}
@@ -362,6 +371,13 @@ function layout(){
 		else if(node.position.getDistance(target) > 0.5)
 			moves.push({node: node, from: node.position, to: target});
 	}
+
+	// remember which nodes are part of a link (see keptRun)
+	for(i=0; i < shown.length; i++)
+		if(shown[i].visualNext && shown[i].visualNext.shown){
+			shown[i].everLinked = true;
+			shown[i].visualNext.everLinked = true;
+		}
 
 	animate(moves, fades);
 }
@@ -869,6 +885,15 @@ window.showNode = function(node){
 
 ///////////////////  Parse the code   //////////////////////////////
 
+// user variables are globals. Some global names belong to the browser and cannot be
+// changed (top, parent, self, name...): the assignment would be silently ignored.
+function assignGlobal(name, value){
+	window[name] = value;
+	if(window[name] !== value)
+		throw new Error('Satır ' + currentLine + ': "' + name + '" adı tarayıcıya ayrılmış, değişken olarak kullanılamaz. ' +
+		                'Başka bir isim seçin' + (name === 'top' ? ' (ör. tepe).' : '.'));
+}
+
 var currentLine = null; // the line that is being executed, for error messages
 
 function processOneItem(item){
@@ -918,13 +943,13 @@ function processOneItem(item){
 	{
 		item['#evaluation']++;
 
-		if(item.rhs.type == 'node') 		//  x = new? Node(2)
-		{
-			window.eval(item.lhs + " = new Node(" + item.rhs.data + ");");
-			window.eval(item.lhs + ".setName('" + item.lhs + "')");
-		}
-		else
-			window.eval(item.lhs + ' = ' + item.rhs);
+		var value = item.rhs.type == 'node'   //  x = new? Node(2)  /  Node(i)
+			? new Node(window.eval('(' + item.rhs.data + '\n)'))
+			: window.eval('(' + item.rhs + '\n)');
+
+		assignGlobal(item.lhs, value);
+		if(isNode(value))
+			value.setName(item.lhs);
 
 		drawGraphics(item, window.eval(item.lhs));
 	}
@@ -952,7 +977,7 @@ function processOneItem(item){
 
 		if(item.rhs.type == 'node')
 		{
-			newNode = new Node(item.rhs.data);
+			newNode = new Node(window.eval('(' + item.rhs.data + '\n)'));
 			target[last.slice(1)] = newNode;
 		}
 		else
@@ -965,7 +990,7 @@ function processOneItem(item){
 		item['#evaluation']++;
 
 		item.text = item.lhs + ' = ' + item.rhs + propertyPath(item.property);
-		window.eval(item.text);
+		assignGlobal(item.lhs, window.eval(item.rhs + propertyPath(item.property)));
 
 		drawGraphics(item, window.eval(item.lhs));
 	}

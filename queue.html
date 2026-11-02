@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+	<!--    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Roboto" rel="stylesheet">-->
+<!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"  rel="stylesheet">-->
+
+<!--    http://mdbootstrap.com/css/colors/-->
+<!--    <link href="css/mdb.min.css" rel="stylesheet" type="text/css">-->
+
+	<link href="css/shapes.css" rel="stylesheet">
+	<link href="css/styles.css" rel="stylesheet">
+
+    <link href="vendor/codemirror-5.25.2/codemirror.css" rel="stylesheet">
+	<link href="vendor/codemirror-5.25.2/theme/eclipse.css" rel="stylesheet">
+
+	<link href="css/myButtons.css" rel="stylesheet">
+	<link href="css/myCodeMirrorSettings.css" rel="stylesheet">
+
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src='js/peg-0.9.0.min.js'></script>
+
+    <title> Kuyruk (queue) | Bağlı Listeler </title>
+</head>
+<body>
+
+
+ <div class="container">
+
+<h1>Bağlı Listeler: Kuyruk (queue)</h1>
+<!--  <p>This app is basically focused on linked lists. Code part at the left automatically changes your codes to visualisation.  </p>-->
+ <div class="row">
+
+
+		  <div class="col-md-5">
+			<div class="col-xs-12" style="height:10px;"></div>
+
+<div class = "mytitle">
+	<p class="big"> Görselleştirmek İçin Kodunuzu Yazın </p>
+</div>
+
+
+<p>Kuyruk (queue) <em>ilk giren ilk çıkar</em> (FIFO) mantığıyla çalışır: market kuyruğu gibi. İki pointer tutulur: <code>bas</code> (front) ilk çıkacak düğümü, <code>son</code> (rear) en son eklenen düğümü gösterir. Ekleme (enqueue) sona yapılır. <code>son</code> sayesinde listeyi dolaşmaya gerek kalmaz, işlem O(1) zaman alır. Kuyruk boşsa yeni düğüm hem baş hem son olur.</p>
+
+<textarea id = "text1" class = "deneme">
+var bas = null
+var son = null
+for(var i = 1; i <= 3; i++)  // 10, 20 ve 30'u ekle (enqueue)
+{
+  var n = new Node(i * 10)
+  if(son == null)  // kuyruk boş
+  {
+    bas = n
+    son = n
+  }
+  else
+  {
+    son.next = n
+    son = n
+  }
+}
+</textarea>
+<br>
+
+<p>Çıkarma (dequeue) baştan yapılır: değer saklanır, <code>bas</code> bir sonraki düğüme geçer ve eski düğüm silinir. İlk eklenen 10 ilk çıkar. Kuyruk boşaldıysa <code>son</code> da <code>null</code> yapılmalıdır, yoksa silinmiş düğümü göstermeye devam eder.</p>
+
+<textarea id = "text2" class = "deneme">
+var t = bas
+var value = t.data  // çıkan değer
+bas = bas.next
+if(bas == null)     // kuyruk boşaldı
+  son = null
+delete t
+</textarea>
+<br>
+
+<p>Sona yeni bir eleman ekleyip kuyruğu boşaltalım. Değerler eklenme sırasıyla çıkar ve Çıktı alanına yazılır.</p>
+
+<textarea id = "text3" class = "deneme">
+var n = new Node(40)
+son.next = n
+son = n
+
+while(bas != null)
+{
+  print bas.data
+  var t = bas
+  bas = bas.next
+  delete t
+}
+son = null
+</textarea>
+<br>
+
+<p>Blokları sırayla oynat düğmesiyle çalıştırın ya da bir bloğun içine tıklayıp <kbd>CTRL</kbd>+<kbd>ENTER</kbd> tuşlarına basın. <a href="index.html">Ana sayfaya dön</a></p>
+
+<div class="col-xs-12" style="height:5px;"></div>
+
+<!--
+<button type="button" onclick="parse()" class="btn btn-round btn-lg" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-play icon-white"></span></button>
+
+<button id = "addElement" type="button" onclick="addEditor()" class="btn btn-round btn-md" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-plus icon-white"></span></button>
+-->
+
+
+ 		<div class="col-xs-12" style="height:20px;"></div>
+
+		<div class="row">
+		  <div class="col-md-6">
+       <div class = "mytitle">
+            <p class="big"> Komut Satırı </p>
+        </div>
+		</div>
+		  <div class="col-md-6">
+				<div class="col-xs-12" style="height:20px;"></div>
+				<h4><span id = "resultSign" class="label label-default"></span></h4>
+		  </div>
+		</div>
+
+		<textarea id="command" class = "commandPrompt"></textarea>
+
+		<div class="col-xs-12" style="height:20px;"></div>
+
+<!--		<div id = "result" class="alert alert-success" role="alert"></div>-->
+
+		<div id = "content">
+			<div class="content-height">
+            <h3 id="output-header">Çıktı</h3>
+				<pre style="overflow:auto; white-space:pre-wrap; word-wrap:break-word;" id="output" class=""></pre>
+          </div>
+        </div>
+	</div>
+
+		<div  style="margin-left: 40%; position: fixed">
+<!--			<div class="col-xs-12" style="height:60px;"></div>-->
+			<canvas id="myCanvas0" height="900" width="1200"></canvas>
+		</div>
+		<div class="col-xs-12" style="height:120px;"></div>
+
+    </div>
+
+     <hr>
+     <br><br>
+
+
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">Bu uygulama
+            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> tarafından paper.js, peg.js, codemirror.js ve jquery kullanılarak geliştirilmiştir.
+        </p>
+        <p class="text-muted">Orta Doğu Teknik Üniversitesi, Bilgisayar Mühendisliği Bölümü</p>
+
+      </div>
+    </footer>
+
+    </div>
+</body>
+
+
+<script type="text/javascript" src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+
+<script src='js/editorSettings.js'></script>
+
+
+<script src='js/addon/active-line.js'></script>
+<script src='js/addon/closebrackets.js'></script>
+
+<script src='js/addon/foldcode.js'></script>
+<script src='js/addon/foldgutter.js'></script>
+
+<script src='js/addon/show-hint.js'></script>
+<script src='js/mode/simple.js'></script>
+<script src='js/mode/css.js'></script>
+
+<!-- Load the Paper.js library -->
+<script type="text/javascript" src="js/paper.js"></script>
+
+<!-- Define inlined PaperScript associate it with myCanvas -->
+<!--<script type="text/javascript" src="js/parser.js"></script>	-->
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+
+
+<script type="text/javascript">
+
+</script>
+
+</html>
