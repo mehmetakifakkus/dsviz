@@ -13,7 +13,7 @@ statement
   
 
 if_statement "if"
-  = _ ('if' / 'eğer') + '(' _ los:logical_statement  _ ')' _ nl
+  = _ ('if' / 'eğer') _ '(' _ los:logical_statement  _ ')' _ nl
   		_ lines1:(compound_statement / block_item) _ nl
   lines2:( _ ('else' / 'değilse') _ nl 
   		_ (compound_statement / block_item) )? nl
@@ -79,7 +79,7 @@ block_item
 	/ if_statement
 	/ while_statement
 
-	/ expression_statement
+	/ e:expression_statement _ nl {return e;}
 	/ object_poperty
 
 	/ math_functions
@@ -261,7 +261,7 @@ yanlis = 'yanlış' {return false;}
 
 
 letter "letter" 
-  = [a-zA-Z_|ş|ğ|ç|ö|ü|ı|ü|Ş|Ğ|Ç|Ö|Ü|I|Ü]+ {return text()} 
+  = [a-zA-Z_şğçöüıŞĞÇÖÜİ]+ {return text()}
 
 StringLiteral "string"
   = '"' chars:DoubleStringCharacter* '"' {
@@ -321,7 +321,7 @@ nl "newline"
   = comment? [\n]* {return null;}
 
 comment 
-   = _ "//" _ value:[ a-zA-Z0-9|\=|(|)|+|\-|\+|*|\._|\,|ş|ğ|ç|ö|ü|ı|Ş|Ğ|Ç|Ö|Ü|I|Ü]* nl {return {type: 'comment', value: value.join("")}; }
+   = _ "//" value:[^\n]* nl {return {type: 'comment', value: value.join("")}; }
   
 operator
   = operator_text / operator_symbol
