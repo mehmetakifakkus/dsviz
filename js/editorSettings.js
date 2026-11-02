@@ -54,12 +54,12 @@ function evaluateCommand(){
 
 		//document.getElementById("result").textContent = JSON.stringify(result, null, 3);
 
-		document.getElementById("resultSign").innerHTML = "Successfully operated";
+		document.getElementById("resultSign").innerHTML = "Başarıyla çalıştı";
 		document.getElementById("resultSign").className = "label label-success";
 	}
 	catch (err) {
-		document.getElementById("output").textContent = err.toString();
-		document.getElementById("resultSign").innerHTML = "Error!";
+		document.getElementById("output").textContent = window.explainError ? window.explainError(err, command) : err.toString();
+		document.getElementById("resultSign").innerHTML = "Hata!";
 		document.getElementById("resultSign").className = "label label-warning";
 	}
 

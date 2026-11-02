@@ -467,7 +467,7 @@ function pointTo(name, node, color, direction){
 //////////////////////////////////////  Variables area  ////////////////////////////////////
 
 var VARS_Y = 620;
-new PointText({ point: [20, VARS_Y], fontSize: 18+'px', fillColor: 'black', content:'======= Variables ====='});
+new PointText({ point: [20, VARS_Y], fontSize: 18+'px', fillColor: 'black', content:'======= Değişkenler ====='});
 
 // show "name = value" in the variables area (also used for pointers that are null)
 var variableTexts = {}, variableOrder = [];
@@ -644,8 +644,8 @@ var player = {
 		var ui = player.ui;
 		var running = player.playing && player.cursor < player.steps.length;
 		ui.play.innerHTML = running ? ICONS.pause : ICONS.play;
-		ui.play.title = running ? 'Pause' : 'Play';
-		ui.counter.textContent = 'Step ' + player.cursor + ' / ' + player.steps.length;
+		ui.play.title = running ? 'Duraklat' : 'Oynat';
+		ui.counter.textContent = 'Adım ' + player.cursor + ' / ' + player.steps.length;
 		ui.back.disabled = player.cursor === 0;
 		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
 	}
@@ -695,14 +695,14 @@ function createPlayerUI(){
 	}
 
 	var ui = {};
-	ui.back = button(ICONS.back, 'Step back', player.back);
-	ui.play = button(ICONS.pause, 'Pause', function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
-	ui.next = button(ICONS.next, 'Step forward', function(){ player.pause(); player.forward(); });
-	ui.end  = button(ICONS.end, 'Skip to the end', function(){ player.pause(); player.toEnd(); });
+	ui.back = button(ICONS.back, 'Geri adım', player.back);
+	ui.play = button(ICONS.pause, 'Duraklat', function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
+	ui.next = button(ICONS.next, 'İleri adım', function(){ player.pause(); player.forward(); });
+	ui.end  = button(ICONS.end, 'Sona atla', function(){ player.pause(); player.toEnd(); });
 
 	var speedLabel = document.createElement('label');
 	speedLabel.className = 'dsv-speed';
-	speedLabel.innerHTML = 'Speed <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
+	speedLabel.innerHTML = 'Hız <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
 	speedLabel.querySelector('input').addEventListener('input', function(e){ player.speed = +e.target.value; });
 	bar.appendChild(speedLabel);
 
@@ -821,7 +821,11 @@ window.showNode = function(node){
 
 ///////////////////  Parse the code   //////////////////////////////
 
+var currentLine = null; // the line that is being executed, for error messages
+
 function processOneItem(item){
+
+	currentLine = item.lineNumber;
 
 	if(item.type == 'logical')
 	{
@@ -843,7 +847,7 @@ function processOneItem(item){
 				recursivelyProcess(item.statements)
 
 				if(++guard > 1000)
-					throw new Error('The loop at line ' + item.lineNumber + ' ran more than 1000 times. Is it an infinite loop?');
+					throw new Error('Satır ' + item.lineNumber + ': döngü 1000 kereden fazla döndü. Sonsuz bir döngü olabilir mi? Döngü koşulunun bir gün yanlış olacağından emin olun.');
 			}
 			drawGraphics(item, false);
 		}
@@ -936,6 +940,39 @@ function recursivelyProcess(items){
 }
 
 
+// turn parser and JavaScript errors into short Turkish explanations for learners
+function explainError(err, source){
+	var m, msg = (err && err.message) || String(err);
+
+	if(err && err.name === 'SyntaxError' && err.location){ // from the PEG parser
+		var loc = err.location.start;
+		var found = err.found === null ? 'kodun sonu' : (err.found === '\n' ? 'satır sonu' : '"' + err.found + '"');
+		var line = (source || '').split('\n')[loc.line - 1] || '';
+		return 'Yazım hatası (satır ' + loc.line + ', sütun ' + loc.column + '): burada ' + found + ' beklenmiyordu.\n\n' +
+		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
+	}
+
+	var where = currentLine ? 'Satır ' + currentLine + ': ' : '';
+
+	if((m = /Cannot read propert(?:y|ies) of (?:null|undefined) \(reading '([^']+)'\)/.exec(msg)) ||
+	   (m = /can't access property "([^"]+)", .* is (?:null|undefined)/.exec(msg)))
+		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı okunmaya çalışıldı. ' +
+		       'Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. p != null).';
+
+	if((m = /Cannot set propert(?:y|ies) of (?:null|undefined) \(setting '([^']+)'\)/.exec(msg)))
+		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı değiştirilmeye çalışıldı. Pointer bir düğümü göstermiyor.';
+
+	if((m = /^(\S+) is not defined/.exec(msg)))
+		return where + '"' + m[1] + '" tanımlı değil. Önce var ile tanımlayın (ör. var ' + m[1] + ' = ...).';
+
+	if(msg.indexOf('Satır ') === 0) // our own messages already say where
+		return msg;
+
+	return where + 'Hata: ' + msg;
+}
+
+window.explainError = explainError;
+
 var grammer = null, parser = null;
 
 $.get("grammer.pegjs", function(response) {
@@ -949,6 +986,8 @@ window.parse = function(text) {
 	if(output)
 		output.textContent = '';
 
+	currentLine = null;
+
 	try {
 		var text = text || editor.getValue();
 		var result = parser.parse(text);
@@ -961,7 +1000,7 @@ window.parse = function(text) {
 
 		return result;
 	} catch (err) {
-		document.getElementById("output").textContent = err.toString();
+		document.getElementById("output").textContent = explainError(err, text);
 		return null;
 	}
 }
@@ -1001,7 +1040,7 @@ function setEditors(items){
 
 		var button = document.createElement("button");
 		button.innerHTML = ICONS.play;
-		button.title = 'Run (Ctrl+Enter)';
+		button.title = 'Çalıştır (Ctrl+Enter)';
 		button.className = "btn-round btn-lg dsv-run";
 		insertAfter(button, editor.getWrapperElement());
 		button.addEventListener("click", run);
