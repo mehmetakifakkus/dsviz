@@ -134,3 +134,13 @@ body {
   font-variant-numeric: tabular-nums;
   color: #555;
 }
+
+/* algorithm list on the main page */
+.dsv-group {
+  margin: 14px 0 4px;
+  font-weight: bold;
+  color: #0d47a1;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 12px;
+}
