@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
+    <meta charset="utf-8">
     <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
 
 	<!--    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Roboto" rel="stylesheet">-->
@@ -22,14 +23,14 @@
     <script src="js/bootstrap.min.js"></script>
     <script src='js/peg-0.9.0.min.js'></script>
 
-    <title> Detect a cycle | Linked Lists </title>
+    <title> Döngü tespiti | Bağlı Listeler </title>
 </head>
 <body>
 
 
  <div class="container">
 
-<h1>Linked Lists: Detect a cycle</h1>
+<h1>Bağlı Listeler: Döngü tespiti</h1>
 <!--  <p>This app is basically focused on linked lists. Code part at the left automatically changes your codes to visualisation.  </p>-->
  <div class="row">
 
@@ -38,11 +39,11 @@
 			<div class="col-xs-12" style="height:10px;"></div>
 
 <div class = "mytitle">
-	<p class="big"> Write Your Code for Visualisation </p>
+	<p class="big"> Görselleştirmek İçin Kodunuzu Yazın </p>
 </div>
 
 
-<p>Build a list whose last node points back to the second node: the list never ends.</p>
+<p>Son düğümü ikinci düğümü gösteren bir liste oluşturalım. Bu liste hiç bitmez.</p>
 
 <textarea id = "text1" class = "deneme">
 var x = new Node(1)
@@ -55,27 +56,29 @@ x.next = y
 y.next = z
 z.next = w
 w.next = v
-v.next = y  // the cycle
-</textarea>
+v.next = y  // döngü burada</textarea>
 <br>
 
-<p>Floyd's algorithm: <code>slow</code> moves one node per step, <code>fast</code> moves two. If the list ends, <code>fast</code> reaches <code>null</code> and there is no cycle. If there is a cycle, <code>fast</code> laps <code>slow</code> inside it and they meet. To see the case without a cycle, reload the page, delete the last line of the first block and run both blocks.</p>
+<p>Floyd algoritması: <code>slow</code> her adımda bir düğüm, <code>fast</code> iki düğüm ilerler. Liste bir yerde bitiyorsa <code>fast</code> <code>null</code>'a ulaşır ve döngü yoktur. Döngü varsa <code>fast</code> döngünün içinde <code>slow</code>'a yetişir ve buluşurlar; o anda <code>break</code> ile döngüden çıkılır. Döngüsüz durumu görmek için sayfayı yenileyin, ilk bloğun son satırını silin ve iki bloğu da çalıştırın.</p>
 
 <textarea id = "text2" class = "deneme">
 var slow = x
 var fast = x
 var found = false
-while(fast != null && fast.next != null && found == false)
+while(fast != null && fast.next != null)
 {
-  slow = slow.next
-  fast = fast.next.next
+  slow = slow.next       // bir adım
+  fast = fast.next.next  // iki adım
   if(slow == fast)
+  {
     found = true
+    break                // buluştular, döngüden çık
+  }
 }
 </textarea>
 <br>
 
-<p>Click the play button of each block in order, or select a block and press <kbd>CTRL</kbd>+<kbd>ENTER</kbd>. <a href="index.html">Back to the main page</a></p>
+<p>Blokları sırayla oynat düğmesiyle çalıştırın ya da bir bloğun içine tıklayıp <kbd>CTRL</kbd>+<kbd>ENTER</kbd> tuşlarına basın. <a href="index.html">Ana sayfaya dön</a></p>
 
 <div class="col-xs-12" style="height:5px;"></div>
 
@@ -91,7 +94,7 @@ while(fast != null && fast.next != null && found == false)
 		<div class="row">
 		  <div class="col-md-6">
        <div class = "mytitle">
-            <p class="big"> Command Prompt </p>
+            <p class="big"> Komut Satırı </p>
         </div>
 		</div>
 		  <div class="col-md-6">
@@ -108,7 +111,7 @@ while(fast != null && fast.next != null && found == false)
 
 		<div id = "content">
 			<div class="content-height">
-            <h3 id="output-header">Output</h3>
+            <h3 id="output-header">Çıktı</h3>
 				<pre style="overflow:auto; white-space:pre-wrap; word-wrap:break-word;" id="output" class=""></pre>
           </div>
         </div>
@@ -128,10 +131,10 @@ while(fast != null && fast.next != null && found == false)
 
     <footer class="footer">
       <div class="container">
-        <p class="text-muted">This app is developed by
-            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> using paper.js, peg.js, codemirror.js and jquery.
+        <p class="text-muted">Bu uygulama
+            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> tarafından paper.js, peg.js, codemirror.js ve jquery kullanılarak geliştirilmiştir.
         </p>
-        <p class="text-muted">Middle East Technical University. Computer Engineering Department</p>
+        <p class="text-muted">Orta Doğu Teknik Üniversitesi, Bilgisayar Mühendisliği Bölümü</p>
 
       </div>
     </footer>

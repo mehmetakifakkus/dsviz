@@ -57,6 +57,46 @@ while_statement
 } 
 
  
+for_statement "for"
+ = _ 'for' !idChar _ '(' _ init:for_init? _ ';' _ los:logical_statement? _ ';' _ update:for_update? _ ')' _ nl
+   _ lines:(compound_statement / block_item) _ nl
+{
+	var head = location().start.line;
+	if(init) init.lineNumber = head;
+	if(update) update.lineNumber = head;
+
+	return {'type': 'logical',
+		'mainType': 'for',
+		'text': los ? los.text : 'true',
+		'init': init,
+		'update': update,
+		'statements': lines,
+		'lineNumber': head,
+		'start': los ? los.start : 0,
+		'end': los ? los.end : 0
+	   };
+}
+
+for_init = object_statement / right_object_poperty / declaration
+for_update = increment / right_object_poperty / declaration
+
+// break / continue: leave the loop / go on with the next round
+loop_control
+ = _ kind:('break' / 'continue') !idChar _ ';'? _ nl {
+	return {'type': kind, 'text': kind, 'lineNumber': location().start.line};
+ }
+
+// i++  i--  i += 2  i -= 2   (written as an assignment)
+increment
+ = _ n:name _ op:('++' / '--') _ ';'? _ nl {
+	var rhs = n + (op == '++' ? ' + 1' : ' - 1');
+	return {'type': 'assignment', '#evaluation': 0, 'text': n + ' = ' + rhs, 'lhs': n, 'rhs': rhs, 'lineNumber': location().start.line};
+ }
+ / _ n:name _ op:('+=' / '-=') _ e:expression_statement _ ';'? _ nl {
+	var rhs = n + ' ' + op.charAt(0) + ' (' + e.text + ')';
+	return {'type': 'assignment', '#evaluation': 0, 'text': n + ' = ' + rhs, 'lhs': n, 'rhs': rhs, 'lineNumber': location().start.line};
+ }
+
 compound_statement
  = nl _'{' _ [ \n]* _ b:block_item_list _ '}' _ nl _{  // block itemlar yerine bos da olabilir
  	return b.filter(isItem)
@@ -66,6 +106,9 @@ compound_statement
 
 block_item
 =	 [ \t\r] {return 'ws';}
+	/ for_statement
+	/ loop_control
+	/ increment
     /l: logical_statement _ nl {return l;}
 	/ object_statement	
 	/ Object_Constructor
@@ -119,20 +162,21 @@ init_declarator
         return {'lhs': left, 'rhs': exp.text};        
 }   
 
-print_statement = _ "print" _ exp:( _  '+'? _ (math_functions / StringLiteral / expression_statement))+ _ comment? _ nl {
-	//console.log(exp)
-    var list = []
-    
-    for(var i=0; i < exp.length; i++)
-	{
-      if(exp[i][3].type == 'Literal')
-          list.push( {'subtype': 'string', 'text': exp[i][3].value, 'lineNumber': location().start.line}); 
-      else
-          list.push({ 'subtype': 'var', 'text': exp[i][3].text, 'lineNumber': location().start.line});        
-    }
-	
-    return {'type':'print', 'list': list, 'lineNumber': location().start.line}
+// print "toplam: " + sum     (the parts after the first one must be joined with +)
+print_statement = _ "print" !idChar _ first:print_item rest:( _ '+' _ print_item)* _ comment? _ nl {
+    var items = [first].concat(rest.map(function(r){ return r[3]; }));
+    var line = location().start.line;
+
+    var list = items.map(function(item){
+      return item.type == 'Literal'
+          ? {'subtype': 'string', 'text': item.value, 'lineNumber': line}
+          : {'subtype': 'var', 'text': item.text, 'lineNumber': line};
+    });
+
+    return {'type':'print', 'list': list, 'lineNumber': line}
 }
+
+print_item = math_functions / StringLiteral / expression_statement
 
 
 /////////////////////////			 Object reference 		////////////////

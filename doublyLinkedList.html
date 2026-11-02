@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+	<!--    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Roboto" rel="stylesheet">-->
+<!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"  rel="stylesheet">-->
+
+<!--    http://mdbootstrap.com/css/colors/-->
+<!--    <link href="css/mdb.min.css" rel="stylesheet" type="text/css">-->
+
+	<link href="css/shapes.css" rel="stylesheet">
+	<link href="css/styles.css" rel="stylesheet">
+
+    <link href="vendor/codemirror-5.25.2/codemirror.css" rel="stylesheet">
+	<link href="vendor/codemirror-5.25.2/theme/eclipse.css" rel="stylesheet">
+
+	<link href="css/myButtons.css" rel="stylesheet">
+	<link href="css/myCodeMirrorSettings.css" rel="stylesheet">
+
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src='js/peg-0.9.0.min.js'></script>
+
+    <title> Çift yönlü liste | Bağlı Listeler </title>
+</head>
+<body>
+
+
+ <div class="container">
+
+<h1>Bağlı Listeler: Çift yönlü liste</h1>
+<!--  <p>This app is basically focused on linked lists. Code part at the left automatically changes your codes to visualisation.  </p>-->
+ <div class="row">
+
+
+		  <div class="col-md-5">
+			<div class="col-xs-12" style="height:10px;"></div>
+
+<div class = "mytitle">
+	<p class="big"> Görselleştirmek İçin Kodunuzu Yazın </p>
+</div>
+
+
+<p>Çift yönlü listede her düğümün iki bağı vardır: <code>next</code> bir sonraki düğümü, <code>prev</code> bir önceki düğümü gösterir. Düğümün sol hücresi <code>prev</code>, sağ hücresi <code>next</code> bağıdır. Bu yüzden her bağ iki kez kurulur: <code>a.next = b</code> ve <code>b.prev = a</code>.</p>
+
+<textarea id = "text1" class = "deneme">
+var a = new Node(1)
+var b = new Node(2)
+var c = new Node(3)
+var d = new Node(4)
+
+a.next = b
+b.prev = a
+b.next = c
+c.prev = b
+c.next = d
+d.prev = c
+</textarea>
+<br>
+
+<p>Önce <code>p</code> ile listenin sonuna gidelim.</p>
+
+<textarea id = "text2" class = "deneme">
+var p = a
+while(p.next != null)  // sona git
+  p = p.next
+</textarea>
+<br>
+
+<p>Şimdi aynı pointer ile <code>prev</code> bağlarını izleyerek geriye doğru dolaşalım. Tek yönlü listede bu mümkün değildir. Değerler Çıktı alanına yazılır.</p>
+
+<textarea id = "text3" class = "deneme">
+while(p != null)  // geriye doğru dolaş
+{
+  print p.data
+  p = p.prev
+}
+</textarea>
+<br>
+
+<p>Blokları sırayla oynat düğmesiyle çalıştırın ya da bir bloğun içine tıklayıp <kbd>CTRL</kbd>+<kbd>ENTER</kbd> tuşlarına basın. <a href="index.html">Ana sayfaya dön</a></p>
+
+<div class="col-xs-12" style="height:5px;"></div>
+
+<!--
+<button type="button" onclick="parse()" class="btn btn-round btn-lg" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-play icon-white"></span></button>
+
+<button id = "addElement" type="button" onclick="addEditor()" class="btn btn-round btn-md" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-plus icon-white"></span></button>
+-->
+
+
+ 		<div class="col-xs-12" style="height:20px;"></div>
+
+		<div class="row">
+		  <div class="col-md-6">
+       <div class = "mytitle">
+            <p class="big"> Komut Satırı </p>
+        </div>
+		</div>
+		  <div class="col-md-6">
+				<div class="col-xs-12" style="height:20px;"></div>
+				<h4><span id = "resultSign" class="label label-default"></span></h4>
+		  </div>
+		</div>
+
+		<textarea id="command" class = "commandPrompt"></textarea>
+
+		<div class="col-xs-12" style="height:20px;"></div>
+
+<!--		<div id = "result" class="alert alert-success" role="alert"></div>-->
+
+		<div id = "content">
+			<div class="content-height">
+            <h3 id="output-header">Çıktı</h3>
+				<pre style="overflow:auto; white-space:pre-wrap; word-wrap:break-word;" id="output" class=""></pre>
+          </div>
+        </div>
+	</div>
+
+		<div  style="margin-left: 40%; position: fixed">
+<!--			<div class="col-xs-12" style="height:60px;"></div>-->
+			<canvas id="myCanvas0" height="900" width="1200"></canvas>
+		</div>
+		<div class="col-xs-12" style="height:120px;"></div>
+
+    </div>
+
+     <hr>
+     <br><br>
+
+
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">Bu uygulama
+            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> tarafından paper.js, peg.js, codemirror.js ve jquery kullanılarak geliştirilmiştir.
+        </p>
+        <p class="text-muted">Orta Doğu Teknik Üniversitesi, Bilgisayar Mühendisliği Bölümü</p>
+
+      </div>
+    </footer>
+
+    </div>
+</body>
+
+
+<script type="text/javascript" src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+
+<script src='js/editorSettings.js'></script>
+
+
+<script src='js/addon/active-line.js'></script>
+<script src='js/addon/closebrackets.js'></script>
+
+<script src='js/addon/foldcode.js'></script>
+<script src='js/addon/foldgutter.js'></script>
+
+<script src='js/addon/show-hint.js'></script>
+<script src='js/mode/simple.js'></script>
+<script src='js/mode/css.js'></script>
+
+<!-- Load the Paper.js library -->
+<script type="text/javascript" src="js/paper.js"></script>
+
+<!-- Define inlined PaperScript associate it with myCanvas -->
+<!--<script type="text/javascript" src="js/parser.js"></script>	-->
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+
+
+<script type="text/javascript">
+
+</script>
+
+</html>
