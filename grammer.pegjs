@@ -6,7 +6,12 @@
  * p1.next = p2
  */
 
-start = statement*
+{
+  // whitespace-only matches return the string 'ws'; keep only real statement objects
+  function isItem(x) { return x !== null && typeof x === 'object'; }
+}
+
+start = s:statement* { return s.filter(isItem); }
 
 statement 
   =	block_item
@@ -57,7 +62,7 @@ while_statement
  
 compound_statement
  = nl _'{' _ [ \n]* _ b:block_item_list _ '}' _ nl _{  // block itemlar yerine bos da olabilir
- 	return b
+ 	return b.filter(isItem)
  }
 
 

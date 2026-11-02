@@ -11,7 +11,6 @@ var commandHist = [], currHist = 0;
 editor2.setOption("extraKeys", {
 	Enter: function(cm) {
 	  evaluateCommand()
-	  console.log(editor2.getValue())
 	  commandHist.push(editor2.getValue())
 	  currHist = commandHist.length;
 
@@ -143,8 +142,6 @@ window.activeEditor = editor2.doc;
 
 var markedLine, markedLogic, logicals = [];
 function highlightLine(line, type, result) { // type is used for logical,  result is logical true or false
-
-	console.log(window.activeEditor)
 
   var ln = line.lineNumber-1;
 
