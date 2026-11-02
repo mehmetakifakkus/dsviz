@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+	<!--    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Roboto" rel="stylesheet">-->
+<!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"  rel="stylesheet">-->
+
+<!--    http://mdbootstrap.com/css/colors/-->
+<!--    <link href="css/mdb.min.css" rel="stylesheet" type="text/css">-->
+
+	<link href="css/shapes.css" rel="stylesheet">
+	<link href="css/styles.css" rel="stylesheet">
+
+    <link href="vendor/codemirror-5.25.2/codemirror.css" rel="stylesheet">
+	<link href="vendor/codemirror-5.25.2/theme/eclipse.css" rel="stylesheet">
+
+	<link href="css/myButtons.css" rel="stylesheet">
+	<link href="css/myCodeMirrorSettings.css" rel="stylesheet">
+
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src='js/peg-0.9.0.min.js'></script>
+
+    <title> Yığın (stack) | Bağlı Listeler </title>
+</head>
+<body>
+
+
+ <div class="container">
+
+<h1>Bağlı Listeler: Yığın (stack)</h1>
+<!--  <p>This app is basically focused on linked lists. Code part at the left automatically changes your codes to visualisation.  </p>-->
+ <div class="row">
+
+
+		  <div class="col-md-5">
+			<div class="col-xs-12" style="height:10px;"></div>
+
+<div class = "mytitle">
+	<p class="big"> Görselleştirmek İçin Kodunuzu Yazın </p>
+</div>
+
+
+<p>Yığın (stack) <em>son giren ilk çıkar</em> (LIFO) mantığıyla çalışır: tabak yığını gibi, en son konan en üstte durur ve ilk o alınır. Bağlı listeyle kurulan yığında listenin başı yığının tepesidir. Ekleme (push) başa eklemeyle aynıdır: yeni düğüm tepeye bağlanır ve tepe yeni düğüme taşınır, bu yüzden O(1) zaman alır. <em>Not:</em> İngilizcede tepe <code>top</code> diye geçer, ama <code>top</code> tarayıcıda ayrılmış bir isim olduğu için burada <code>tepe</code> kullanıyoruz.</p>
+
+<textarea id = "text1" class = "deneme">
+var tepe = null
+for(var i = 1; i <= 3; i++)  // 1, 2 ve 3'ü ekle (push)
+{
+  var n = new Node(i)
+  n.next = tepe
+  tepe = n
+}
+</textarea>
+<br>
+
+<p>Çıkarma (pop) tepedeki düğümü alır: değeri saklanır, tepe bir alttaki düğüme iner ve eski düğüm silinir. En son eklenen 3 ilk çıkar.</p>
+
+<textarea id = "text2" class = "deneme">
+var t = tepe        // tepedeki düğüm
+var value = t.data  // çıkan değer
+tepe = tepe.next    // tepe bir aşağı iner
+delete t
+</textarea>
+<br>
+
+<p>Yığını boşalana kadar boşaltalım. Değerler eklenme sırasının tersiyle çıkar ve Çıktı alanına yazılır. Boş bir yığından pop yapılmaya çalışılırsa <code>tepe</code> <code>null</code> olduğu için <code>tepe.data</code> hata verir; gerçek programlarda önce <code>tepe != null</code> kontrol edilir.</p>
+
+<textarea id = "text3" class = "deneme">
+while(tepe != null)
+{
+  print tepe.data
+  var t = tepe
+  tepe = tepe.next
+  delete t
+}
+</textarea>
+<br>
+
+<p>Blokları sırayla oynat düğmesiyle çalıştırın ya da bir bloğun içine tıklayıp <kbd>CTRL</kbd>+<kbd>ENTER</kbd> tuşlarına basın. <a href="index.html">Ana sayfaya dön</a></p>
+
+<div class="col-xs-12" style="height:5px;"></div>
+
+<!--
+<button type="button" onclick="parse()" class="btn btn-round btn-lg" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-play icon-white"></span></button>
+
+<button id = "addElement" type="button" onclick="addEditor()" class="btn btn-round btn-md" style="background-color: #0d47a1!important;"><span class="glyphicon glyphicon-plus icon-white"></span></button>
+-->
+
+
+ 		<div class="col-xs-12" style="height:20px;"></div>
+
+		<div class="row">
+		  <div class="col-md-6">
+       <div class = "mytitle">
+            <p class="big"> Komut Satırı </p>
+        </div>
+		</div>
+		  <div class="col-md-6">
+				<div class="col-xs-12" style="height:20px;"></div>
+				<h4><span id = "resultSign" class="label label-default"></span></h4>
+		  </div>
+		</div>
+
+		<textarea id="command" class = "commandPrompt"></textarea>
+
+		<div class="col-xs-12" style="height:20px;"></div>
+
+<!--		<div id = "result" class="alert alert-success" role="alert"></div>-->
+
+		<div id = "content">
+			<div class="content-height">
+            <h3 id="output-header">Çıktı</h3>
+				<pre style="overflow:auto; white-space:pre-wrap; word-wrap:break-word;" id="output" class=""></pre>
+          </div>
+        </div>
+	</div>
+
+		<div  style="margin-left: 40%; position: fixed">
+<!--			<div class="col-xs-12" style="height:60px;"></div>-->
+			<canvas id="myCanvas0" height="900" width="1200"></canvas>
+		</div>
+		<div class="col-xs-12" style="height:120px;"></div>
+
+    </div>
+
+     <hr>
+     <br><br>
+
+
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">Bu uygulama
+            <a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php"  target="_blank">Mehmet Akif AKKUS</a> tarafından paper.js, peg.js, codemirror.js ve jquery kullanılarak geliştirilmiştir.
+        </p>
+        <p class="text-muted">Orta Doğu Teknik Üniversitesi, Bilgisayar Mühendisliği Bölümü</p>
+
+      </div>
+    </footer>
+
+    </div>
+</body>
+
+
+<script type="text/javascript" src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script type="text/javascript" src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+
+<script src='js/editorSettings.js'></script>
+
+
+<script src='js/addon/active-line.js'></script>
+<script src='js/addon/closebrackets.js'></script>
+
+<script src='js/addon/foldcode.js'></script>
+<script src='js/addon/foldgutter.js'></script>
+
+<script src='js/addon/show-hint.js'></script>
+<script src='js/mode/simple.js'></script>
+<script src='js/mode/css.js'></script>
+
+<!-- Load the Paper.js library -->
+<script type="text/javascript" src="js/paper.js"></script>
+
+<!-- Define inlined PaperScript associate it with myCanvas -->
+<!--<script type="text/javascript" src="js/parser.js"></script>	-->
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+
+
+<script type="text/javascript">
+
+</script>
+
+</html>
