@@ -803,7 +803,7 @@ function drawGraphics(line, result){
 				layout();
 			}
 		}
-		else if(line.type == 'expression')
+		else if(line.type == 'expression' || line.type == 'break' || line.type == 'continue')
 		{
 			highlight(doc, line);
 		}
@@ -839,17 +839,28 @@ function processOneItem(item){
 			else if(item.falsePart)
 				recursivelyProcess(item.falsePart)
 		}
-		else if(item.mainType == 'while')
+		else if(item.mainType == 'while' || item.mainType == 'for')
 		{
-			var guard = 0;
+			if(item.init)
+				processOneItem(item.init);
+
+			var guard = 0, stopped = false;
 			while(window.eval(item.text)){
 				drawGraphics(item, true);
-				recursivelyProcess(item.statements)
+
+				if(runLoopBody(item.statements) === 'break'){
+					stopped = true;
+					break;
+				}
+
+				if(item.update)
+					processOneItem(item.update);
 
 				if(++guard > 1000)
 					throw new Error('Satır ' + item.lineNumber + ': döngü 1000 kereden fazla döndü. Sonsuz bir döngü olabilir mi? Döngü koşulunun bir gün yanlış olacağından emin olun.');
 			}
-			drawGraphics(item, false);
+			if(!stopped) // after a break the condition is not checked again
+				drawGraphics(item, false);
 		}
 		else{ // there is no type, only logical expression
 			drawGraphics(item, window.eval(item.text));
@@ -926,6 +937,25 @@ function processOneItem(item){
 	{
 		drawGraphics(item);
 	}
+	else if(item.type == 'break' || item.type == 'continue')
+	{
+		drawGraphics(item);
+		throw {loopSignal: item.type, lineNumber: item.lineNumber}; // caught by the nearest loop
+	}
+}
+
+// run the body of a loop; returns 'break' when a break statement left the loop
+function runLoopBody(statements){
+	try {
+		recursivelyProcess(statements);
+	}
+	catch(signal){
+		if(signal && signal.loopSignal === 'break')
+			return 'break';
+		if(!(signal && signal.loopSignal === 'continue'))
+			throw signal;
+	}
+	return 'done';
 }
 
 function recursivelyProcess(items){
@@ -942,6 +972,9 @@ function recursivelyProcess(items){
 
 // turn parser and JavaScript errors into short Turkish explanations for learners
 function explainError(err, source){
+	if(err && err.loopSignal) // break / continue that is not inside a loop
+		return 'Satır ' + err.lineNumber + ': ' + err.loopSignal + ' yalnızca bir döngünün (while ya da for) içinde kullanılabilir.';
+
 	var m, msg = (err && err.message) || String(err);
 
 	if(err && err.name === 'SyntaxError' && err.location){ // from the PEG parser

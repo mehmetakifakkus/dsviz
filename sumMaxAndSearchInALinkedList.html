@@ -73,17 +73,15 @@ while(p != null)
 </textarea>
 <br>
 
-<p>Arama, değer bulunur bulunmaz durur: <code>p</code> o düğümde kalır. Değer listede yoksa <code>p</code> sonunda <code>null</code> olur. 2'yi 5 yapıp tekrar deneyin.</p>
+<p>Arama, değer bulunur bulunmaz <code>break</code> ile durur: <code>p</code> o düğümde kalır. Değer listede yoksa <code>p</code> sonunda <code>null</code> olur. 2'yi 5 yapıp tekrar deneyin.</p>
 
 <textarea id = "text3" class = "deneme">
 var p = x
-var found = false
-while(p != null && found == false)
+while(p != null)
 {
   if(p.data == 2)
-    found = true
-  else
-    p = p.next
+    break     // bulundu, aramayı bitir
+  p = p.next
 }
 </textarea>
 <br>

@@ -59,16 +59,12 @@ w.next = v
 </textarea>
 <br>
 
-<p>Önce <code>fast</code>'i k düğüm ileri götürün. Sonra iki pointer'ı birlikte ilerletin. Aralarındaki mesafe hep k kalır, bu yüzden <code>fast</code> listenin sonundan düştüğünde <code>slow</code> sondan k'ıncı düğümdedir. k = 2 için bu düğüm 4'tür. Tek geçiş yeterli, uzunluğu bilmek gerekmez.</p>
+<p>Önce bir <code>for</code> döngüsüyle <code>fast</code>'i k düğüm ileri götürün. Sonra iki pointer'ı birlikte ilerletin. Aralarındaki mesafe hep k kalır, bu yüzden <code>fast</code> listenin sonundan düştüğünde <code>slow</code> sondan k'ıncı düğümdedir. k = 2 için bu düğüm 4'tür. Tek geçiş yeterli, uzunluğu bilmek gerekmez.</p>
 
 <textarea id = "text2" class = "deneme">
 var fast = x
-var i = 0
-while(i < 2)  // fast'i k = 2 düğüm ileri götür
-{
+for(var i = 0; i < 2; i++)  // fast'i k = 2 düğüm ileri götür
   fast = fast.next
-  i = i + 1
-}
 var slow = x
 while(fast != null)
 {

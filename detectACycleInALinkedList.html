@@ -59,18 +59,21 @@ w.next = v
 v.next = y  // döngü burada</textarea>
 <br>
 
-<p>Floyd algoritması: <code>slow</code> her adımda bir düğüm, <code>fast</code> iki düğüm ilerler. Liste bir yerde bitiyorsa <code>fast</code> <code>null</code>'a ulaşır ve döngü yoktur. Döngü varsa <code>fast</code> döngünün içinde <code>slow</code>'a yetişir ve buluşurlar. Döngüsüz durumu görmek için sayfayı yenileyin, ilk bloğun son satırını silin ve iki bloğu da çalıştırın.</p>
+<p>Floyd algoritması: <code>slow</code> her adımda bir düğüm, <code>fast</code> iki düğüm ilerler. Liste bir yerde bitiyorsa <code>fast</code> <code>null</code>'a ulaşır ve döngü yoktur. Döngü varsa <code>fast</code> döngünün içinde <code>slow</code>'a yetişir ve buluşurlar; o anda <code>break</code> ile döngüden çıkılır. Döngüsüz durumu görmek için sayfayı yenileyin, ilk bloğun son satırını silin ve iki bloğu da çalıştırın.</p>
 
 <textarea id = "text2" class = "deneme">
 var slow = x
 var fast = x
 var found = false
-while(fast != null && fast.next != null && found == false)
+while(fast != null && fast.next != null)
 {
-  slow = slow.next
-  fast = fast.next.next
+  slow = slow.next       // bir adım
+  fast = fast.next.next  // iki adım
   if(slow == fast)
+  {
     found = true
+    break                // buluştular, döngüden çık
+  }
 }
 </textarea>
 <br>
