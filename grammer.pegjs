@@ -18,7 +18,7 @@ statement
   
 
 if_statement "if"
-  = _ ('if' / 'eğer') !idChar _ '(' _ los:logical_statement  _ ')' _ nl
+  = _ ('if' / 'eğer') !idChar _ '(' _ los:condition  _ ')' _ nl
   		_ lines1:(compound_statement / block_item) _ nl
   lines2:( _ ('else' / 'değilse') !idChar _ nl
   		_ body:(compound_statement / block_item) { return body; } )? nl
@@ -37,7 +37,7 @@ if_statement "if"
 }
  
 while_statement
- = _ ('yinele' / 'while') _ '(' los:logical_statement ')' _ nl 
+ = _ ('yinele' / 'while') _ '(' los:condition ')' _ nl 
    _ lines:(compound_statement / block_item) _ nl
 { 
     if(lines instanceof Array)
@@ -58,7 +58,7 @@ while_statement
 
  
 for_statement "for"
- = _ 'for' !idChar _ '(' _ init:for_init? _ ';' _ los:logical_statement? _ ';' _ update:for_update? _ ')' _ nl
+ = _ 'for' !idChar _ '(' _ init:for_init? _ ';' _ los:condition? _ ';' _ update:for_update? _ ')' _ nl
    _ lines:(compound_statement / block_item) _ nl
 {
 	var head = location().start.line;
@@ -114,7 +114,7 @@ closing_brace
 
 // return / return value   (or: döndür)
 return_statement "return"
- = _ ('return' / 'döndür') !idChar _ value:(logical_statement / expression_statement)? _ ';'? _ nl
+ = _ ('return' / 'döndür') !idChar _ value:condition? _ ';'? _ nl
 {
 	return {'type': 'return', 'text': value ? value.text : null, 'lineNumber': location().start.line};
 }
@@ -291,6 +291,45 @@ logical_statement = _ f1:factor2 _ op:operator _ f2:factor2 log:(_ logical_opera
 	
 	return {'type':'logical', 'text': text, 'lineNumber': location().start.line, 'start': location().start.column-1, 'end': location().end.column-1};
 }
+
+// The condition of if / while / for and a return value. Unlike a statement on its own
+// line it does not need a comparison: if(p), while(!isEmpty()), return p == null.
+// Precedence: || < && < ! < comparison. The text is the JavaScript that is evaluated.
+condition
+ = _ c:or_condition {
+	return {'type':'logical', 'text': c, 'lineNumber': location().start.line, 'start': location().start.column-1, 'end': location().end.column-1};
+ }
+
+or_condition
+ = head:and_condition tail:(_ logical_or _ and_condition)* {
+	return tail.reduce(function(text, t){ return text + ' ' + t[1] + ' ' + t[3]; }, head);
+ }
+
+and_condition
+ = head:not_condition tail:(_ logical_and _ not_condition)* {
+	return tail.reduce(function(text, t){ return text + ' ' + t[1] + ' ' + t[3]; }, head);
+ }
+
+not_condition
+ = ('!' !'=' / 'not' !idChar / 'değil' !idChar) _ c:not_condition { return '!' + c; }
+ / comparison
+
+comparison
+ = l:condition_operand _ op:operator _ r:condition_operand { return l + ' ' + op + ' ' + r; }
+ / condition_operand
+
+condition_operand
+ = "(" _ c:or_condition _ ")" !(_ ('+' / '-' / '*' / '/' / '%')) { return '(' + c + ')'; }
+ / o:object_poperty { return o.text; }
+ / e:expression_statement { return e.text; }
+
+logical_and
+ = "&&" { return text(); }
+ / "and" !idChar { return "&&"; }
+
+logical_or
+ = "||" { return text(); }
+ / "or" !idChar { return "||"; }
 
 factor2 = "(" logical_statement ")" 
 	   / object_poperty

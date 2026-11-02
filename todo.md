@@ -4,7 +4,6 @@
 
 ## Dil
 
-- [ ] Koşullar bir karşılaştırma operatörü istiyor: `if(isEmpty())` ya da `while(p)` yazılamıyor, `if(isEmpty() == true)` yazmak gerekiyor.
 - [ ] Fonksiyon içinde fonksiyon tanımı (closure) yok: fonksiyonlar yalnızca kendi yerel değişkenlerini ve globalleri görür.
 - [ ] Çağrı sonucunun alanına erişim (`pop().data`) gramerde yok.
 - [ ] `var a = 1, b = 2` yalnızca `a`'yı tanımlıyor; virgülle ayrılan tanımların hepsi işlenmeli.
@@ -50,3 +49,4 @@
 - [x] Koyu tema (sistem ayarına uyar, elle değiştirilebilir) ve mobil uyum.
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
+- [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.

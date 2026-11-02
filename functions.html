@@ -48,6 +48,17 @@ var a = pop()
 var b = pop()
 print "çıkanlar: " + a + ", " + b
 </textarea>
+
+<p>Koşul yazarken karşılaştırma şart değildir. <code>if(p)</code> "<code>p</code> bir düğümü gösteriyorsa", <code>if(!p)</code> ise "<code>p</code> <code>null</code> ise" demektir: <code>null</code>, <code>0</code> ve <code>false</code> yanlış, bir düğüm ya da sıfırdan farklı bir sayı doğru sayılır. <code>!</code> (ya da <code>değil</code>) koşulu tersine çevirir. Bu yüzden doğru/yanlış döndüren bir fonksiyon doğrudan koşul olarak kullanılabilir: aşağıdaki döngü yığın boşalana kadar <code>pop</code> yapar.</p>
+<textarea id="text3" class="deneme">
+function isEmpty()
+{
+  return tepe == null
+}
+
+while(!isEmpty())  // yığın boş olmadığı sürece
+  print pop()
+</textarea>
 </main>
 
 <script src="js/layout.js"></script>
