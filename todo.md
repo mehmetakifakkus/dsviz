@@ -4,11 +4,9 @@
 
 ## Dil
 
-- [ ] **Fonksiyonlar**: `function push(v) { ... }`, `return`, çağrı `push(5)`.
-  - Yerel değişkenler: şu an bütün kullanıcı değişkenleri `window` üzerinde global. Fonksiyonlar için çağrı başına bir kapsam (scope) gerekir; `window.eval` yerine kendi değişken ortamımızı tutmak en temiz yol.
-  - Özyineleme (recursion) desteği ve sınır (ör. 200 derinlik) aşılınca Türkçe hata.
-  - Görselleştirme: çağrı yığını (call stack) paneli, her çağrının yerel değişkenleri; yerel pointer'lar çizimde fonksiyon adıyla gösterilebilir (`push.n`).
-  - Örnekler: yığın/kuyruk işlemlerini fonksiyon olarak yazma, listeyi özyinelemeli ters çevirme, listeyi sondan başa yazdırma.
+- [ ] Koşullar bir karşılaştırma operatörü istiyor: `if(isEmpty())` ya da `while(p)` yazılamıyor, `if(isEmpty() == true)` yazmak gerekiyor.
+- [ ] Fonksiyon içinde fonksiyon tanımı (closure) yok: fonksiyonlar yalnızca kendi yerel değişkenlerini ve globalleri görür.
+- [ ] Çağrı sonucunun alanına erişim (`pop().data`) gramerde yok.
 - [ ] `var a = 1, b = 2` yalnızca `a`'yı tanımlıyor; virgülle ayrılan tanımların hepsi işlenmeli.
 - [ ] `Node(3, y)` yazımında ikinci argüman (next) gramerde var ama motor yok sayıyor.
 - [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
@@ -45,9 +43,10 @@
 - [x] Otomatik yerleşim ve adım adım oynatıcı (ileri, geri, hız).
 - [x] Türkçe arayüz ve öğrenciye yönelik Türkçe hata mesajları.
 - [x] `for`, `break`, `continue`, `i++`, `i += n`, `new Node(ifade)`.
-- [x] Çift yönlü liste, yığın, kuyruk ve toplam 19 örnek sayfa.
+- [x] Çift yönlü liste, yığın, kuyruk, fonksiyonlar ve özyineleme; toplam 21 örnek sayfa.
 - [x] CodeMirror repoya alındı; site dış CDN'e bağlı değil.
 - [x] Modern arayüz: üst çubuk, örnek menüsü, sabit görselleştirme kartı, önceki/sonraki bağlantıları; sayfalar yalnızca içerik taşıyor, iskelet `js/layout.js`'den kuruluyor.
 - [x] Değişkenler HTML panelinde; tuval kartın genişliğine uyuyor, yüksekliği çizime göre ayarlanıyor, uzun listeler sığacak şekilde küçültülüyor.
 - [x] Koyu tema (sistem ayarına uyar, elle değiştirilebilir) ve mobil uyum.
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
+- [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).

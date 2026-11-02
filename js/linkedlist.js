@@ -4,7 +4,7 @@
  * How it works
  * ------------
  * 1. parse() turns the code of an editor into a list of statements (grammer.pegjs).
- * 2. processOneItem() EXECUTES every statement immediately (window.eval) and hands a
+ * 2. processOneItem() EXECUTES every statement immediately (evalExpr) and hands a
  *    snapshot of everything the drawing needs to drawGraphics().
  * 3. drawGraphics() does not draw: it pushes a "step" into the player queue. The player
  *    runs the steps one by one (play / pause / step forward / step back / speed).
@@ -29,8 +29,51 @@ function isNode(v){
 function safeEval(code){
 	if(code === undefined || code === null || typeof code !== 'string')
 		return code;
-	try { return window.eval(code); }
+	try { return evalExpr(code); }
 	catch(e) { return undefined; }
+}
+
+//////////////////////////////////  Variables and frames  ///////////////////////////////
+//
+// Global user variables live on window. Every call of a user function gets a frame
+// (frame.vars) for its parameters and its "var" variables. evalExpr() evaluates an
+// expression inside the current frame: a name is looked up in frame.vars first and on
+// window after that (a "with" statement in a compiled function does exactly this).
+
+var frames = [];          // the calls that are running, innermost last
+var frameCounter = 0;
+var NO_FRAME = Object.create(null);
+var compiledExpressions = {};
+
+function currentFrame(){
+	return frames.length ? frames[frames.length - 1] : null;
+}
+
+function evalExpr(code){
+	code = String(code);
+	var compiled = compiledExpressions[code];
+	if(!compiled) // the newline keeps a trailing // comment from swallowing the ')'
+		compiled = compiledExpressions[code] = new Function('__frame', 'with(__frame){ return (' + code + '\n); }');
+	var frame = currentFrame();
+	return compiled(frame ? frame.vars : NO_FRAME);
+}
+
+// var x = ... (declare) creates a local inside a function; x = ... changes the local if
+// there is one, the global otherwise
+function setVar(name, value, declare){
+	var frame = currentFrame();
+	if(frame && (declare || Object.prototype.hasOwnProperty.call(frame.vars, name)))
+		frame.vars[name] = value;
+	else
+		assignGlobal(name, value);
+}
+
+// for drawing: which call does the variable `name` belong to (null: a global)
+function scopeOf(name){
+	var frame = currentFrame();
+	if(!frame || !name || typeof name !== 'string' || !Object.prototype.hasOwnProperty.call(frame.vars, name))
+		return null;
+	return {id: frame.id, fn: frame.fn, depth: frame.sameDepth};
 }
 
 function propertyPath(property){ // [[".","next"],[".","next"]] -> ".next.next"
@@ -60,7 +103,8 @@ function palette(){
 		stroke: token('--viz-stroke', '#1f2937'),
 		text: token('--viz-text', '#111827'),
 		named: token('--viz-named', '#2563eb'),
-		pointer: token('--viz-pointer', '#dc2626')
+		pointer: token('--viz-pointer', '#dc2626'),
+		local: token('--viz-local', '#7c3aed')
 	};
 }
 
@@ -489,10 +533,16 @@ function onFrame(){
 
 //////////////////////////////////////////  Pointers  //////////////////////////////////////
 
-function Pointer(node, name, color, direction){
+var SUBSCRIPT = ['', '', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+
+// scope: null for a global variable, {id, fn, depth} for a local of a call. Locals get
+// their own color; in a recursion the deeper calls' pointers are labeled p₂, p₃...
+function Pointer(node, name, color, direction, scope){
 	this.name = name || '';
+	this.scope = scope || null;
+	this.label = this.name + (scope && scope.depth > 1 ? (SUBSCRIPT[scope.depth] || '₊') : '');
 	this.points = node;
-	this.kind = (color === 'blue' || color === 'named') ? 'named' : 'pointer'; // the color comes from the theme
+	this.kind = scope ? 'local' : (color === 'blue' || color === 'named') ? 'named' : 'pointer'; // the color comes from the theme
 	this.direction = direction || 'down';
 	this.active = false;
 
@@ -501,20 +551,27 @@ function Pointer(node, name, color, direction){
 	this.draw = function(node){
 		self.points = node || self.points;
 		self.active = true;
-		removeVariable(self.name); // it is not null any more
+		if(self.scope)
+			setFrameVar(self.scope.id, self.name, '→ ' + self.points.shownData, false, true);
+		else
+			removeVariable(self.name); // it is not null any more
 		redrawPointers();
 	}
 
 	this.markNull = function(){
 		self.points = null;
 		self.active = false;
-		showVariable(self.name, 'null', true); // listed in the variables area
+		if(self.scope)
+			setFrameVar(self.scope.id, self.name, 'null', true, true);
+		else
+			showVariable(self.name, 'null', true); // listed in the variables area
 		redrawPointers();
 	}
 
 	this.remove = function(){
 		self.active = false;
-		removeVariable(self.name);
+		if(!self.scope)
+			removeVariable(self.name);
 		redrawPointers();
 	}
 
@@ -556,7 +613,7 @@ function redrawPointers(){
 
 		var labels = [], x = 0;
 		group.forEach(function(p, index){
-			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.name + (index < group.length - 1 ? ',' : '')});
+			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.label + (index < group.length - 1 ? ',' : '')});
 			x += label.bounds.width + 5;
 			labels.push(label);
 		});
@@ -568,13 +625,18 @@ function redrawPointers(){
 	});
 }
 
+// the drawn pointers by variable: "p" for a global, "<call id>:p" for a local
+var pointerMap = {};
+function pointerKey(name, scope){ return scope ? scope.id + ':' + name : name; }
+
 // point the pointer called `name` to `node` (or mark it as null)
-function pointTo(name, node, color, direction){
-	var pointer = window['pointer_' + name];
+function pointTo(name, node, color, direction, scope){
+	var key = pointerKey(name, scope);
+	var pointer = pointerMap[key];
 
 	if(!pointer){
-		pointer = new Pointer(node, name, color, direction);
-		window['pointer_' + name] = pointer;
+		pointer = new Pointer(node, name, color, direction, scope);
+		pointerMap[key] = pointer;
 	}
 	if(node == null)
 		pointer.markNull();
@@ -618,6 +680,106 @@ function removeVariable(name){
 		return;
 	variableItems[name].remove();
 	delete variableItems[name];
+}
+
+//////////////////////////////////////  Call stack panel  //////////////////////////////////
+//
+// #callstack (built by js/layout.js) shows the calls that are running, the innermost on
+// top, with their local variables. It is drawn state: callStep / returnStep change it.
+
+var visualFrames = [];  // {id, title, vars: {name: {text, isNull, isPointer}}, order: []}
+var returnNote = '';
+
+function findVisualFrame(id){
+	for(var i=0; i < visualFrames.length; i++)
+		if(visualFrames[i].id === id)
+			return visualFrames[i];
+	return null;
+}
+
+function setFrameVar(id, name, text, isNull, isPointer){
+	var frame = findVisualFrame(id);
+	if(!frame)
+		return;
+	if(!frame.vars[name])
+		frame.order.push(name);
+	frame.vars[name] = {text: String(text), isNull: !!isNull, isPointer: !!isPointer};
+	renderCallStack();
+}
+
+// a plain value (number, boolean...): a global goes to the variables panel, a local to its call
+function showValue(name, value, scope){
+	if(scope)
+		setFrameVar(scope.id, name, formatValue(value), value === null, false);
+	else
+		showVariable(name, value);
+}
+
+function renderCallStack(){
+	var box = document.getElementById('callstack');
+	if(!box)
+		return;
+
+	var MAX_SHOWN = 8, html = '';
+	for(var i = visualFrames.length - 1; i >= Math.max(0, visualFrames.length - MAX_SHOWN); i--){
+		var f = visualFrames[i];
+		var vars = f.order.map(function(name){
+			var v = f.vars[name];
+			return '<span class="frame-var' + (v.isNull ? ' is-null' : '') + (v.isPointer ? ' is-pointer' : '') + '">' +
+			       escapeHTML(name) + (v.text.charAt(0) === '→' ? ' ' : ' = ') + escapeHTML(v.text) + '</span>';
+		}).join('');
+		html += '<li' + (i === visualFrames.length - 1 ? ' class="current"' : '') + '><div class="frame-head">' + escapeHTML(f.title) + '</div>' +
+		        (vars ? '<div class="frame-vars">' + vars + '</div>' : '') + '</li>';
+	}
+	if(visualFrames.length > MAX_SHOWN)
+		html += '<li class="more">… ' + (visualFrames.length - MAX_SHOWN) + ' çağrı daha</li>';
+	box.innerHTML = html;
+
+	var note = document.getElementById('callstack-note');
+	if(note)
+		note.textContent = returnNote;
+
+	var panel = box.parentNode;
+	if(panel)
+		panel.hidden = !visualFrames.length && !returnNote;
+	fitCanvas();
+}
+
+function callStep(info, def){
+	highlight(def.doc, {lineNumber: def.lineNumber});
+	returnNote = '';
+
+	var args = info.args.map(function(a){ return formatValue(a.value); }).join(', ');
+	visualFrames.push({id: info.id, title: info.fn + '(' + args + ')', vars: {}, order: []});
+
+	var scope = {id: info.id, fn: info.fn, depth: info.depth};
+	info.args.forEach(function(a){
+		if(a.value === null || isNode(a.value))
+			pointTo(a.name, a.value, undefined, undefined, scope);
+		else
+			setFrameVar(info.id, a.name, formatValue(a.value), false, false);
+	});
+	renderCallStack();
+}
+
+// remove a call from the panel together with its pointers; returns its frame
+function dropFrame(info){
+	for(var key in pointerMap) // the call's pointers disappear with it
+		if(pointerMap[key].scope && pointerMap[key].scope.id === info.id){
+			pointerMap[key].remove();
+			delete pointerMap[key];
+		}
+
+	var frame = findVisualFrame(info.id);
+	visualFrames = visualFrames.filter(function(f){ return f.id !== info.id; });
+	return frame;
+}
+
+function returnStep(info, value, exitLine, def){
+	highlight(def.doc, {lineNumber: exitLine});
+	var frame = dropFrame(info);
+	returnNote = (frame ? frame.title : info.fn + '()') + (value === undefined ? ' bitti.' : ' döndürdü: ' + formatValue(value));
+	renderCallStack();
 }
 
 ////////////////////////////////////////  Line highlighting  ///////////////////////////////
@@ -786,9 +948,13 @@ function resetVisuals(){
 	lastPlaced = null;
 	doublyMode = false;
 
-	pointers.forEach(function(p){ delete window['pointer_' + p.name]; });
+	pointerMap = {};
 	pointers = [];
 	redrawPointers();
+
+	visualFrames = [];
+	returnNote = '';
+	renderCallStack();
 
 	for(var name in variableItems)
 		variableItems[name].remove();
@@ -850,8 +1016,11 @@ function drawGraphics(line, result){
 
 	var res = result;
 	var doc = window.activeEditor;                  // the editor that runs this code
-	var lhs_temp = safeEval(line.lhs || line.text); // snapshot of the left hand side
+	// snapshot of the node a free/delete removes. Only there: evaluating line.text again for
+	// other statements would run the calls in it twice (push(3))
+	var lhs_temp = line.type == 'free object' ? safeEval(line.text) : null;
 	var doubly = doublyRequested;
+	var scope = scopeOf(line.lhs);                  // null for a global variable
 
 	player.add(function(){
 
@@ -867,16 +1036,17 @@ function drawGraphics(line, result){
 				res.shown = true;
 				layout();
 
-				if(window['pointer_' + line.lhs])  // a new node: replace the old pointer with a fresh one
-					window['pointer_' + line.lhs].remove();
+				var key = pointerKey(line.lhs, scope);
+				if(pointerMap[key])  // a new node: replace the old pointer with a fresh one
+					pointerMap[key].remove();
 
-				window['pointer_' + line.lhs] = new Pointer(res, line.lhs, 'blue', 'up');
-				window['pointer_' + line.lhs].draw(res);
+				pointerMap[key] = new Pointer(res, line.lhs, 'blue', 'up', scope);
+				pointerMap[key].draw(res);
 			}
 			else if(res === null || isNode(res))  // p1 = null  /  p1 = x  /  p1 = x.next
-				pointTo(line.lhs, res);
+				pointTo(line.lhs, res, undefined, undefined, scope);
 			else                                  // a plain value: count = count + 1
-				showVariable(line.lhs, res);
+				showValue(line.lhs, res, scope);
 		}
 		else if(line.type == 'logical')
 		{
@@ -912,9 +1082,9 @@ function drawGraphics(line, result){
 			highlight(doc, line);
 
 			if(res === null || isNode(res))
-				pointTo(line.lhs, res);
+				pointTo(line.lhs, res, undefined, undefined, scope);
 			else
-				showVariable(line.lhs, res);
+				showValue(line.lhs, res, scope);
 		}
 		else if(line.type == 'object property left-right') // p.next = x.next
 		{
@@ -954,7 +1124,11 @@ window.showNode = function(node){
 
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvExamples', 'activeEditor', 'editor2'];
+
 function assignGlobal(name, value){
+	if(ENGINE_GLOBALS.indexOf(name) >= 0)
+		throw new Error('Satır ' + currentLine + ': "' + name + '" adı uygulamanın kendisi tarafından kullanılıyor, başka bir isim seçin.');
 	window[name] = value;
 	if(window[name] !== value)
 		throw new Error('Satır ' + currentLine + ': "' + name + '" adı tarayıcıya ayrılmış, değişken olarak kullanılamaz. ' +
@@ -971,7 +1145,7 @@ function processOneItem(item){
 	{
 		if(item.mainType == 'if')
 		{
-			var condition = window.eval(item.text);
+			var condition = evalExpr(item.text);
 			drawGraphics(item, condition);
 
 			if(condition)
@@ -985,7 +1159,7 @@ function processOneItem(item){
 				processOneItem(item.init);
 
 			var guard = 0, stopped = false;
-			while(window.eval(item.text)){
+			while(evalExpr(item.text)){
 				drawGraphics(item, true);
 
 				if(runLoopBody(item.statements) === 'break'){
@@ -1003,7 +1177,8 @@ function processOneItem(item){
 				drawGraphics(item, false);
 		}
 		else{ // there is no type, only logical expression
-			drawGraphics(item, window.eval(item.text));
+			item.value = evalExpr(item.text);
+			drawGraphics(item, item.value);
 		}
 	}
 	else if(item.type == 'declaration' || item.type == 'assignment')
@@ -1011,25 +1186,26 @@ function processOneItem(item){
 		item['#evaluation']++;
 
 		var value = item.rhs.type == 'node'   //  x = new? Node(2)  /  Node(i)
-			? new Node(window.eval('(' + item.rhs.data + '\n)'))
-			: window.eval('(' + item.rhs + '\n)');
+			? new Node(evalExpr(item.rhs.data))
+			: evalExpr(item.rhs);
 
-		assignGlobal(item.lhs, value);
+		setVar(item.lhs, value, item.type == 'declaration');
 		if(isNode(value))
 			value.setName(item.lhs);
 
-		drawGraphics(item, window.eval(item.lhs));
+		drawGraphics(item, value);
 	}
 	else if(item.type == 'expression')
 	{
 		item['#evaluation']++;
-		drawGraphics(item, window.eval(item.text));
+		item.value = evalExpr(item.text); // the command prompt shows it
+		drawGraphics(item, item.value);
 	}
 	else if(item.type == 'print')
 	{
 		var resu = '';
 		for(var i=0; i < item.list.length; i++)
-			resu += item.list[i].subtype == 'var' ? window.eval(item.list[i].text) : item.list[i].text;
+			resu += item.list[i].subtype == 'var' ? formatValue(evalExpr(item.list[i].text)) : item.list[i].text;
 
 		drawGraphics(item, resu);
 	}
@@ -1039,16 +1215,16 @@ function processOneItem(item){
 
 		var path = propertyPath(item.property);
 		var last = item.property[item.property.length-1].join(''); // ".next" or ".data"
-		var target = window.eval(item.lhs + path.slice(0, path.length - last.length));
+		var target = evalExpr(item.lhs + path.slice(0, path.length - last.length));
 		var newNode = null;
 
 		if(item.rhs.type == 'node')
 		{
-			newNode = new Node(window.eval('(' + item.rhs.data + '\n)'));
+			newNode = new Node(evalExpr(item.rhs.data));
 			target[last.slice(1)] = newNode;
 		}
 		else
-			window.eval(item.lhs + path + ' = ' + rhsCode(item.rhs));
+			target[last.slice(1)] = evalExpr(rhsCode(item.rhs));
 
 		drawGraphics(item, {target: target, prop: last, value: target[last.slice(1)], newNode: newNode});
 	}
@@ -1057,9 +1233,10 @@ function processOneItem(item){
 		item['#evaluation']++;
 
 		item.text = item.lhs + ' = ' + item.rhs + propertyPath(item.property);
-		assignGlobal(item.lhs, window.eval(item.rhs + propertyPath(item.property)));
+		var moved = evalExpr(item.rhs + propertyPath(item.property));
+		setVar(item.lhs, moved, false);
 
-		drawGraphics(item, window.eval(item.lhs));
+		drawGraphics(item, moved);
 	}
 	else if(item.type == 'object property left-right') // p.next = x.next
 	{
@@ -1067,9 +1244,9 @@ function processOneItem(item){
 
 		var pathLeft = propertyPath(item.propertyLeft);
 		var lastLeft = item.propertyLeft[item.propertyLeft.length-1].join('');
-		var targetLeft = window.eval(item.lhs + pathLeft.slice(0, pathLeft.length - lastLeft.length));
+		var targetLeft = evalExpr(item.lhs + pathLeft.slice(0, pathLeft.length - lastLeft.length));
 
-		window.eval(item.lhs + pathLeft + ' = ' + item.rhs + propertyPath(item.propertyRight));
+		targetLeft[lastLeft.slice(1)] = evalExpr(item.rhs + propertyPath(item.propertyRight));
 
 		drawGraphics(item, {target: targetLeft, prop: lastLeft, value: targetLeft[lastLeft.slice(1)]});
 	}
@@ -1082,6 +1259,87 @@ function processOneItem(item){
 		drawGraphics(item);
 		throw {loopSignal: item.type, lineNumber: item.lineNumber}; // caught by the nearest loop
 	}
+	else if(item.type == 'function')
+	{
+		defineFunction(item);
+	}
+	else if(item.type == 'return')
+	{
+		var returned = item.text === null ? undefined : evalExpr(item.text);
+		throw {returnSignal: true, value: returned, lineNumber: item.lineNumber}; // caught by callUser
+	}
+}
+
+//////////////////////////////////////  Functions  /////////////////////////////////////////
+
+var MAX_CALL_DEPTH = 200;
+var unfinishedCalls = []; // calls an error interrupted (their returnStep never came)
+
+// a user function becomes a JavaScript function, so a call can sit anywhere inside an
+// expression (var v = pop(), return 1 + count(p.next)) and recursion works by itself
+function defineFunction(item){
+	currentLine = item.lineNumber;
+	var def = {name: item.name, params: item.params, body: item.body,
+	           lineNumber: item.lineNumber, endLine: item.endLine, doc: window.activeEditor};
+	assignGlobal(item.name, function(){ return callUser(def, arguments); });
+}
+
+function callUser(def, args){
+	if(frames.length >= MAX_CALL_DEPTH)
+		throw new Error('Satır ' + currentLine + ': iç içe ' + MAX_CALL_DEPTH + ' fonksiyon çağrısı aşıldı. ' +
+		                'Özyinelemenin bir durma koşulu var mı? (ör. if(p == null) return 0)');
+
+	var sameDepth = 1;
+	frames.forEach(function(f){ if(f.fn === def.name) sameDepth++; });
+
+	var frame = {id: ++frameCounter, fn: def.name, sameDepth: sameDepth, vars: Object.create(null)};
+	def.params.forEach(function(param, i){ frame.vars[param] = args[i] === undefined ? null : args[i]; });
+
+	var callerLine = currentLine, callerDoc = window.activeEditor;
+	var info = {id: frame.id, fn: def.name, depth: sameDepth,
+	            args: def.params.map(function(param){ return {name: param, value: frame.vars[param]}; })};
+
+	player.add(function(){ callStep(info, def); });
+
+	frames.push(frame);
+	window.activeEditor = def.doc; // the body is highlighted in the editor that defined it
+
+	var result, exitLine = def.endLine, finished = false;
+	try {
+		recursivelyProcess(def.body);
+		finished = true;
+	}
+	catch(signal){
+		if(signal && signal.returnSignal){
+			finished = true;
+			result = signal.value;
+			exitLine = signal.lineNumber;
+		}
+		else if(signal && signal.loopSignal){ // a break inside a function cannot leave the caller's loop
+			unfinishedCalls.push(info);
+			throw new Error('Satır ' + signal.lineNumber + ': ' + signal.loopSignal + ' yalnızca bir döngünün (while ya da for) içinde kullanılabilir.');
+		}
+		else {
+			unfinishedCalls.push(info); // an error stopped this call; its frame stays visible until the next run
+			throw signal;
+		}
+	}
+	finally {
+		frames.pop();
+		window.activeEditor = callerDoc;
+		if(finished) // after an error currentLine stays on the failing line, for the message
+			currentLine = callerLine;
+	}
+
+	player.add(function(){ returnStep(info, result, exitLine, def); });
+	return result;
+}
+
+function formatValue(value){
+	if(isNode(value)) return 'düğüm(' + value.data + ')';
+	if(value === null) return 'null';
+	if(value === undefined) return 'tanımsız';
+	return String(value);
 }
 
 // run the body of a loop; returns 'break' when a break statement left the loop
@@ -1115,6 +1373,12 @@ function explainError(err, source){
 	if(err && err.loopSignal) // break / continue that is not inside a loop
 		return 'Satır ' + err.lineNumber + ': ' + err.loopSignal + ' yalnızca bir döngünün (while ya da for) içinde kullanılabilir.';
 
+	if(err && err.returnSignal) // return that is not inside a function
+		return 'Satır ' + err.lineNumber + ': return yalnızca bir fonksiyonun içinde kullanılabilir.';
+
+	if(err instanceof RangeError && /call stack/i.test(err.message))
+		return 'Çok fazla iç içe fonksiyon çağrısı. Özyinelemenin bir durma koşulu var mı?';
+
 	var m, msg = (err && err.message) || String(err);
 
 	if(err && err.name === 'SyntaxError' && err.location){ // from the PEG parser
@@ -1137,6 +1401,9 @@ function explainError(err, source){
 
 	if((m = /^(\S+) is not defined/.exec(msg)))
 		return where + '"' + m[1] + '" tanımlı değil. Önce var ile tanımlayın (ör. var ' + m[1] + ' = ...).';
+
+	if((m = /^(\S+) is not a function/.exec(msg)))
+		return where + '"' + m[1] + '" bir fonksiyon değil. Fonksiyonu çağırmadan önce function ile tanımlayın.';
 
 	if(msg.indexOf('Satır ') === 0) // our own messages already say where
 		return msg;
@@ -1175,6 +1442,16 @@ window.parse = function(text) {
 
 		if(/\.prev\b/.test(text))
 			doublyRequested = true;
+
+		frames = []; // a previous run may have stopped inside a call
+		if(unfinishedCalls.length){ // ... and left its frames in the panel: remove them first
+			var stale = unfinishedCalls;
+			unfinishedCalls = [];
+			player.add(function(){ stale.forEach(dropFrame); returnNote = ''; renderCallStack(); });
+		}
+
+		// functions can be called before the line that defines them (as in JavaScript)
+		result.forEach(function(item){ if(item.type === 'function') defineFunction(item); });
 
 		player.play();
 		recursivelyProcess(result);

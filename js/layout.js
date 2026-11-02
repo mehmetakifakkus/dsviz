@@ -37,6 +37,10 @@
 			['stack.html', 'Yığın (stack): push ve pop'],
 			['queue.html', 'Kuyruk (queue): enqueue ve dequeue']
 		]},
+		{ group: 'Fonksiyonlar', items: [
+			['functions.html', 'Fonksiyonlar: push ve pop'],
+			['recursion.html', 'Özyineleme (recursion)']
+		]},
 		{ group: 'İki liste', items: [
 			['checkIfTwoLinkedListAreEqual.html', 'İki liste eşit mi?'],
 			['compareLinkedListCheckOneIsGreater.html', 'İlk liste daha mı büyük?'],
@@ -156,6 +160,7 @@
 	// ---------- visualisation card ----------
 	var viz = el('div', {'class': 'card viz'},
 		'<div class="viz-canvas"><canvas id="myCanvas0" width="800" height="260"></canvas></div>' +
+		'<div class="viz-stack" hidden><div class="panel-title">Çağrı yığını</div><ol id="callstack"></ol><div id="callstack-note"></div></div>' +
 		'<div class="viz-vars"><div class="panel-title">Değişkenler</div><ul id="variables"></ul></div>' +
 		'<div class="tabs"><button class="tab active" data-tab="tab-output">Çıktı</button><button class="tab" data-tab="tab-command">Komut satırı</button><span id="resultSign"></span></div>' +
 		'<div class="tab-body" id="tab-output"><pre id="output"></pre></div>' +

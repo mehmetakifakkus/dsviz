@@ -70,7 +70,7 @@ function evaluateCommand(){
 
 	if(res.type == 'logical')
 	{
-		var result = eval(res.text)
+		var result = 'value' in res ? res.value : eval(res.text) // the value the run computed
 		document.getElementById("output").textContent = JSON.stringify(result, null, 2);
 		return;
 	}
@@ -93,7 +93,7 @@ function evaluateCommand(){
 
 	if(res.type == 'expression')
 	{
-		var evaluation = eval(res.text);
+		var evaluation = 'value' in res ? res.value : eval(res.text); // do not call a function twice
 
 		document.getElementById("output").textContent = JSON.stringify(typeof evaluation == 'object' ? createSummary(evaluation) : evaluation, null, 3);
 

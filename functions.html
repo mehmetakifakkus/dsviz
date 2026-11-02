@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fonksiyonlar: push ve pop | Bağlı Listeler</title>
+<script>
+  // apply the saved or the system theme before the page is drawn
+  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
+    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t); })();
+</script>
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1>Fonksiyonlar: push ve pop</h1>
+<p class="lead">Blokları sırayla çalıştırın. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p>Aynı işi tekrar tekrar yazmak yerine bir kez <code>function</code> ile tanımlayıp adıyla çağırabiliriz (Türkçesi <code>fonksiyon</code> da yazılabilir). Parantez içindeki <code>v</code> fonksiyonun <em>parametresidir</em>: çağırırken verilen değeri alır. Fonksiyonun içinde <code>var</code> ile tanımlanan değişkenler (<code>n</code>, <code>t</code>) <em>yereldir</em>: yalnızca o çağrı sürerken vardır ve çizimde mor renkte görünür. <code>tepe</code> fonksiyonların dışında tanımlandığı için globaldir, fonksiyonlar onu değiştirebilir. Bu blok fonksiyonları yalnızca tanımlar, henüz liste çizilmez.</p>
+<textarea id="text1" class="deneme">
+var tepe = null
+
+function push(v)
+{
+  var n = new Node(v)
+  n.next = tepe
+  tepe = n
+}
+
+function pop()
+{
+  var t = tepe
+  tepe = tepe.next
+  var v = t.data
+  delete t
+  return v  // çağrının sonucu
+}
+</textarea>
+
+<p>Şimdi fonksiyonları çağıralım. Her çağrı, görselleştirmenin altındaki <strong>Çağrı yığını</strong> panelinde parametreleri ve yerel değişkenleriyle görünür; çağrı bitince panelden kalkar ve yerel pointer'ları çizimden silinir. <code>return</code> ile döndürülen değer çağrının yerine geçer: <code>var a = pop()</code> satırında <code>a</code>, <code>pop</code>'un döndürdüğü değeri alır.</p>
+<textarea id="text2" class="deneme">
+push(1)
+push(2)
+push(3)
+var a = pop()
+var b = pop()
+print "çıkanlar: " + a + ", " + b
+</textarea>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

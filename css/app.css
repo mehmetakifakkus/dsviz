@@ -22,6 +22,7 @@
   --viz-text: #111827;
   --viz-named: #2563eb;    /* the variable a node was created with: x, y... */
   --viz-pointer: #dc2626;  /* pointers: p, curr, slow... */
+  --viz-local: #7c3aed;    /* local variables of a function call */
 
   /* code editor */
   --code-bg: #fbfcfe;
@@ -66,6 +67,7 @@
   --viz-text: #f1f5f9;
   --viz-named: #7aa2ff;
   --viz-pointer: #ff7b72;
+  --viz-local: #c4a5ff;
 
   --code-bg: #121924;
   --cm-keyword: #c792ea;
@@ -230,6 +232,17 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 #resultSign { font-size: 12px; margin-left: 8px; }
 #resultSign.label-success { color: #16a34a; }
 #resultSign.label-warning { color: var(--viz-pointer); }
+
+/* call stack: the running calls, innermost on top */
+.viz-stack { border-top: 1px solid var(--border); padding: 10px 14px; }
+#callstack { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#callstack li { border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--surface-2); }
+#callstack li.current { border-left-color: var(--viz-local); }
+.frame-head { font: 600 13px ui-monospace, Menlo, Consolas, monospace; color: var(--viz-local); }
+.frame-vars { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; font: 12px ui-monospace, Menlo, Consolas, monospace; color: var(--text); }
+.frame-var.is-null { color: var(--viz-pointer); }
+#callstack-note { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+#callstack-note:empty { display: none; }
 
 /* ---------- main page: example groups ---------- */
 .example-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-top: 8px; }

@@ -8,12 +8,13 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 
 ## Neler var?
 
-- Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `if`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
+- Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `for`, `if`, `function`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
+- Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır.
 - Düğümler otomatik yerleşir: her liste kendi satırında soldan sağa durur, değişiklikler animasyonla gösterilir.
 - Değişkenler görselleştirmenin altındaki panelde listelenir; tüm örneklere üst çubuktaki menüden ulaşılır. Açık ve koyu tema vardır, telefonda da kullanılabilir.
 - Hatalar Türkçe ve anlaşılır biçimde açıklanır (hangi satırda, ne yanlış gitti).
-- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, iki listeyi karşılaştırma ve birleştirme.
+- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
 
 ## Yerelde çalıştırma
 
