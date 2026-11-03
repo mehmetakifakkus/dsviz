@@ -298,6 +298,36 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('an array is drawn as buckets, each chain on its row', async ({ page }) => {
+		const problems = await openPage(page, 'hashTable.html');
+		await runBlock(page, 1);
+		const drawn = await state(page);
+		expect(drawn.rows).toEqual([[15], [17, 22, 7, 12], [8, 3]]); // buckets 0, 2, 3 (rows of empty buckets have no nodes)
+		expect(drawn.lost).toEqual([]);
+
+		await runCode(page, 'table[4] = new Node(9)\n');
+		await expect(page.locator('#narration')).toHaveText('table[4] yeni bir düğümü gösteriyor: [9].');
+		await runCode(page, 'table[2] = null\n'); // the chain of bucket 2 is lost
+		expect((await state(page)).lost.sort((a, b) => a - b)).toEqual([7, 12, 17, 22]);
+
+		await page.locator('.tab[data-tab="tab-command"]').click();
+		await page.keyboard.type('table');
+		await page.keyboard.press('Enter');
+		expect(JSON.parse(await outputText(page))).toEqual([{ data: 15, next: null }, null, null, { data: 8, next: { data: 3, next: null } }, { data: 9, next: null }]);
+		expect(problems).toEqual([]);
+	});
+
+	test('array errors are explained', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var t = new Array(3)\nt[3] = 1\n');
+		await expect(page.locator('#output')).toContainText('t[3]: dizinin 3 hücresi var, geçerli indisler 0 ile 2 arası.');
+		await runCode(page, 'var u = new Array(0)\n');
+		await expect(page.locator('#output')).toContainText('Dizi boyutu 1 ile 50 arasında bir tam sayı olmalı (0 verildi).');
+		await runCode(page, 'var w = 5\nw[0] = 1\n');
+		await expect(page.locator('#output')).toContainText('"w" bir dizi değil');
+		expect(problems).toEqual([]);
+	});
+
 	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
 		const problems = await openPage(page, 'binarySearchTree.html');
 		await runBlock(page, 0);

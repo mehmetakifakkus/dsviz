@@ -72,6 +72,9 @@
 			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}],
 			['treeDelete.html', {tr: 'Ağaçta silme', en: 'Deleting from a tree', de: 'Löschen im Baum'}],
 			['avlTree.html', {tr: 'AVL ağacı: döndürmelerle dengeleme', en: 'AVL tree: balancing with rotations', de: 'AVL-Baum: ausgleichen mit Rotationen'}]
+	]},
+		{ group: {tr: 'Hash tablosu', en: 'Hash table', de: 'Hashtabelle'}, items: [
+			['hashTable.html', {tr: 'Zincirlemeli hash tablosu', en: 'Hash table with chaining', de: 'Hashtabelle mit Verkettung'}]
 		]}
 	];
 

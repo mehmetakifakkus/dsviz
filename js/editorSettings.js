@@ -89,6 +89,8 @@ function evaluateCommand(){
 	function createSummary(tree, seen, isTree){
 		if(tree == null)
 			return null;
+		if(tree.dsvArray) // an array: each cell on its own
+			return tree.map(function(cell){ return cell && typeof cell === 'object' ? createSummary(cell) : cell; });
 		seen = seen || [];
 		if(isTree === undefined) // a tree when the first node has a child; then its leaves are tree nodes too
 			isTree = !!(tree.left || tree.right);

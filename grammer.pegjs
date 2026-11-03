@@ -142,6 +142,7 @@ block_item
 	/ object_statement	
 	/ Object_Constructor
 	/ free_item
+	/ index_assignment
 		
 	/ left_right_object_poperty 
 	/ left_object_poperty
@@ -183,12 +184,14 @@ init_declarator_list
  = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
 
 init_declarator
-	= _ left:name _"="_ exp: (node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(]) { return o; }) / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
+	= _ left:name _"="_ exp: (array_constructor / node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(]) { return o; }) / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
 
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
     else if(exp.type == 'node') // x = new Node(9): without this it was read as "x = new" and "Node(9)"
         return {'lhs': left, 'rhs': exp, 'text': left + ' = new Node(' + exp.data + ')'};
+    else if(exp.type == 'array') // table = new Array(5)
+        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Array(' + exp.size + ')'};
     else
         return {'lhs': left, 'rhs': exp.text};
 }   
@@ -219,6 +222,23 @@ object_statement
  
 Object_Constructor
  = node
+
+// new Array(5) (or: new Dizi(5)): an array of 5 cells, all null
+array_constructor
+ = _ 'new'? _ ('Array' / 'Dizi') !idChar _ '(' _ size:expression_statement _ ')' _ comment? _ nl {
+	return {'type': 'array', 'size': size.text, 'lineNumber': location().start.line};
+ }
+
+// table[k], table[hash(v)].data: reading a cell inside an expression (evaluated as JavaScript)
+index_access
+ = name _ '[' _ expression_statement _ ']' ('.' name)* { return text(); }
+
+// table[k] = n   /   table[k] = p.next   /   table[k] = new Node(5)
+index_assignment
+ = _ a:name _ '[' _ i:expression_statement _ ']' _ '=' !'=' _ right:(Object_Constructor / e:expression_statement { return e.text.trim(); }) _ nl {
+	return {'type': 'array assignment', '#evaluation': 0, 'array': a, 'index': i.text, 'rhs': right,
+	        'text': a + '[' + i.text + '] = ' + (typeof right === 'string' ? right : 'new Node(' + right.data + ')'), 'lineNumber': location().start.line};
+ }
  
 // Node(5), Node(i), Node(p.data + 1): a number literal stays a number, anything else is
 // kept as an expression and evaluated when the statement runs
@@ -272,6 +292,7 @@ Term
 Factor
   = "(" _ expr:expression_statement _ ")" { return expr; }
   / c:call_expression { return c; }
+  / ia:index_access { return ia; }
   / op: object_poperty {return op.text;}
   / f:Float { return f.text;}
   / i:Integer { return i.text;}
