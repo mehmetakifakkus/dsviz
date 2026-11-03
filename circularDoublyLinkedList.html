@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dairesel çift yönlü liste | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Dairesel çift yönlü liste</h1>
+<h1 data-lang="en">Circular doubly linked list</h1>
+<h1 data-lang="de">Zirkuläre doppelt verkettete Liste</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Dairesel çift yönlü listede iki halka vardır: son düğümün <code>next</code>'i başı, başın <code>prev</code>'i son düğümü gösterir. Hiçbir bağ <code>null</code> değildir; listede hem ileri hem geri sonsuza kadar dönülebilir. Çizimde sondan başa giden <code>next</code> satırın üstünden, baştan sona giden <code>prev</code> satırın altından dolaşır. Önce dört düğümlü halkayı kuralım.</p>
+<p data-lang="en">A circular doubly linked list has two rings: the <code>next</code> of the last node points to the head, and the <code>prev</code> of the head points to the last node. No link is <code>null</code>; you can go round forwards and backwards for ever. In the drawing, the <code>next</code> from the tail to the head goes around above the row, and the <code>prev</code> from the head to the tail around below it. First we build a ring of four nodes.</p>
+<p data-lang="de">Eine zirkuläre doppelt verkettete Liste hat zwei Ringe: <code>next</code> des letzten Knotens zeigt auf den Kopf, <code>prev</code> des Kopfes auf den letzten Knoten. Keine Verbindung ist <code>null</code>; man kann vorwärts und rückwärts endlos im Kreis gehen. In der Zeichnung läuft das <code>next</code> vom Ende zum Kopf oberhalb der Zeile herum, das <code>prev</code> vom Kopf zum Ende unterhalb. Zuerst bauen wir einen Ring aus vier Knoten.</p>
+
+<textarea id="text1" class="deneme">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i &lt;= 4; i++)
+{
+  var n = new Node(i)
+  tail.next = n
+  n.prev = tail
+  tail = n
+}
+tail.next = head     // halka: sondan başa
+head.prev = tail     // ve baştan sona
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 4; i++)
+{
+  var n = new Node(i)
+  tail.next = n
+  n.prev = tail
+  tail = n
+}
+tail.next = head     // the ring: from the tail to the head
+head.prev = tail     // and from the head to the tail
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 4; i++)
+{
+  var n = new Node(i)
+  tail.next = n
+  n.prev = tail
+  tail = n
+}
+tail.next = head     // der Ring: vom Ende zum Kopf
+head.prev = tail     // und vom Kopf zum Ende
+</script>
+
+<p data-lang="tr">Geriye doğru dolaşmak için ayrı bir son pointer'ı gerekmez: son düğüm her zaman <code>head.prev</code>'dir. Oradan başlayıp <code>prev</code> bağlarını izleriz ve yeniden <code>head.prev</code>'e gelince dururuz; değerler sondan başa yazılır.</p>
+<p data-lang="en">Walking backwards needs no separate tail pointer: the last node is always <code>head.prev</code>. We start there, follow the <code>prev</code> links and stop when we reach <code>head.prev</code> again; the values come out from the last to the first.</p>
+<p data-lang="de">Für den Rückwärtslauf braucht man keinen eigenen Zeiger aufs Ende: der letzte Knoten ist immer <code>head.prev</code>. Wir beginnen dort, folgen den <code>prev</code>-Verbindungen und hören auf, wenn wir wieder bei <code>head.prev</code> sind; die Werte kommen vom letzten zum ersten heraus.</p>
+
+<textarea id="text2" class="deneme">
+var p = head.prev        // son düğüm: baştan bir geri
+print p.data
+p = p.prev
+while(p != head.prev)    // başın bir gerisine dönünce dur
+{
+  print p.data
+  p = p.prev
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var p = head.prev        // the last node: one step back from the head
+print p.data
+p = p.prev
+while(p != head.prev)    // stop when back at the last node
+{
+  print p.data
+  p = p.prev
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var p = head.prev        // der letzte Knoten: einen Schritt hinter dem Kopf
+print p.data
+p = p.prev
+while(p != head.prev)    // anhalten, wenn wir wieder beim letzten sind
+{
+  print p.data
+  p = p.prev
+}
+</script>
+
+<p data-lang="tr">Sona ekleme de dolaşmadan, O(1) zamanda yapılır: yeni düğüm son düğüm ile baş arasına girer ve dört bağ değişir. <code>tail</code> değişkenini de yeni düğüme taşıyoruz; çizim halkayı <code>tail</code>'den sonra başlatır, böylece 5 satırın sonuna yerleşir.</p>
+<p data-lang="en">Appending also needs no walk and takes O(1) time: the new node goes between the last node and the head, and four links change. We move the variable <code>tail</code> to the new node too; the drawing starts the ring after <code>tail</code>, so 5 takes its place at the end of the row.</p>
+<p data-lang="de">Auch das Anhängen braucht keinen Durchlauf und dauert O(1): der neue Knoten kommt zwischen den letzten Knoten und den Kopf, und vier Verbindungen ändern sich. Auch die Variable <code>tail</code> setzen wir auf den neuen Knoten; die Zeichnung beginnt den Ring nach <code>tail</code>, so steht 5 am Ende der Zeile.</p>
+
+<textarea id="text3" class="deneme">
+var last = head.prev     // son düğüm, dolaşmadan
+var m = new Node(5)
+m.next = head            // yeni düğüm baş ile son arasına
+m.prev = last
+last.next = m
+head.prev = m
+tail = m                 // tail de yeni son düğüme geçer
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var last = head.prev     // the last node, without walking
+var m = new Node(5)
+m.next = head            // the new node goes between the tail and the head
+m.prev = last
+last.next = m
+head.prev = m
+tail = m                 // tail moves to the new last node too
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var last = head.prev     // der letzte Knoten, ohne Durchlaufen
+var m = new Node(5)
+m.next = head            // der neue Knoten kommt zwischen Ende und Kopf
+m.prev = last
+last.next = m
+head.prev = m
+tail = m                 // auch tail wandert zum neuen letzten Knoten
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

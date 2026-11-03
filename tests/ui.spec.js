@@ -543,6 +543,18 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('a circular doubly linked list: both rings drawn, read backwards, appended in O(1)', async ({ page }) => {
+		const problems = await openPage(page, 'circularDoublyLinkedList.html');
+		await runBlock(page, 1);
+		expect(await outputText(page)).toBe('4\n3\n2\n1\n');
+		await runBlock(page, 2);
+		const drawn = await state(page);
+		expect(drawn.doubly).toBe(true);
+		expect(drawn.rows).toEqual([[1, 2, 3, 4, 5]]);
+		expect(drawn.lost).toEqual([]);
+		expect(problems).toEqual([]);
+	});
+
 	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
 		const problems = await openPage(page, 'binarySearchTree.html');
 		await runBlock(page, 0);

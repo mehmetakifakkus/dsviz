@@ -465,6 +465,11 @@ function nodeArrow(from, to, kind, color){
 		line = r.line; end = r.end; angle = r.angle;
 		line.strokeColor = color; line.strokeWidth = 2;
 	}
+	else if(sameRow && !isNext && dx > colWidth + 1) {    // prev from the head to the tail (a circle): a loop under the row
+		var rb = returnLoopBelow(from, to, start);
+		line = rb.line; end = rb.end; angle = rb.angle;
+		line.strokeColor = color; line.strokeWidth = 2;
+	}
 	else if(sameRow) {                                    // to the left neighbour (a reversed list) or skipping forwards: an arc
 		end = b + [g.width / 2, isNext ? 0 : NODE_H];
 		var bulge = 18 + Math.abs(dx) * 0.1;
@@ -518,6 +523,24 @@ function returnLoop(from, to, start){
 	var end = b + [g.nextX + 10, 0];
 	var points = [start, new Point(right, start.y), new Point(right, top), new Point(end.x, top), end];
 	return {line: roundedPath(points, 10), end: end, angle: 90};
+}
+
+// The mirror of returnLoop for prev in a circular doubly linked list: from the head's prev cell
+// left, down under the row (under the pointer names drawn below it, if any), along to the
+// tail and up into the bottom of its prev cell.
+var LOOP_SINK = 86, LOOP_SINK_LOW = 22; // the drawing keeps room for it (extent: NODE_H + 100)
+function returnLoopBelow(from, to, start){
+	var a = from.position, b = to.position, g = geometry();
+	var left = a.x - 20, rightEdge = b.x + g.width + 50;
+	var crowded = pointers.some(function(p){
+		var n = p.active && p.direction !== 'up' && p.points;
+		return n && n.shown && n.position && Math.abs(n.position.y - a.y) < 1 && n.position.x >= left && n.position.x <= rightEdge;
+	});
+	var bottom = a.y + NODE_H + (crowded ? LOOP_SINK : LOOP_SINK_LOW);
+	var outside = a.x - 14;
+	var end = b + [10, NODE_H];
+	var points = [start, new Point(outside, start.y), new Point(outside, bottom), new Point(end.x, bottom), end];
+	return {line: roundedPath(points, 10), end: end, angle: -90};
 }
 
 // n.next = n: a small loop from the next cell back into the node's top
@@ -839,7 +862,7 @@ function layout(tidy){
 	for(i=0; i < shown.length; i++)
 		maxRowUsed = Math.max(maxRowUsed, shown[i].cell.row);
 	extent = shown.length
-		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 85}
+		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 100}
 		: null;
 
 	var rows = rowArrays();
