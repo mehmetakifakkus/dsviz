@@ -46,6 +46,20 @@ var h = new Node(9)  // der neue Knoten
 h.next = x           // vor den Kopf hängen
 x = h                // x ist jetzt der neue Kopf
 </script>
+
+<p data-lang="tr">Aynı üç adım tek satırda da yazılabilir: <code>Node</code>'a verilen ikinci değer yeni düğümün <code>next</code>'idir. <code>new Node(8, x)</code> önce eski başı gösteren yeni düğümü oluşturur, sonra <code>x</code> ona taşınır; sağ taraf atamadan önce hesaplandığı için eski baş kaybolmaz.</p>
+<p data-lang="en">The same three steps also fit in one line: the second value given to <code>Node</code> is the new node's <code>next</code>. <code>new Node(8, x)</code> first creates the new node pointing to the old head, then <code>x</code> moves to it; the right-hand side is computed before the assignment, so the old head is not lost.</p>
+<p data-lang="de">Dieselben drei Schritte passen auch in eine Zeile: der zweite Wert für <code>Node</code> ist das <code>next</code> des neuen Knotens. <code>new Node(8, x)</code> erzeugt zuerst den neuen Knoten, der auf den alten Kopf zeigt, dann wandert <code>x</code> zu ihm; die rechte Seite wird vor der Zuweisung berechnet, daher geht der alte Kopf nicht verloren.</p>
+
+<textarea id="text3" class="deneme">
+x = new Node(8, x)   // yeni düğüm, next'i eski baş
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+x = new Node(8, x)   // a new node whose next is the old head
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+x = new Node(8, x)   // ein neuer Knoten, sein next ist der alte Kopf
+</script>
 </main>
 
 <script src="js/layout.js"></script>

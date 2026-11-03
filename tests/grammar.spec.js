@@ -115,6 +115,13 @@ test('every name of a comma-separated declaration is declared', () => {
 	expect(parse('var v = f(1, 2), q = 3\n').map(d => d.rhs)).toEqual(['f(1, 2)', '3']); // the comma of a call is not a separator
 });
 
+test('the second value of Node is the new node\'s next', () => {
+	expect(parse('head = new Node(0, head)\n')[0]).toMatchObject({ type: 'assignment', lhs: 'head', rhs: { type: 'node', data: 0, next: 'head' } });
+	expect(parse('x.next = new Node(5, x.next)\n')[0].rhs).toMatchObject({ data: 5, next: 'x.next' });
+	expect(parse('var n = Node(p.data + 1, null)\n')[0].rhs).toMatchObject({ data: 'p.data + 1', next: 'null' });
+	expect(parse('var m = new Node(4)\n')[0].rhs.next).toBe(null);
+});
+
 test('functions, return and calls', () => {
 	const result = parse('function push(v, w)\n{\n  var n = new Node(v)\n  return n\n}\nfonksiyon f()\n{\n  döndür\n}\nvar a = push(1, 2) + 1\n');
 	expect(result[0]).toMatchObject({ type: 'function', name: 'push', params: ['v', 'w'], lineNumber: 1, endLine: 5 });

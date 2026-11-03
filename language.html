@@ -32,6 +32,7 @@
 <tbody>
 <tr><td><code>var x = new Node(5)</code></td><td>Yeni bir düğüm; <code>x</code> onu gösterir.</td></tr>
 <tr><td><code>x.next = y</code></td><td><code>x</code>'ten <code>y</code>'ye bağ kurar.</td></tr>
+<tr><td><code>x = new Node(0, x)</code></td><td><code>next</code>'i <code>x</code> olan yeni düğüm (başa ekleme).</td></tr>
 <tr><td><code>x.next = null</code></td><td>Bağı keser.</td></tr>
 <tr><td><code>p = p.next</code></td><td>Pointer'ı bir sonraki düğüme taşır.</td></tr>
 <tr><td><code>x.data = 7</code></td><td>Düğümün değerini değiştirir.</td></tr>
@@ -51,6 +52,7 @@
 <tbody>
 <tr><td><code>var x = new Node(5)</code></td><td>A new node; <code>x</code> points to it.</td></tr>
 <tr><td><code>x.next = y</code></td><td>Links <code>x</code> to <code>y</code>.</td></tr>
+<tr><td><code>x = new Node(0, x)</code></td><td>A new node whose <code>next</code> is <code>x</code> (insert at the head).</td></tr>
 <tr><td><code>x.next = null</code></td><td>Cuts the link.</td></tr>
 <tr><td><code>p = p.next</code></td><td>Moves the pointer to the next node.</td></tr>
 <tr><td><code>x.data = 7</code></td><td>Changes the node's value.</td></tr>
@@ -70,6 +72,7 @@
 <tbody>
 <tr><td><code>var x = new Node(5)</code></td><td>Ein neuer Knoten; <code>x</code> zeigt auf ihn.</td></tr>
 <tr><td><code>x.next = y</code></td><td>Verbindet <code>x</code> mit <code>y</code>.</td></tr>
+<tr><td><code>x = new Node(0, x)</code></td><td>Ein neuer Knoten, dessen <code>next</code> <code>x</code> ist (am Anfang einfügen).</td></tr>
 <tr><td><code>x.next = null</code></td><td>Trennt die Verbindung.</td></tr>
 <tr><td><code>p = p.next</code></td><td>Rückt den Zeiger zum nächsten Knoten.</td></tr>
 <tr><td><code>x.data = 7</code></td><td>Ändert den Wert des Knotens.</td></tr>
@@ -108,9 +111,9 @@ print "a = " + a + ", b = " + b + ", d = " + d
 <h2 data-lang="en">Nodes and links</h2>
 <h2 data-lang="de">Knoten und Verbindungen</h2>
 
-<p data-lang="tr"><code>new Node(değer)</code> yeni bir düğüm oluşturur (<code>new</code> yazılmasa da olur); değer bir ifade de olabilir. Her düğümün <code>data</code> (değer) ve <code>next</code> (sonraki düğüm) alanları vardır; <code>next</code> başta <code>null</code>'dır. Bir değişken düğümün kendisini değil, onu gösteren bir <em>pointer</em>'ı tutar: <code>p = x</code> yeni bir düğüm oluşturmaz, iki değişken aynı düğümü gösterir. Alanlar zincirlenebilir: <code>x.next.next.data</code>. <code>delete</code> bir düğümü siler; ona hâlâ ulaşan bir bağ ya da pointer kalmamasına dikkat etmek programcının işidir. Artık hiçbir yerden ulaşılamayan düğümler soluk çizilir ve uyarı verilir.</p>
-<p data-lang="en"><code>new Node(value)</code> makes a new node (<code>new</code> may be left out); the value can be an expression. Every node has the fields <code>data</code> (its value) and <code>next</code> (the next node); <code>next</code> starts as <code>null</code>. A variable does not hold the node itself but a <em>pointer</em> to it: <code>p = x</code> makes no new node, the two variables point to the same node. Fields can be chained: <code>x.next.next.data</code>. <code>delete</code> deletes a node; making sure that no link or pointer still leads to it is the programmer's job. Nodes that nothing reaches any more are drawn faded, with a warning.</p>
-<p data-lang="de"><code>new Node(Wert)</code> erzeugt einen neuen Knoten (<code>new</code> darf fehlen); der Wert kann ein Ausdruck sein. Jeder Knoten hat die Felder <code>data</code> (sein Wert) und <code>next</code> (der nächste Knoten); <code>next</code> ist anfangs <code>null</code>. Eine Variable enthält nicht den Knoten selbst, sondern einen <em>Zeiger</em> auf ihn: <code>p = x</code> erzeugt keinen neuen Knoten, beide Variablen zeigen auf denselben Knoten. Felder lassen sich verketten: <code>x.next.next.data</code>. <code>delete</code> löscht einen Knoten; dafür zu sorgen, dass keine Verbindung und kein Zeiger mehr zu ihm führt, ist Aufgabe des Programmierers. Knoten, die nichts mehr erreicht, werden blass gezeichnet, mit einer Warnung.</p>
+<p data-lang="tr"><code>new Node(değer)</code> yeni bir düğüm oluşturur (<code>new</code> yazılmasa da olur); değer bir ifade de olabilir. İkinci bir değer verilirse yeni düğümün <code>next</code>'i olur: <code>head = new Node(0, head)</code> başa ekler. Her düğümün <code>data</code> (değer) ve <code>next</code> (sonraki düğüm) alanları vardır; <code>next</code> başta <code>null</code>'dır. Bir değişken düğümün kendisini değil, onu gösteren bir <em>pointer</em>'ı tutar: <code>p = x</code> yeni bir düğüm oluşturmaz, iki değişken aynı düğümü gösterir. Alanlar zincirlenebilir: <code>x.next.next.data</code>. <code>delete</code> bir düğümü siler; ona hâlâ ulaşan bir bağ ya da pointer kalmamasına dikkat etmek programcının işidir. Artık hiçbir yerden ulaşılamayan düğümler soluk çizilir ve uyarı verilir.</p>
+<p data-lang="en"><code>new Node(value)</code> makes a new node (<code>new</code> may be left out); the value can be an expression. A second value becomes the new node's <code>next</code>: <code>head = new Node(0, head)</code> inserts at the head. Every node has the fields <code>data</code> (its value) and <code>next</code> (the next node); <code>next</code> starts as <code>null</code>. A variable does not hold the node itself but a <em>pointer</em> to it: <code>p = x</code> makes no new node, the two variables point to the same node. Fields can be chained: <code>x.next.next.data</code>. <code>delete</code> deletes a node; making sure that no link or pointer still leads to it is the programmer's job. Nodes that nothing reaches any more are drawn faded, with a warning.</p>
+<p data-lang="de"><code>new Node(Wert)</code> erzeugt einen neuen Knoten (<code>new</code> darf fehlen); der Wert kann ein Ausdruck sein. Ein zweiter Wert wird das <code>next</code> des neuen Knotens: <code>head = new Node(0, head)</code> fügt am Anfang ein. Jeder Knoten hat die Felder <code>data</code> (sein Wert) und <code>next</code> (der nächste Knoten); <code>next</code> ist anfangs <code>null</code>. Eine Variable enthält nicht den Knoten selbst, sondern einen <em>Zeiger</em> auf ihn: <code>p = x</code> erzeugt keinen neuen Knoten, beide Variablen zeigen auf denselben Knoten. Felder lassen sich verketten: <code>x.next.next.data</code>. <code>delete</code> löscht einen Knoten; dafür zu sorgen, dass keine Verbindung und kein Zeiger mehr zu ihm führt, ist Aufgabe des Programmierers. Knoten, die nichts mehr erreicht, werden blass gezeichnet, mit einer Warnung.</p>
 
 <textarea id="text2" class="deneme">
 var x = new Node(1)

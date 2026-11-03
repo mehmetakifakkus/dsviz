@@ -158,6 +158,7 @@ function Node(content, next){
 
 	this.data = (content === undefined || content === null) ? '' : content;
 	this.next = next || null;
+	this.firstNext = this.next; // new Node(0, head): the link it was made with, drawn when it appears
 	this.prev = null;
 	this.left = null;  // a tree node's children
 	this.right = null;
@@ -229,6 +230,22 @@ function Node(content, next){
 }
 
 window.Node = Node;
+
+// new Node(value) or new Node(value, next) from the grammar's node object
+function makeNode(rhs){
+	var next = rhs.next ? evalExpr(rhs.next) : null;
+	if(next === undefined)
+		next = null;
+	if(next !== null && !isNode(next))
+		throw ownError(currentLine, 'eNodeNext', {value: formatValue(next)});
+	return new Node(evalExpr(rhs.data), next);
+}
+
+// a new node appears with the link it was made with
+function showNewNode(n){
+	n.shown = true;
+	n.visualNext = n.firstNext;
+}
 
 function enableTreeMode(){
 	treeMode = true;
@@ -1393,6 +1410,7 @@ function describe(line, res, removed){
 	switch(line.type){
 	case 'declaration':
 	case 'assignment':
+		if(line.rhs.type == 'node' && res.firstNext) return t('nNewNodeNext', {name: name, node: nodeLabel(res), next: nodeLabel(res.firstNext)});
 		if(line.rhs.type == 'node') return t('nNewNode', {name: name, node: nodeLabel(res)});
 		if(line.rhs.type == 'array') return t('nNewArray', {name: name, n: res.length});
 		if(res === null || isNode(res)) return pointsTo(res);
@@ -1581,7 +1599,7 @@ function drawGraphics(line, result){
 			}
 			else if(line.rhs.type == 'node') 		//  x = Node(2)
 			{
-				res.shown = true;
+				showNewNode(res);
 				layout();
 
 				var key = pointerKey(line.lhs, scope);
@@ -1601,7 +1619,7 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 			if(res.newNode)
-				res.newNode.shown = true;
+				showNewNode(res.newNode);
 			res.array.visual.cells[res.index] = res.value;
 			focusEdge(res.array.visual, 'cell' + res.index);
 			layout();
@@ -1624,7 +1642,7 @@ function drawGraphics(line, result){
 			if(VISUAL_FIELD[res.prop])
 			{
 				if(res.newNode)
-					res.newNode.shown = true;
+					showNewNode(res.newNode);
 
 				res.target[VISUAL_FIELD[res.prop]] = res.value;
 				focusEdge(res.target, res.prop.slice(1));
@@ -1689,7 +1707,7 @@ function drawGraphics(line, result){
 // show a node that was created from the command prompt (Node(5))
 window.showNode = function(node){
 	player.add(function(){
-		node.shown = true;
+		showNewNode(node);
 		layout();
 	});
 }
@@ -1791,7 +1809,7 @@ function processOneItem(item){
 		item['#evaluation']++;
 
 		var value = item.rhs.type == 'node'   //  x = new? Node(2)  /  Node(i)
-			? new Node(evalExpr(item.rhs.data))
+			? makeNode(item.rhs)
 			: item.rhs.type == 'array' ? makeArray(evalExpr(item.rhs.size)) // table = new Array(5)
 			: evalExpr(item.rhs);
 
@@ -1827,7 +1845,7 @@ function processOneItem(item){
 
 		if(item.rhs.type == 'node')
 		{
-			newNode = new Node(evalExpr(item.rhs.data));
+			newNode = makeNode(item.rhs);
 			target[last.slice(1)] = newNode;
 		}
 		else
@@ -1847,7 +1865,7 @@ function processOneItem(item){
 			throw ownError(item.lineNumber, 'eIndex', {name: item.array, i: formatValue(index), n: arr.length, last: arr.length - 1});
 		var cellNode = null, cellValue;
 		if(item.rhs && item.rhs.type == 'node')
-			cellValue = cellNode = new Node(evalExpr(item.rhs.data));
+			cellValue = cellNode = makeNode(item.rhs);
 		else
 			cellValue = evalExpr(rhsCode(item.rhs));
 		arr[index] = cellValue;
