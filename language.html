@@ -19,9 +19,9 @@
 <p data-lang="en">The code on this site is written in a small language called <strong>Düğüm</strong>. Düğüm is a JavaScript-like language made for teaching data structures: it runs one line at a time, and what each line changes in the data structure is drawn on the canvas. The name is Turkish for <em>node</em>, the building block of the language; it also means <em>knot</em>, the place where two ropes are tied together, just as <code>next</code> links tie nodes together.</p>
 <p data-lang="de">Der Code auf dieser Seite ist in einer kleinen Sprache namens <strong>Düğüm</strong> geschrieben. Düğüm ist eine JavaScript-ähnliche Sprache zum Lehren von Datenstrukturen: sie führt eine Zeile nach der anderen aus, und was jede Zeile an der Datenstruktur ändert, wird auf der Zeichenfläche gezeichnet. Der Name ist das türkische Wort für <em>Knoten</em> (node), den Grundbaustein der Sprache; er bedeutet auch den Knoten in einem Seil, dort wo zwei Seile verbunden sind, so wie <code>next</code>-Verbindungen Knoten verbinden.</p>
 
-<p data-lang="tr">JavaScript bilen biri Düğüm kodunu hemen okur; yine de dil bilerek küçük tutuldu: her satırda tek bir komut vardır, dizi ve nesne yerine yalnızca düğümler vardır. Böylece öğrenci dile değil, veri yapısına odaklanır. Kodu her sayfada değiştirip yeniden çalıştırabilirsiniz; bu sayfanın blokları da çalışır.</p>
-<p data-lang="en">Anyone who knows JavaScript can read Düğüm code right away; still, the language is kept small on purpose: one statement per line, and nodes instead of arrays and objects. That way students focus on the data structure, not on the language. You can change and rerun the code on every page; the blocks on this page run too.</p>
-<p data-lang="de">Wer JavaScript kennt, kann Düğüm-Code sofort lesen; trotzdem ist die Sprache absichtlich klein gehalten: eine Anweisung pro Zeile und Knoten statt Arrays und Objekten. So konzentrieren sich Lernende auf die Datenstruktur, nicht auf die Sprache. Sie können den Code auf jeder Seite ändern und erneut ausführen; auch die Blöcke dieser Seite laufen.</p>
+<p data-lang="tr">JavaScript bilen biri Düğüm kodunu hemen okur; yine de dil bilerek küçük tutuldu: her satırda tek bir komut vardır, nesneler yerine düğümler ve basit diziler vardır. Böylece öğrenci dile değil, veri yapısına odaklanır. Kodu her sayfada değiştirip yeniden çalıştırabilirsiniz; bu sayfanın blokları da çalışır.</p>
+<p data-lang="en">Anyone who knows JavaScript can read Düğüm code right away; still, the language is kept small on purpose: one statement per line, and nodes and simple arrays instead of objects. That way students focus on the data structure, not on the language. You can change and rerun the code on every page; the blocks on this page run too.</p>
+<p data-lang="de">Wer JavaScript kennt, kann Düğüm-Code sofort lesen; trotzdem ist die Sprache absichtlich klein gehalten: eine Anweisung pro Zeile, und Knoten und einfache Arrays statt Objekten. So konzentrieren sich Lernende auf die Datenstruktur, nicht auf die Sprache. Sie können den Code auf jeder Seite ändern und erneut ausführen; auch die Blöcke dieser Seite laufen.</p>
 
 <h2 data-lang="tr">Kısa özet</h2>
 <h2 data-lang="en">Quick reference</h2>
@@ -42,6 +42,7 @@
 <tr><td><code>while(p) { … }</code></td><td>Koşul doğru oldukça tekrarlar.</td></tr>
 <tr><td><code>for(var i = 0; i &lt; 5; i++) { … }</code></td><td>Sayaçlı döngü; <code>break</code>, <code>continue</code>.</td></tr>
 <tr><td><code>function f(a) { … return a }</code></td><td>Fonksiyon; özyineleme de olur.</td></tr>
+<tr><td><code>var t = new Array(5)</code> <code>t[2] = x</code> <code>t[2].data</code></td><td>Dizi: hücreleri <code>null</code> ile başlar.</td></tr>
 <tr><td><code>p.prev</code> <code>t.left</code> <code>t.right</code></td><td>Çift yönlü liste ve ağaç bağları.</td></tr>
 <tr><td><code>// yorum</code></td><td>Satırın gerisi yorumdur.</td></tr>
 </tbody></table></div>
@@ -60,6 +61,7 @@
 <tr><td><code>while(p) { … }</code></td><td>Repeats while the condition is true.</td></tr>
 <tr><td><code>for(var i = 0; i &lt; 5; i++) { … }</code></td><td>A counting loop; <code>break</code>, <code>continue</code>.</td></tr>
 <tr><td><code>function f(a) { … return a }</code></td><td>A function; recursion works too.</td></tr>
+<tr><td><code>var t = new Array(5)</code> <code>t[2] = x</code> <code>t[2].data</code></td><td>An array: its cells start as <code>null</code>.</td></tr>
 <tr><td><code>p.prev</code> <code>t.left</code> <code>t.right</code></td><td>Doubly linked list and tree links.</td></tr>
 <tr><td><code>// comment</code></td><td>The rest of the line is a comment.</td></tr>
 </tbody></table></div>
@@ -78,6 +80,7 @@
 <tr><td><code>while(p) { … }</code></td><td>Wiederholt, solange die Bedingung wahr ist.</td></tr>
 <tr><td><code>for(var i = 0; i &lt; 5; i++) { … }</code></td><td>Zählschleife; <code>break</code>, <code>continue</code>.</td></tr>
 <tr><td><code>function f(a) { … return a }</code></td><td>Eine Funktion; Rekursion geht auch.</td></tr>
+<tr><td><code>var t = new Array(5)</code> <code>t[2] = x</code> <code>t[2].data</code></td><td>Ein Array: seine Zellen sind anfangs <code>null</code>.</td></tr>
 <tr><td><code>p.prev</code> <code>t.left</code> <code>t.right</code></td><td>Verbindungen in doppelt verketteten Listen und Bäumen.</td></tr>
 <tr><td><code>// Kommentar</code></td><td>Der Rest der Zeile ist ein Kommentar.</td></tr>
 </tbody></table></div>
@@ -314,6 +317,33 @@ değilse
 var r = karekök(16) + mutlak(-2) + tavan(2.5)
 </script>
 
+<h2 data-lang="tr">Diziler</h2>
+<h2 data-lang="en">Arrays</h2>
+<h2 data-lang="de">Arrays</h2>
+
+<p data-lang="tr"><code>new Array(n)</code> (ya da <code>new Dizi(n)</code>) <em>n</em> hücreli bir dizi oluşturur; hücrelerin hepsi başta <code>null</code>'dır. <code>t[i]</code> i numaralı hücredir (0'dan başlar); bir düğüm, bir sayı ya da <code>null</code> tutabilir. Hücre okumak her ifadede olur: <code>var p = t[k]</code>, <code>n.next = t[k]</code>, <code>t[k].data</code>. Hücreye yazmak <code>t[i] = …</code> ile yapılır. Dizi tuvalin solunda dikey hücreler olarak çizilir; bir hücre bir düğümü gösteriyorsa, o düğümden başlayan zincir hücrenin satırına yerleşir. Bu tam olarak zincirlemeli hash tablosunun görüntüsüdür (Örnekler menüsündeki hash tablosu sayfasına bakın). Bir dizi en fazla 50 hücreli olabilir; dizinin dışındaki bir indise yazmak açıklamalı bir hata verir.</p>
+<p data-lang="en"><code>new Array(n)</code> (or <code>new Dizi(n)</code>) makes an array of <em>n</em> cells; all cells start as <code>null</code>. <code>t[i]</code> is cell number i (counting from 0); it can hold a node, a number or <code>null</code>. Reading a cell works in any expression: <code>var p = t[k]</code>, <code>n.next = t[k]</code>, <code>t[k].data</code>. A cell is written with <code>t[i] = …</code>. The array is drawn as a column of cells on the left of the canvas; when a cell points to a node, the chain starting at that node is placed on the cell's row. That is exactly the picture of a hash table with chaining (see the hash table page in the Examples menu). An array can have at most 50 cells; writing to an index outside the array gives an explained error.</p>
+<p data-lang="de"><code>new Array(n)</code> (oder <code>new Dizi(n)</code>) erzeugt ein Array mit <em>n</em> Zellen; alle Zellen sind anfangs <code>null</code>. <code>t[i]</code> ist die Zelle Nummer i (ab 0 gezählt); sie kann einen Knoten, eine Zahl oder <code>null</code> enthalten. Eine Zelle lesen geht in jedem Ausdruck: <code>var p = t[k]</code>, <code>n.next = t[k]</code>, <code>t[k].data</code>. Geschrieben wird eine Zelle mit <code>t[i] = …</code>. Das Array wird links auf der Zeichenfläche als Spalte von Zellen gezeichnet; zeigt eine Zelle auf einen Knoten, steht die Kette ab diesem Knoten in der Zeile der Zelle. Genau so sieht eine Hashtabelle mit Verkettung aus (siehe die Seite zur Hashtabelle im Menü Beispiele). Ein Array kann höchstens 50 Zellen haben; das Schreiben an einen Index außerhalb des Arrays gibt einen erklärten Fehler.</p>
+
+<textarea id="text6" class="deneme">
+var t = new Array(3)
+t[0] = x                    // x listesinin başı
+t[2] = new Node(7)
+var first = t[0].data
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text6" data-lang="en">
+var t = new Array(3)
+t[0] = x                    // the head of the list x
+t[2] = new Node(7)
+var first = t[0].data
+</script>
+<script type="text/plain" class="code-variant" data-for="text6" data-lang="de">
+var t = new Array(3)
+t[0] = x                    // der Kopf der Liste x
+t[2] = new Node(7)
+var first = t[0].data
+</script>
+
 <h2 data-lang="tr">Çift yönlü listeler ve ağaçlar</h2>
 <h2 data-lang="en">Doubly linked lists and trees</h2>
 <h2 data-lang="de">Doppelt verkettete Listen und Bäume</h2>
@@ -334,9 +364,9 @@ var r = karekök(16) + mutlak(-2) + tavan(2.5)
 <h2 data-lang="en">Differences from JavaScript</h2>
 <h2 data-lang="de">Unterschiede zu JavaScript</h2>
 
-<p data-lang="tr">Her satırda tek komut olur ve satır sonunda <code>;</code> gerekmez. Dizi, nesne ve metin değişkeni yoktur; tek veri yapısı düğümdür. <code>var a = 1, b = 2</code> şimdilik yalnızca <code>a</code>'yı tanımlar. Fonksiyon içinde fonksiyon tanımlanamaz. Bir çağrının sonucunun alanı doğrudan okunamaz (<code>pop().data</code> yerine önce <code>var t = pop()</code>). Dilin grameri <code>grammer.pegjs</code> dosyasındadır (PEG.js); sayfa açılınca tarayıcıda derlenir.</p>
-<p data-lang="en">One statement per line, and no <code>;</code> needed at the end of a line. There are no arrays, objects or text variables; the only data structure is the node. <code>var a = 1, b = 2</code> only defines <code>a</code> for now. A function cannot be defined inside another function. The field of a call's result cannot be read directly (instead of <code>pop().data</code>, first <code>var t = pop()</code>). The grammar of the language is in the file <code>grammer.pegjs</code> (PEG.js); it is compiled in the browser when a page opens.</p>
-<p data-lang="de">Eine Anweisung pro Zeile, und am Zeilenende ist kein <code>;</code> nötig. Es gibt keine Arrays, Objekte oder Textvariablen; die einzige Datenstruktur ist der Knoten. <code>var a = 1, b = 2</code> definiert vorerst nur <code>a</code>. Eine Funktion kann nicht innerhalb einer anderen Funktion definiert werden. Das Feld eines Aufrufergebnisses kann man nicht direkt lesen (statt <code>pop().data</code> zuerst <code>var t = pop()</code>). Die Grammatik der Sprache steht in der Datei <code>grammer.pegjs</code> (PEG.js); sie wird beim Öffnen einer Seite im Browser übersetzt.</p>
+<p data-lang="tr">Her satırda tek komut olur ve satır sonunda <code>;</code> gerekmez. Nesne ve metin değişkeni yoktur; veri yapıları düğümler ve düğüm tutan dizilerle kurulur. <code>var a = 1, b = 2</code> şimdilik yalnızca <code>a</code>'yı tanımlar. Fonksiyon içinde fonksiyon tanımlanamaz. Bir çağrının sonucunun alanı doğrudan okunamaz (<code>pop().data</code> yerine önce <code>var t = pop()</code>). Dilin grameri <code>grammer.pegjs</code> dosyasındadır (PEG.js); sayfa açılınca tarayıcıda derlenir.</p>
+<p data-lang="en">One statement per line, and no <code>;</code> needed at the end of a line. There are no objects or text variables; data structures are built from nodes and arrays of nodes. <code>var a = 1, b = 2</code> only defines <code>a</code> for now. A function cannot be defined inside another function. The field of a call's result cannot be read directly (instead of <code>pop().data</code>, first <code>var t = pop()</code>). The grammar of the language is in the file <code>grammer.pegjs</code> (PEG.js); it is compiled in the browser when a page opens.</p>
+<p data-lang="de">Eine Anweisung pro Zeile, und am Zeilenende ist kein <code>;</code> nötig. Es gibt keine Objekte oder Textvariablen; Datenstrukturen werden aus Knoten und Arrays von Knoten gebaut. <code>var a = 1, b = 2</code> definiert vorerst nur <code>a</code>. Eine Funktion kann nicht innerhalb einer anderen Funktion definiert werden. Das Feld eines Aufrufergebnisses kann man nicht direkt lesen (statt <code>pop().data</code> zuerst <code>var t = pop()</code>). Die Grammatik der Sprache steht in der Datei <code>grammer.pegjs</code> (PEG.js); sie wird beim Öffnen einer Seite im Browser übersetzt.</p>
 </main>
 
 <script src="js/layout.js"></script>

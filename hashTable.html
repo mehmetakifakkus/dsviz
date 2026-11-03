@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hash tablosu (zincirleme) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Hash tablosu (zincirleme)</h1>
+<h1 data-lang="en">Hash table (chaining)</h1>
+<h1 data-lang="de">Hashtabelle (Verkettung)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Hash tablosu bir değeri, bütün yapıyı dolaşmadan, ortalama sabit zamanda bulmaya yarar. Değerler <em>m</em> tane <em>kovaya</em> (bucket) dağıtılır; bir değerin hangi kovaya gideceğini <em>hash fonksiyonu</em> söyler. Burada en basitini kullanıyoruz: değerin <em>m</em>'ye bölümünden kalan. Kovalar bir dizidedir: <code>new Array(m)</code> hücreleri <code>null</code> olan bir dizi oluşturur, <code>table[k]</code> k numaralı hücredir. Dizi solda dikey olarak çizilir; her hücrenin zinciri kendi satırında sağa doğru uzanır.</p>
+<p data-lang="en">A hash table finds a value in constant time on average, without walking the whole structure. The values are spread over <em>m</em> <em>buckets</em>; the <em>hash function</em> says which bucket a value goes to. Here we use the simplest one: the remainder of the value divided by <em>m</em>. The buckets are in an array: <code>new Array(m)</code> makes an array whose cells are <code>null</code>, and <code>table[k]</code> is cell number k. The array is drawn as a column on the left; the chain of each cell runs to the right on its row.</p>
+<p data-lang="de">Eine Hashtabelle findet einen Wert im Mittel in konstanter Zeit, ohne die ganze Struktur zu durchlaufen. Die Werte werden auf <em>m</em> <em>Eimer</em> (Buckets) verteilt; in welchen Eimer ein Wert kommt, sagt die <em>Hashfunktion</em>. Hier nehmen wir die einfachste: den Rest des Werts bei Division durch <em>m</em>. Die Eimer liegen in einem Array: <code>new Array(m)</code> erzeugt ein Array, dessen Zellen <code>null</code> sind, und <code>table[k]</code> ist die Zelle Nummer k. Das Array wird links als Spalte gezeichnet; die Kette jeder Zelle läuft in ihrer Zeile nach rechts.</p>
+
+<textarea id="text1" class="deneme">
+var m = 5                  // kova sayısı
+var table = new Array(m)   // 5 kova, hepsi boş (null)
+function hash(v)           // değer -&gt; kova numarası 0..m-1
+{
+  return v % m
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var m = 5                  // the number of buckets
+var table = new Array(m)   // 5 buckets, all empty (null)
+function hash(v)           // value -> bucket number 0..m-1
+{
+  return v % m
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var m = 5                  // die Anzahl der Eimer
+var table = new Array(m)   // 5 Eimer, alle leer (null)
+function hash(v)           // Wert -> Eimernummer 0..m-1
+{
+  return v % m
+}
+</script>
+
+<p data-lang="tr">Farklı değerler aynı kovaya düşebilir: 12, 7, 22 ve 17'nin hepsi 5'e bölününce 2 kalanını verir. Buna <em>çakışma</em> (collision) denir. <em>Zincirleme</em> (chaining) yönteminde her kova bir bağlı listenin başıdır ve aynı kovaya düşen değerler bu listede durur. Yeni düğüm zincirin başına eklenir: iki bağ, O(1). Yeni düğüm önce tablonun altında belirir, bağlanınca kovasının satırına geçer.</p>
+<p data-lang="en">Different values can land in the same bucket: 12, 7, 22 and 17 all leave a remainder of 2 when divided by 5. This is called a <em>collision</em>. With <em>chaining</em>, every bucket is the head of a linked list, and the values that land in the same bucket stay in that list. A new node is inserted at the head of the chain: two links, O(1). The new node first appears under the table and moves to its bucket's row once it is linked.</p>
+<p data-lang="de">Verschiedene Werte können im selben Eimer landen: 12, 7, 22 und 17 lassen bei Division durch 5 alle den Rest 2. Das nennt man eine <em>Kollision</em>. Bei der <em>Verkettung</em> ist jeder Eimer der Kopf einer verketteten Liste, und Werte, die im selben Eimer landen, stehen in dieser Liste. Ein neuer Knoten wird am Anfang der Kette eingefügt: zwei Verbindungen, O(1). Der neue Knoten erscheint zuerst unter der Tabelle und wandert in die Zeile seines Eimers, sobald er verbunden ist.</p>
+
+<textarea id="text2" class="deneme">
+function insert(v)
+{
+  var k = hash(v)          // kova
+  var n = new Node(v)
+  n.next = table[k]        // zincirin başına ekle
+  table[k] = n
+}
+insert(12)
+insert(7)
+insert(3)
+insert(22)
+insert(15)
+insert(8)
+insert(17)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function insert(v)
+{
+  var k = hash(v)          // the bucket
+  var n = new Node(v)
+  n.next = table[k]        // insert at the head of the chain
+  table[k] = n
+}
+insert(12)
+insert(7)
+insert(3)
+insert(22)
+insert(15)
+insert(8)
+insert(17)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function insert(v)
+{
+  var k = hash(v)          // der Eimer
+  var n = new Node(v)
+  n.next = table[k]        // am Anfang der Kette einfügen
+  table[k] = n
+}
+insert(12)
+insert(7)
+insert(3)
+insert(22)
+insert(15)
+insert(8)
+insert(17)
+</script>
+
+<p data-lang="tr">Arama önce değerin kovasını hesaplar, sonra yalnızca o kovanın zincirini dolaşır. 22 için 2 numaralı kovaya bakılır ve iki adımda bulunur; 9 için 4 numaralı kova boştur, <code>find</code> hemen <code>null</code> döndürür. <em>n</em> değer <em>m</em> kovaya dağıldığında zincirlerin ortalama uzunluğu <em>n</em>/<em>m</em>'dir (<em>doluluk oranı</em>, load factor). Bu oran küçük tutulursa, örneğin tablo dolunca kova sayısı ikiye katlanırsa, arama da ekleme gibi ortalama O(1) olur. Kötü bir hash fonksiyonu bütün değerleri aynı kovaya yığarsa tablo tek bir listeye döner.</p>
+<p data-lang="en">A search first computes the value's bucket, then walks only that bucket's chain. For 22 it looks at bucket 2 and finds it in two steps; for 9 bucket 4 is empty and <code>find</code> returns <code>null</code> at once. When <em>n</em> values are spread over <em>m</em> buckets, the chains are <em>n</em>/<em>m</em> long on average (the <em>load factor</em>). If this ratio is kept small, for example by doubling the number of buckets when the table fills up, searching is O(1) on average, just like inserting. A bad hash function that piles all values into one bucket turns the table into a single list.</p>
+<p data-lang="de">Eine Suche berechnet zuerst den Eimer des Werts und durchläuft dann nur dessen Kette. Für 22 wird Eimer 2 angesehen und der Wert in zwei Schritten gefunden; für 9 ist Eimer 4 leer, und <code>find</code> gibt sofort <code>null</code> zurück. Verteilen sich <em>n</em> Werte auf <em>m</em> Eimer, sind die Ketten im Mittel <em>n</em>/<em>m</em> lang (der <em>Füllgrad</em>, load factor). Hält man dieses Verhältnis klein, etwa indem man die Zahl der Eimer verdoppelt, wenn die Tabelle voll wird, ist die Suche wie das Einfügen im Mittel O(1). Eine schlechte Hashfunktion, die alle Werte in einen Eimer stapelt, macht aus der Tabelle eine einzige Liste.</p>
+
+<textarea id="text3" class="deneme">
+function find(v)
+{
+  var p = table[hash(v)]   // tek bir kovanın zinciri
+  while(p != null &amp;&amp; p.data != v)
+  {
+    p = p.next
+  }
+  return p                 // yoksa null
+}
+var f = find(22)
+print f.data
+var g = find(9)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function find(v)
+{
+  var p = table[hash(v)]   // only one bucket's chain
+  while(p != null && p.data != v)
+  {
+    p = p.next
+  }
+  return p                 // null if it is not there
+}
+var f = find(22)
+print f.data
+var g = find(9)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function find(v)
+{
+  var p = table[hash(v)]   // nur die Kette eines Eimers
+  while(p != null && p.data != v)
+  {
+    p = p.next
+  }
+  return p                 // null, wenn er fehlt
+}
+var f = find(22)
+print f.data
+var g = find(9)
+</script>
+
+<p data-lang="tr">Silme, bağlı listeden silmenin aynısıdır; tek fark, silinen düğüm zincirin başındaysa kovanın kendisinin bir sonraki düğümü göstermesidir.</p>
+<p data-lang="en">Deleting is the same as deleting from a linked list; the only difference is that if the deleted node is at the head of its chain, the bucket itself must point to the next node.</p>
+<p data-lang="de">Löschen funktioniert wie in einer verketteten Liste; der einzige Unterschied ist, dass der Eimer selbst auf den nächsten Knoten zeigen muss, wenn der gelöschte Knoten am Anfang seiner Kette steht.</p>
+
+<textarea id="text4" class="deneme">
+var k = hash(7)
+var p = table[k]
+var prev = null
+while(p.data != 7)
+{
+  prev = p
+  p = p.next
+}
+if(prev == null)           // 7 zincirin başındaysa
+  table[k] = p.next        // kova onu atlar
+else
+  prev.next = p.next       // önceki düğüm onu atlar
+delete p
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="en">
+var k = hash(7)
+var p = table[k]
+var prev = null
+while(p.data != 7)
+{
+  prev = p
+  p = p.next
+}
+if(prev == null)           // 7 heads its chain
+  table[k] = p.next        // the bucket skips it
+else
+  prev.next = p.next       // the node before skips it
+delete p
+</script>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="de">
+var k = hash(7)
+var p = table[k]
+var prev = null
+while(p.data != 7)
+{
+  prev = p
+  p = p.next
+}
+if(prev == null)           // 7 am Kettenanfang
+  table[k] = p.next        // der Eimer überspringt ihn
+else
+  prev.next = p.next       // der Knoten davor überspringt ihn
+delete p
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

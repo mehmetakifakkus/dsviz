@@ -243,6 +243,99 @@ function enableDoublyMode(){
 	layout(); // wider nodes need wider columns
 }
 
+//////////////////////////////////////////  Arrays  //////////////////////////////////////
+//
+// new Array(5) makes a JavaScript array of 5 nulls; the program reads and writes it directly.
+// Its drawn state is kept on it in .visual (like a node's visualNext). The first drawn array
+// is a column of cells at the left, and the chain each cell leads to is laid out on that
+// cell's row: the buckets of a hash table with chaining.
+
+var allArrays = [];
+
+function isArray(v){ return !!(v && v.dsvArray); }
+
+function makeArray(n){
+	n = Number(n);
+	if(!(n >= 1 && n <= 50 && n % 1 === 0))
+		throw ownError(currentLine, 'eArraySize', {n: n});
+	var a = [];
+	for(var i = 0; i < n; i = i + 1)
+		a.push(null);
+	a.dsvArray = true;
+	a.visual = {id: 'a' + (allArrays.length + 1), shown: false, name: '', cells: a.slice()};
+	allArrays.push(a);
+	return a;
+}
+
+// the array drawn as a table (not in a tree drawing)
+function drawnTable(){
+	if(treeMode)
+		return null;
+	for(var i = 0; i < allArrays.length; i++)
+		if(allArrays[i].visual.shown)
+			return allArrays[i];
+	return null;
+}
+
+var TABLE_W = 34; // width of an array cell
+var tableDraw = null;
+function drawTable(){
+	if(tableDraw){
+		tableDraw.remove();
+		tableDraw = null;
+	}
+	var table = drawnTable();
+	if(!table)
+		return;
+
+	var v = table.visual, items = [], x = COL_X0;
+	items.push(new PointText({ point: [x + TABLE_W / 2, ROW_Y0 - 16], justification: 'center', fontSize: 20+'px', fillColor: PAL.named, content: v.name }));
+	for(var i = 0; i < v.cells.length; i = i + 1){
+		var y = ROW_Y0 + i * rowH(), cell = v.cells[i];
+		var color = isFocusedEdge(v, 'cell' + i) ? PAL.changed : PAL.stroke;
+		items.push(new Path.Rectangle({ point: [x, y], size: [TABLE_W, NODE_H], strokeColor: PAL.stroke, strokeWidth: 2, fillColor: PAL.node }));
+		items.push(new PointText({ point: [x - 8, y + 17], justification: 'right', fontSize: 13+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + i }));
+		if(isNode(cell) && cell.shown && cell.position){
+			var start = new Point(x + TABLE_W / 2, y + NODE_H / 2), end = cell.position + [0, NODE_H / 2];
+			items.push(new Path.Line({ from: start, to: end, strokeColor: color, strokeWidth: color !== PAL.stroke ? 3 : 2 }));
+			items.push(arrowTip(end, (end - start).angle, color));
+			items.push(new Path.Circle({ radius: 4, fillColor: color, center: start }));
+		}
+		else if(cell === null || isNode(cell))   // empty (or its node was deleted): a slash
+			items.push(new Path.Line({ from: [x + 9, y + NODE_H - 5], to: [x + TABLE_W - 9, y + 5], strokeColor: color, strokeWidth: color !== PAL.stroke ? 3 : 1.5 }));
+		else                                     // a plain value
+			items.push(new PointText({ point: [x + TABLE_W / 2, y + 18], justification: 'center', fontSize: 15+'px', fillColor: PAL.text, content: '' + cell }));
+	}
+	tableDraw = new Group(items);
+}
+
+// the bucket rows of a drawn table: cell i's chain on row i (column 0 is the table itself);
+// nodes in no bucket chain go to the rows under the table
+function hashCells(shown, table){
+	var visited = {}, cells = table.visual.cells, i, n;
+	for(i = 0; i < cells.length; i = i + 1){
+		var col = 1;
+		for(n = cells[i]; isNode(n) && n.shown && !visited[n.id]; n = n.visualNext){
+			visited[n.id] = true;
+			n.cell = {row: i, col: col};
+			col = col + 1;
+		}
+	}
+	var row = cells.length;
+	var rest = shown.filter(function(m){ return !visited[m.id]; }).sort(function(a, b){ return a.id - b.id; });
+	rest.forEach(function(start){
+		if(visited[start.id])
+			return;
+		var col = 1;
+		for(n = start; n && n.shown && !visited[n.id]; n = n.visualNext){
+			visited[n.id] = true;
+			n.cell = {row: row, col: col};
+			col = col + 1;
+		}
+		row = row + 1;
+	});
+}
+
 //////////////////////////////////////////  Arrows  //////////////////////////////////////
 
 function arrowTip(end, angle, color){
@@ -373,6 +466,7 @@ function redrawTreeArrows(n){
 }
 
 function redrawArrows(){
+	drawTable();
 	for(var i=0; i < allNodes.length; i++){
 		var n = allNodes[i];
 
@@ -426,7 +520,7 @@ var ROW_Y0 = 80, ROW_H = 150, COL_X0 = 50;
 var colWidth = 100;
 
 function maxColWidth(){ return treeMode ? 90 : doublyMode ? 125 : 100; }
-function rowH(){ return treeMode ? 110 : ROW_H; }
+function rowH(){ return treeMode ? 110 : drawnTable() ? 95 : ROW_H; }
 
 // A tree: a node's row is its depth and its column its place in an in-order walk (left
 // subtree, node, right subtree), so a binary search tree reads sorted from left to right
@@ -555,7 +649,10 @@ function layout(tidy){
 	var occupied = {};
 	var i, k;
 
-	if(treeMode)
+	var table = drawnTable();
+	if(table)
+		hashCells(shown, table);
+	else if(treeMode)
 		treeCells(shown);
 	else {
 
@@ -629,6 +726,11 @@ function layout(tidy){
 		maxCol = Math.max(maxCol, shown[i].cell.col);
 		minRow = Math.min(minRow, shown[i].cell.row);
 	}
+	if(table){ // the table is column 0 and its first cell row 0
+		minCol = 0;
+		minRow = 0;
+		maxCol = Math.max(maxCol, 1);
+	}
 
 	var visibleWidth = Math.max(300, canvasHolderWidth() - COL_X0 - geometry().width - 30);
 	var widest = maxColWidth(), narrowest = geometry().width + 25;
@@ -641,6 +743,13 @@ function layout(tidy){
 	extent = shown.length
 		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 85}
 		: null;
+
+	if(table){
+		var lastRow = table.visual.cells.length - 1;
+		for(i=0; i < shown.length; i++)
+			lastRow = Math.max(lastRow, shown[i].cell.row);
+		extent = {width: COL_X0 + maxCol * colWidth + geometry().width + 40, height: ROW_Y0 + lastRow * rowH() + NODE_H + 40};
+	}
 
 	var moves = [], fades = [];
 	for(i=0; i < shown.length; i++){
@@ -801,7 +910,7 @@ function redrawPointers(){
 	pointers.forEach(function(p){
 		if(!p.active || !p.points || !p.points.shown || !p.points.position)
 			return;
-		var key = p.points.id + (treeMode ? '' : p.direction);
+		var key = p.points.id + (treeMode || drawnTable() ? '' : p.direction);
 		if(!groups[key]){
 			groups[key] = [];
 			order.push(key);
@@ -812,7 +921,7 @@ function redrawPointers(){
 	order.forEach(function(key){
 		var group = groups[key];
 		var pos = group[0].points.position;
-		var up = !treeMode && group[0].direction === 'up'; // in a tree the parent's link comes from above
+		var up = drawnTable() ? true : !treeMode && group[0].direction === 'up'; // in a tree the parent's link comes from above; next to a table all names go above (rows are close)
 
 		var dx = geometry().dataX; // aim at the data cell
 		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
@@ -945,6 +1054,8 @@ function setFrameVar(id, name, text, isNull, isPointer){
 
 // a plain value (number, boolean...): a global goes to the variables panel, a local to its call
 function showValue(name, value, scope){
+	if(isArray(value))
+		value = formatValue(value);
 	if(scope)
 		setFrameVar(scope.id, name, formatValue(value), value === null, false);
 	else
@@ -1241,6 +1352,7 @@ function finishStep(){
 function updateReachability(){
 	var reached = {}, todo = [];
 	pointers.forEach(function(p){ if(p.active && p.points && p.points.shown) todo.push(p.points); });
+	allArrays.forEach(function(a){ if(a.visual.shown) a.visual.cells.forEach(function(c){ if(isNode(c) && c.shown) todo.push(c); }); });
 	while(todo.length){
 		var n = todo.pop();
 		if(reached[n.id]) continue;
@@ -1280,8 +1392,15 @@ function describe(line, res, removed){
 	case 'declaration':
 	case 'assignment':
 		if(line.rhs.type == 'node') return t('nNewNode', {name: name, node: nodeLabel(res)});
+		if(line.rhs.type == 'array') return t('nNewArray', {name: name, n: res.length});
 		if(res === null || isNode(res)) return pointsTo(res);
 		return t('nValue', {name: name, value: formatValue(res)});
+	case 'array assignment':
+		var cell = '`' + line.array + '[' + res.index + ']`';
+		if(res.newNode) return t('nCellNew', {cell: cell, node: nodeLabel(res.newNode)});
+		if(res.value === null) return t('nCellNull', {cell: cell});
+		if(isNode(res.value)) return t('nCellNode', {cell: cell, node: nodeLabel(res.value)});
+		return t('nCellValue', {cell: cell, value: formatValue(res.value)});
 	case 'object property right':
 		if(res === null || isNode(res)) return pointsTo(res);
 		return t('nValue', {name: name, value: formatValue(res)});
@@ -1328,6 +1447,7 @@ function resetVisuals(){
 	lastPlaced = null;
 	doublyMode = false;
 	treeMode = false;
+	allArrays.forEach(function(a){ a.visual.shown = false; a.visual.cells = a.map(function(){ return null; }); });
 
 	pointerMap = {};
 	pointers = [];
@@ -1451,7 +1571,13 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 
-			if(line.rhs.type == 'node') 		//  x = Node(2)
+			if(line.rhs.type == 'array')        //  table = new Array(5)
+			{
+				res.visual.shown = true;
+				res.visual.name = line.lhs;
+				layout();
+			}
+			else if(line.rhs.type == 'node') 		//  x = Node(2)
 			{
 				res.shown = true;
 				layout();
@@ -1468,6 +1594,15 @@ function drawGraphics(line, result){
 				pointTo(line.lhs, res, undefined, undefined, scope);
 			else                                  // a plain value: count = count + 1
 				showValue(line.lhs, res, scope);
+		}
+		else if(line.type == 'array assignment')
+		{
+			highlight(doc, line);
+			if(res.newNode)
+				res.newNode.shown = true;
+			res.array.visual.cells[res.index] = res.value;
+			focusEdge(res.array.visual, 'cell' + res.index);
+			layout();
 		}
 		else if(line.type == 'logical')
 		{
@@ -1655,6 +1790,7 @@ function processOneItem(item){
 
 		var value = item.rhs.type == 'node'   //  x = new? Node(2)  /  Node(i)
 			? new Node(evalExpr(item.rhs.data))
+			: item.rhs.type == 'array' ? makeArray(evalExpr(item.rhs.size)) // table = new Array(5)
 			: evalExpr(item.rhs);
 
 		setVar(item.lhs, value, item.type == 'declaration');
@@ -1696,6 +1832,25 @@ function processOneItem(item){
 			target[last.slice(1)] = evalExpr(rhsCode(item.rhs));
 
 		drawGraphics(item, {target: target, prop: last, value: target[last.slice(1)], newNode: newNode, oldData: oldData});
+	}
+	else if(item.type == 'array assignment') // table[k] = n
+	{
+		item['#evaluation']++;
+
+		var arr = evalExpr(item.array);
+		if(!isArray(arr))
+			throw ownError(item.lineNumber, 'eNotArray', {name: item.array});
+		var index = evalExpr(item.index);
+		if(!(index >= 0 && index < arr.length && index % 1 === 0))
+			throw ownError(item.lineNumber, 'eIndex', {name: item.array, i: formatValue(index), n: arr.length, last: arr.length - 1});
+		var cellNode = null, cellValue;
+		if(item.rhs && item.rhs.type == 'node')
+			cellValue = cellNode = new Node(evalExpr(item.rhs.data));
+		else
+			cellValue = evalExpr(rhsCode(item.rhs));
+		arr[index] = cellValue;
+
+		drawGraphics(item, {array: arr, index: index, value: cellValue, newNode: cellNode});
 	}
 	else if(item.type == 'object property right') // p1 = p1.next
 	{
@@ -1807,6 +1962,7 @@ function callUser(def, args){
 
 function formatValue(value){
 	if(isNode(value)) return t('nodeValue', {data: value.data});
+	if(isArray(value)) return t('arrayValue', {n: value.length});
 	if(value === null) return 'null';
 	if(value === undefined) return t('undefinedValue');
 	return String(value);
@@ -1999,6 +2155,7 @@ function resetProgram(){
 	delete window.temp_node; // made by the command prompt for Node(5)
 
 	allNodes = [];
+	allArrays = [];
 	pointers = [];
 	pointerMap = {};
 	frames = [];
