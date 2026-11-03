@@ -234,9 +234,33 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 /* the line an error happened on */
 .dsv-error-line { background: color-mix(in srgb, var(--viz-pointer) 18%, transparent); box-shadow: inset 3px 0 0 var(--viz-pointer); }
 
+/* shares the page's code as a link */
+.dsv-share {
+  position: absolute; right: 118px; bottom: 10px; z-index: 3;
+  width: 34px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.dsv-share:hover { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }
+
+/* a page opened from a shared link */
+.share-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 4px 0 16px; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-text); font-size: 14px;
+}
+
+/* a short message at the bottom of the window */
+.dsv-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px); z-index: 50; max-width: calc(100vw - 32px);
+  padding: 10px 16px; border-radius: 10px; background: var(--text); color: var(--bg); font-size: 14px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.dsv-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.share-banner .link-btn { padding: 0; font-weight: 600; font-size: 14px; }
+
 /* puts the example's own code back (shown once the code was changed) */
 .dsv-restore {
-  position: absolute; right: 118px; bottom: 10px; z-index: 3;
+  position: absolute; right: 160px; bottom: 10px; z-index: 3;
   height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px;
   background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; font-weight: 600;
 }

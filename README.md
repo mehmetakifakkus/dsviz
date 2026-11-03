@@ -13,6 +13,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).
 - Her adım bir cümleyle açıklanır; o adımda değişen bağ ya da pointer vurgulanır. `null` bağlar çapraz çizgiyle gösterilir, artık hiçbir yerden ulaşılamayan düğümler için uyarı çıkar.
+- Değiştirilen kod bağlantıyla paylaşılır: blokların altındaki bağlantı düğmesi, sayfanın kendi kodundan farklı olan blokları adresin `#` kısmına koyar ve bağlantıyı kopyalar (sunucu gerekmez). Bağlantıyı açan kişi aynı sayfayı o kodla görür; kod kendiliğinden çalışmaz, okuyup Çalıştır'a basmak gerekir.
 - Bir kod bloğu çalıştırılınca çizim temiz başlar: üstündeki bloklar kendiliğinden yeniden çalışır, böylece bir bloğu değiştirip tekrar çalıştırmak her zaman aynı noktadan başlar.
 - Düğümler otomatik yerleşir: her liste kendi satırında soldan sağa durur, değişiklikler animasyonla gösterilir. Dairesel bir listede son düğümden başa dönen bağ, pointer adlarının üstünden dolaşan bir okla çizilir; satır `tail`'in gösterdiği düğümden sonra başlar.
 - Kodda `.left` ya da `.right` geçince düğümler ağaç düğümü olarak çizilir ([sol | değer | sağ]); her düğüm derinliğine göre bir satıra, sıralı dolaşımdaki yerine göre bir sütuna yerleşir, böylece ikili arama ağacı soldan sağa sıralı okunur.
