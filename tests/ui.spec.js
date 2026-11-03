@@ -496,6 +496,22 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('two bucket tables stand side by side, each chain on its row', async ({ page }) => {
+		const problems = await openPage(page, 'hashTable.html');
+		await runBlock(page, 4); // rehash into a table of 10
+		const drawn = await state(page);
+		expect(drawn.arrays.map(a => [a.name, a.kind])).toEqual([['table', 'buckets'], ['big', 'buckets']]);
+		expect(drawn.rows).toEqual([[12, 22], [3], [15], [17], [8]]);
+		expect(drawn.lost).toEqual([]);
+		// big starts to the right of table's longest chain; its chains to the right of big
+		const x = await page.evaluate(() => {
+			const col = n => window.big[n] && window.big[n].position ? window.big[n].position.x : null;
+			return {chain: col(2)};
+		});
+		expect(x.chain).toBeGreaterThan(200);
+		expect(problems).toEqual([]);
+	});
+
 	test('array errors are explained', async ({ page }) => {
 		const problems = await openPage(page, 'index.html');
 		await runCode(page, 'var t = new Array(3)\nt[3] = 1\n');
