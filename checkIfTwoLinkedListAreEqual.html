@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>İki liste eşit mi? | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>İki liste eşit mi?</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">İki liste eşit mi?</h1>
+<h1 data-lang="en">Are two lists equal?</h1>
+<h1 data-lang="de">Sind zwei Listen gleich?</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Önce iki liste oluşturalım.</p>
+<p data-lang="tr">Önce iki liste oluşturalım.</p>
+<p data-lang="en">First, let's build two lists.</p>
+<p data-lang="de">Zuerst bauen wir zwei Listen.</p>
 
 <textarea id="text1" class="deneme">
 var list1 = new Node(10)
@@ -31,7 +30,9 @@ list2.next.next = new Node(30)
 list2.next.next.next = new Node(40)
 </textarea>
 
-<p>İki pointer iki listede aynı anda ilerler ve karşılıklı değerleri karşılaştırır. Bir fark bulunursa <code>flag</code> yanlış olur. Döngü bittiğinde pointer'lardan biri hâlâ <code>null</code> değilse listelerin uzunlukları farklıdır, yani listeler yine eşit değildir.</p>
+<p data-lang="tr">İki pointer iki listede aynı anda ilerler ve karşılıklı değerleri karşılaştırır. Bir fark bulunursa <code>flag</code> yanlış olur. Döngü bittiğinde pointer'lardan biri hâlâ <code>null</code> değilse listelerin uzunlukları farklıdır, yani listeler yine eşit değildir.</p>
+<p data-lang="en">Two pointers move through the two lists at the same time and compare the matching values. If a difference is found, <code>flag</code> becomes false. If one of the pointers is still not <code>null</code> when the loop ends, the lists have different lengths, so again they are not equal.</p>
+<p data-lang="de">Zwei Zeiger laufen gleichzeitig durch die beiden Listen und vergleichen die zueinander gehörenden Werte. Wird ein Unterschied gefunden, wird <code>flag</code> falsch. Ist nach der Schleife einer der Zeiger noch nicht <code>null</code>, sind die Listen unterschiedlich lang und damit ebenfalls nicht gleich.</p>
 
 <textarea id="text3" class="deneme">
 var p = list1
@@ -52,6 +53,44 @@ while(p != null and q != null)
 if(p != null or q != null)
 	flag = false
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var p = list1
+var q = list2
+var flag = true
+
+// walk to the end of both lists
+while(p != null and q != null)
+{
+  if(p.data != q.data)
+	flag = false
+
+  p = p.next
+  q = q.next
+}
+
+// if one is not null, the lengths differ
+if(p != null or q != null)
+	flag = false
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var p = list1
+var q = list2
+var flag = true
+
+// bis zum Ende beider Listen gehen
+while(p != null and q != null)
+{
+  if(p.data != q.data)
+	flag = false
+
+  p = p.next
+  q = q.next
+}
+
+// ist einer nicht null, sind die Längen verschieden
+if(p != null or q != null)
+	flag = false
+</script>
 </main>
 
 <script src="js/layout.js"></script>

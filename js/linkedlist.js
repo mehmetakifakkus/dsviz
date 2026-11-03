@@ -17,6 +17,8 @@
  * The code is ES5 on purpose: PaperScript in paper.js 0.9.25 does not accept ES6.
  */
 
+var t = window.dsv ? window.dsv.t : function(key){ return key; }; // texts in the chosen language (js/i18n.js)
+
 var allNodes = [];   // every Node ever created (only the shown ones are drawn)
 var pointers = [];   // every Pointer (a named arrow that points to a node)
 
@@ -109,7 +111,22 @@ function palette(){
 	};
 }
 
-// called by js/layout.js after the theme changed
+// called by js/i18n.js when a setting changed (the language reloads the page instead)
+window.dsvApplySettings = function(key){
+	if(key === 'speed' || key === 'all'){
+		player.speed = window.dsv.settings.speed;
+		if(player.ui) player.ui.speed.value = player.speed;
+	}
+	if(key === 'narration' || key === 'warnings' || key === 'all')
+		showNarration(settingOn('narration') ? lastNarration : '', settingOn('warnings') ? lastWarning : '');
+	if(key === 'fontSize' || key === 'all') // CodeMirror measures its lines again
+		Array.prototype.forEach.call(document.querySelectorAll('.CodeMirror'), function(e){ e.CodeMirror.refresh(); });
+	if(key === 'theme' || key === 'all')
+		window.dsvApplyTheme();
+	fitCanvas();
+};
+
+// redraws the canvas with the colors of the current theme
 window.dsvApplyTheme = function(){
 	PAL = palette();
 	allNodes.forEach(function(n){ if(n.shown && n.position) n.render(); });
@@ -168,7 +185,7 @@ function Node(content, next){
 
 		if(self.lost){ // no variable and no link reaches this node any more
 			items[0].dashArray = [5, 4];
-			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: 'ulaşılamıyor'}));
+			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: t('unreachable')}));
 		}
 
 		self.boxDraw = new Group(items);
@@ -666,6 +683,8 @@ function redrawPointers(){
 		});
 		var labelGroup = new Group(labels);
 		labelGroup.position = start + (up ? [-4, -14] : [-4, 14]);
+		if(labelGroup.bounds.left < 4) // a long name under the first column would be cut off at the left edge
+			labelGroup.position = labelGroup.position + [4 - labelGroup.bounds.left, 0];
 
 		items.push(labelGroup);
 		pointerDrawings.push(new Group(items));
@@ -781,7 +800,7 @@ function renderCallStack(){
 		        (vars ? '<div class="frame-vars">' + vars + '</div>' : '') + '</li>';
 	}
 	if(visualFrames.length > MAX_SHOWN)
-		html += '<li class="more">… ' + (visualFrames.length - MAX_SHOWN) + ' çağrı daha</li>';
+		html += '<li class="more">' + escapeHTML(t('moreCalls', {n: visualFrames.length - MAX_SHOWN})) + '</li>';
 	box.innerHTML = html;
 
 	var note = document.getElementById('callstack-note');
@@ -800,7 +819,7 @@ function callStep(info, def){
 
 	var args = info.args.map(function(a){ return formatValue(a.value); }).join(', ');
 	visualFrames.push({id: info.id, title: info.fn + '(' + args + ')', vars: {}, order: []});
-	narrate('`' + info.fn + '(' + args + ')` çağrıldı.');
+	narrate(t('nCalled', {call: info.fn + '(' + args + ')'}));
 
 	var scope = {id: info.id, fn: info.fn, depth: info.depth};
 	info.args.forEach(function(a){
@@ -828,8 +847,9 @@ function dropFrame(info){
 function returnStep(info, value, exitLine, def){
 	highlight(def.doc, {lineNumber: exitLine});
 	var frame = dropFrame(info);
-	returnNote = (frame ? frame.title : info.fn + '()') + (value === undefined ? ' bitti.' : ' döndürdü: ' + formatValue(value));
-	narrate('`' + (frame ? frame.title : info.fn + '()') + '`' + (value === undefined ? ' bitti.' : ' döndürdü: ' + formatValue(value) + '.'));
+	var call = frame ? frame.title : info.fn + '()';
+	returnNote = value === undefined ? t('noteFinished', {call: call}) : t('noteReturned', {call: call, value: formatValue(value)});
+	narrate(value === undefined ? t('nFinished', {call: call}) : t('nReturned', {call: call, value: formatValue(value)}));
 	renderCallStack();
 }
 
@@ -893,7 +913,7 @@ var player = {
 	cursor: 0,         // index of the next step
 	playing: true,
 	animating: true,   // false while replaying (step back)
-	speed: 2,
+	speed: window.dsv ? window.dsv.settings.speed : 2, // the default comes from the settings
 	timer: null,
 	lastStep: 0,
 
@@ -995,8 +1015,8 @@ var player = {
 		var ui = player.ui;
 		var running = player.playing && player.cursor < player.steps.length;
 		ui.play.innerHTML = running ? ICONS.pause : ICONS.play;
-		ui.play.title = running ? 'Duraklat' : 'Oynat';
-		ui.counter.textContent = 'Adım ' + player.cursor + ' / ' + player.steps.length;
+		ui.play.title = running ? t('pause') : t('play');
+		ui.counter.textContent = t('stepCounter', {i: player.cursor, n: player.steps.length});
 		ui.back.disabled = player.cursor === 0;
 		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
 		ui.timeline.max = player.steps.length;
@@ -1033,16 +1053,20 @@ function runStep(i){
 	player.steps[i]();
 }
 
+function settingOn(key){ return !window.dsv || window.dsv.settings[key] !== false; }
+var lastNarration = '', lastWarning = '';
+
 function finishStep(){
 	var lost = updateReachability();
 	redrawArrows();
 	redrawPointers();
 
 	var warning = '';
-	if(lost.length)
-		warning = lost.map(nodeLabel).join(', ') + (lost.length > 1 ? ' düğümlerine' : ' düğümüne') +
-		          ' artık hiçbir değişkenden ya da bağdan ulaşılamıyor.';
-	showNarration(narration, warning);
+	if(lost.length && settingOn('warnings'))
+		warning = t(lost.length > 1 ? 'nLostMany' : 'nLostOne', {nodes: lost.map(nodeLabel).join(', ')});
+	lastNarration = narration;
+	lastWarning = warning;
+	showNarration(settingOn('narration') ? narration : '', warning);
 }
 
 // marks the shown nodes no pointer reaches (through next / prev); returns the newly lost ones
@@ -1081,40 +1105,42 @@ function showNarration(text, warning){
 // the sentence for a statement, made when it runs (the values are the ones of that moment)
 function describe(line, res, removed){
 	var name = '`' + line.lhs + '`';
-	var pointsTo = function(v){ return v === null ? name + ' artık null: hiçbir düğümü göstermiyor.' : name + ' artık ' + nodeLabel(v) + ' düğümünü gösteriyor.'; };
+	var pointsTo = function(v){ return v === null ? t('nPointsNull', {name: name}) : t('nPointsTo', {name: name, node: nodeLabel(v)}); };
+	var cond = String(line.text).trim();
 
 	switch(line.type){
 	case 'declaration':
 	case 'assignment':
-		if(line.rhs.type == 'node') return name + ' adında yeni bir düğüm oluşturuldu: ' + nodeLabel(res) + '.';
+		if(line.rhs.type == 'node') return t('nNewNode', {name: name, node: nodeLabel(res)});
 		if(res === null || isNode(res)) return pointsTo(res);
-		return name + ' = ' + formatValue(res) + '.';
+		return t('nValue', {name: name, value: formatValue(res)});
 	case 'object property right':
 		if(res === null || isNode(res)) return pointsTo(res);
-		return name + ' = ' + formatValue(res) + '.';
+		return t('nValue', {name: name, value: formatValue(res)});
 	case 'object property left':
 	case 'object property left-right':
-		if(res.prop == '.data') return nodeLabel(res.target) + ' düğümünün değeri ' + formatValue(res.value) + ' oldu.';
-		var link = nodeLabel(res.target) + ' düğümünün ' + res.prop.slice(1) + "'i";
-		if(res.newNode) return 'Yeni bir düğüm ' + nodeLabel(res.newNode) + ' oluşturuldu ve ' + link + ' ona bağlandı.';
-		return link + ' artık ' + (res.value === null ? 'null.' : nodeLabel(res.value) + ' düğümünü gösteriyor.');
+		if(res.prop == '.data') return t('nData', {node: nodeLabel(res.target), value: formatValue(res.value)});
+		var link = {node: nodeLabel(res.target), field: res.prop.slice(1)};
+		if(res.newNode) { link['new'] = nodeLabel(res.newNode); return t('nLinkNew', link); }
+		if(res.value === null) return t('nLinkNull', link);
+		link.target = nodeLabel(res.value);
+		return t('nLink', link);
 	case 'logical':
-		var cond = 'Koşul `' + String(line.text).trim() + '`';
 		if(line.mainType == 'if')
-			return cond + (res ? ' doğru: if bloğu çalışacak.' : line.falsePart ? ' yanlış: else bloğu çalışacak.' : ' yanlış: if bloğu atlanıyor.');
+			return t(res ? 'nIfTrue' : line.falsePart ? 'nIfElse' : 'nIfSkip', {c: cond});
 		if(line.mainType == 'while' || line.mainType == 'for')
-			return cond + (res ? ' doğru: döngü bir tur daha dönüyor.' : ' yanlış: döngü bitti.');
-		return cond + (res ? ' doğru.' : ' yanlış.');
+			return t(res ? 'nLoopTrue' : 'nLoopFalse', {c: cond});
+		return t(res ? 'nCondTrue' : 'nCondFalse', {c: cond});
 	case 'print':
-		return 'Çıktıya yazıldı: ' + res;
+		return t('nPrint', {value: res});
 	case 'free object':
-		return nodeLabel(removed) + ' düğümü silindi.';
+		return t('nFreed', {node: nodeLabel(removed)});
 	case 'expression':
-		return '`' + String(line.text).trim() + '` çalıştı' + (res === undefined ? '.' : ', sonuç: ' + formatValue(res) + '.');
+		return res === undefined ? t('nExpr', {code: cond}) : t('nExprValue', {code: cond, value: formatValue(res)});
 	case 'break':
-		return 'break: döngüden çıkılıyor.';
+		return t('nBreak');
 	case 'continue':
-		return 'continue: döngünün bir sonraki turuna geçiliyor.';
+		return t('nContinue');
 	}
 	return '';
 }
@@ -1172,15 +1198,16 @@ function createPlayerUI(){
 	}
 
 	var ui = {};
-	ui.back = button(ICONS.back, 'Geri adım', player.back);
-	ui.play = button(ICONS.pause, 'Duraklat', function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
-	ui.next = button(ICONS.next, 'İleri adım', function(){ player.pause(); player.forward(); });
-	ui.end  = button(ICONS.end, 'Sona atla', function(){ player.pause(); player.toEnd(); });
+	ui.back = button(ICONS.back, t('stepBack'), player.back);
+	ui.play = button(ICONS.pause, t('pause'), function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
+	ui.next = button(ICONS.next, t('stepForward'), function(){ player.pause(); player.forward(); });
+	ui.end  = button(ICONS.end, t('toEnd'), function(){ player.pause(); player.toEnd(); });
 
 	var speedLabel = document.createElement('label');
 	speedLabel.className = 'dsv-speed';
-	speedLabel.innerHTML = 'Hız <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
-	speedLabel.querySelector('input').addEventListener('input', function(e){ player.speed = Number(e.target.value); });
+	speedLabel.innerHTML = escapeHTML(t('speed')) + ' <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
+	ui.speed = speedLabel.querySelector('input');
+	ui.speed.addEventListener('input', function(e){ player.speed = Number(e.target.value); });
 	bar.appendChild(speedLabel);
 
 	ui.counter = document.createElement('span');
@@ -1192,8 +1219,8 @@ function createPlayerUI(){
 	ui.timeline.type = 'range';
 	ui.timeline.className = 'dsv-timeline';
 	ui.timeline.min = 0;
-	ui.timeline.setAttribute('aria-label', 'Adım');
-	ui.timeline.title = 'Adımlar arasında gezinin. Kısayollar: ← → adım, boşluk oynat/duraklat';
+	ui.timeline.setAttribute('aria-label', t('step'));
+	ui.timeline.title = t('timelineTitle');
 	ui.timeline.addEventListener('input', function(){
 		var k = Number(ui.timeline.value); // read it first: pause() puts the slider back on the current step
 		player.pause();
@@ -1205,6 +1232,7 @@ function createPlayerUI(){
 	narrationBox.id = 'narration';
 	narrationBox.className = 'dsv-narration';
 	narrationBox.setAttribute('aria-live', 'polite');
+	narrationBox.setAttribute('data-empty', t('narrationEmpty'));
 
 	canvas.parentNode.insertBefore(bar, canvas);
 	canvas.parentNode.insertBefore(narrationBox, canvas);
@@ -1344,16 +1372,22 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvExamples', 'activeEditor', 'editor2'];
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2'];
+
+// an error of our own: "Line 3: ..." in the chosen language, shown as it is
+function ownError(line, key, vars){
+	var e = new Error((line ? t('eLine', {n: line}) : '') + t(key, vars));
+	e.dsvOwn = true;
+	return e;
+}
 
 function assignGlobal(name, value){
 	if(ENGINE_GLOBALS.indexOf(name) >= 0)
-		throw new Error('Satır ' + currentLine + ': "' + name + '" adı uygulamanın kendisi tarafından kullanılıyor, başka bir isim seçin.');
+		throw ownError(currentLine, 'eEngineName', {name: name});
 	window[name] = value;
 	userGlobals[name] = true; // removed when a block runs again (see runBlock)
 	if(window[name] !== value)
-		throw new Error('Satır ' + currentLine + ': "' + name + '" adı tarayıcıya ayrılmış, değişken olarak kullanılamaz. ' +
-		                'Başka bir isim seçin' + (name === 'top' ? ' (ör. tepe).' : '.'));
+		throw ownError(currentLine, 'eReserved', {name: name, hint: name === 'top' ? t('eReservedTop') : '.'});
 }
 
 var currentLine = null; // the line that is being executed, for error messages
@@ -1407,7 +1441,7 @@ function processOneItem(item){
 
 				guard = guard + 1;
 				if(guard > 1000)
-					throw new Error('Satır ' + item.lineNumber + ': döngü 1000 kereden fazla döndü. Sonsuz bir döngü olabilir mi? Döngü koşulunun bir gün yanlış olacağından emin olun.');
+					throw ownError(item.lineNumber, 'eLoop');
 			}
 			if(!stopped) // after a break the condition is not checked again
 				drawGraphics(item, false);
@@ -1522,8 +1556,7 @@ function defineFunction(item){
 
 function callUser(def, args){
 	if(frames.length >= MAX_CALL_DEPTH)
-		throw new Error('Satır ' + currentLine + ': iç içe ' + MAX_CALL_DEPTH + ' fonksiyon çağrısı aşıldı. ' +
-		                'Özyinelemenin bir durma koşulu var mı? (ör. if(p == null) return 0)');
+		throw ownError(currentLine, 'eDepth', {max: MAX_CALL_DEPTH});
 
 	var sameDepth = 1;
 	frames.forEach(function(f){ if(f.fn === def.name) sameDepth++; });
@@ -1554,7 +1587,7 @@ function callUser(def, args){
 		}
 		else if(signal && signal.loopSignal){ // a break inside a function cannot leave the caller's loop
 			unfinishedCalls.push(info);
-			throw new Error('Satır ' + signal.lineNumber + ': ' + signal.loopSignal + ' yalnızca bir döngünün (while ya da for) içinde kullanılabilir.');
+			throw ownError(signal.lineNumber, 'eLoopOnly', {kw: signal.loopSignal});
 		}
 		else {
 			unfinishedCalls.push(info); // an error stopped this call; its frame stays visible until the next run
@@ -1573,9 +1606,9 @@ function callUser(def, args){
 }
 
 function formatValue(value){
-	if(isNode(value)) return 'düğüm(' + value.data + ')';
+	if(isNode(value)) return t('nodeValue', {data: value.data});
 	if(value === null) return 'null';
-	if(value === undefined) return 'tanımsız';
+	if(value === undefined) return t('undefinedValue');
 	return String(value);
 }
 
@@ -1605,47 +1638,48 @@ function recursivelyProcess(items){
 }
 
 
-// turn parser and JavaScript errors into short Turkish explanations for learners
+// turn parser and JavaScript errors into short explanations for learners (chosen language)
 function explainError(err, source){
+	var lineOf = function(n){ return n ? t('eLine', {n: n}) : ''; };
+
 	if(err && err.loopSignal) // break / continue that is not inside a loop
-		return 'Satır ' + err.lineNumber + ': ' + err.loopSignal + ' yalnızca bir döngünün (while ya da for) içinde kullanılabilir.';
+		return lineOf(err.lineNumber) + t('eLoopOnly', {kw: err.loopSignal});
 
 	if(err && err.returnSignal) // return that is not inside a function
-		return 'Satır ' + err.lineNumber + ': return yalnızca bir fonksiyonun içinde kullanılabilir.';
+		return lineOf(err.lineNumber) + t('eReturnOnly');
 
 	if(err instanceof RangeError && /call stack/i.test(err.message))
-		return 'Çok fazla iç içe fonksiyon çağrısı. Özyinelemenin bir durma koşulu var mı?';
+		return t('eStack');
 
 	var m, msg = (err && err.message) || String(err);
 
 	if(err && err.name === 'SyntaxError' && err.location){ // from the PEG parser
 		var loc = err.location.start;
-		var found = err.found === null ? 'kodun sonu' : (err.found === '\n' ? 'satır sonu' : '"' + err.found + '"');
+		var found = err.found === null ? t('eEndOfCode') : (err.found === '\n' ? t('eEndOfLine') : '"' + err.found + '"');
 		var line = (source || '').split('\n')[loc.line - 1] || '';
-		return 'Yazım hatası (satır ' + loc.line + ', sütun ' + loc.column + '): burada ' + found + ' beklenmiyordu.\n\n' +
+		return t('eSyntax', {line: loc.line, col: loc.column, found: found}) + '\n\n' +
 		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
 	}
 
-	var where = currentLine ? 'Satır ' + currentLine + ': ' : '';
+	if(err && err.dsvOwn) // our own messages already say where
+		return msg;
+
+	var where = lineOf(currentLine);
 
 	if((m = /Cannot read propert(?:y|ies) of (?:null|undefined) \(reading '([^']+)'\)/.exec(msg)) ||
 	   (m = /can't access property "([^"]+)", .* is (?:null|undefined)/.exec(msg)))
-		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı okunmaya çalışıldı. ' +
-		       'Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. p != null ya da kısaca p).';
+		return where + t('eNullRead', {field: m[1]});
 
 	if((m = /Cannot set propert(?:y|ies) of (?:null|undefined) \(setting '([^']+)'\)/.exec(msg)))
-		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı değiştirilmeye çalışıldı. Pointer bir düğümü göstermiyor.';
+		return where + t('eNullWrite', {field: m[1]});
 
 	if((m = /^(\S+) is not defined/.exec(msg)))
-		return where + '"' + m[1] + '" tanımlı değil. Önce var ile tanımlayın (ör. var ' + m[1] + ' = ...).';
+		return where + t('eUndefined', {name: m[1]});
 
 	if((m = /^(\S+) is not a function/.exec(msg)))
-		return where + '"' + m[1] + '" bir fonksiyon değil. Fonksiyonu çağırmadan önce function ile tanımlayın.';
+		return where + t('eNotFunction', {name: m[1]});
 
-	if(msg.indexOf('Satır ') === 0) // our own messages already say where
-		return msg;
-
-	return where + 'Hata: ' + msg;
+	return where + t('eGeneric', {msg: msg});
 }
 
 window.explainError = explainError;
@@ -1730,7 +1764,7 @@ function runBlock(k){
 		if(!parse(blockEditors[i].getValue())){
 			var output = document.getElementById('output');
 			if(output)
-				output.textContent = 'Blok ' + (i + 1) + ' çalıştırılırken: ' + output.textContent;
+				output.textContent = t('eInBlock', {n: i + 1}) + output.textContent;
 			player.toEnd();
 			return;
 		}
@@ -1803,8 +1837,8 @@ function setEditors(items){
 		editor.addKeyMap({"Ctrl-Enter": run, "Cmd-Enter": run});
 
 		var button = document.createElement("button");
-		button.innerHTML = ICONS.play;
-		button.title = 'Çalıştır (Ctrl+Enter)';
+		button.innerHTML = ICONS.play + '<span>' + escapeHTML(t('run')) + '</span>';
+		button.title = t('runTitle');
 		button.className = "btn-round btn-lg dsv-run";
 		insertAfter(button, editor.getWrapperElement());
 		button.addEventListener("click", run);
@@ -1813,8 +1847,8 @@ function setEditors(items){
 		var original = editor.getValue();
 		var restore = document.createElement("button");
 		restore.className = "dsv-restore";
-		restore.textContent = '↺ Geri yükle';
-		restore.title = 'Örneğin kendi kodunu geri yükle';
+		restore.textContent = t('restore');
+		restore.title = t('restoreTitle');
 		restore.hidden = true;
 		insertAfter(restore, button);
 		restore.addEventListener("click", function(){ editor.setValue(original); editor.focus(); });

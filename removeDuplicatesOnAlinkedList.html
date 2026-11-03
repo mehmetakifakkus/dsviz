@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tekrar edenleri silme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Tekrar edenleri silme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Tekrar edenleri silme</h1>
+<h1 data-lang="en">Remove duplicates</h1>
+<h1 data-lang="de">Duplikate entfernen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Önce sıralı bir liste oluşturalım. 3 değeri iki kez geçiyor.</p>
+<p data-lang="tr">Önce sıralı bir liste oluşturalım. 3 değeri iki kez geçiyor.</p>
+<p data-lang="en">First, let's create a sorted list. The value 3 appears twice.</p>
+<p data-lang="de">Erstellen wir zuerst eine sortierte Liste. Der Wert 3 kommt zweimal vor.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -32,7 +31,9 @@ z.next.next = new Node(4)
 z.next.next.next = new Node(5)
 </textarea>
 
-<p>Liste sıralı olduğu için tekrar eden değerler yan yana durur. <code>p</code> listeyi dolaşır. Bir sonraki düğüm aynı değere sahipse <code>p</code>'nin oku o düğümün üzerinden atlar ve düğüm silinir; <code>p</code> yerinde kalır, çünkü yeni komşusu da aynı değerde olabilir. Değer farklıysa <code>p</code> bir adım ilerler.</p>
+<p data-lang="tr">Liste sıralı olduğu için tekrar eden değerler yan yana durur. <code>p</code> listeyi dolaşır. Bir sonraki düğüm aynı değere sahipse <code>p</code>'nin oku o düğümün üzerinden atlar ve düğüm silinir; <code>p</code> yerinde kalır, çünkü yeni komşusu da aynı değerde olabilir. Değer farklıysa <code>p</code> bir adım ilerler.</p>
+<p data-lang="en">Because the list is sorted, duplicate values sit next to each other. <code>p</code> walks the list. If the next node has the same value, <code>p</code>'s arrow skips over that node and the node is deleted; <code>p</code> stays where it is, because its new neighbour might have the same value too. If the value is different, <code>p</code> moves one step forward.</p>
+<p data-lang="de">Da die Liste sortiert ist, stehen doppelte Werte nebeneinander. <code>p</code> durchläuft die Liste. Hat der nächste Knoten denselben Wert, überspringt der Pfeil von <code>p</code> diesen Knoten und der Knoten wird gelöscht; <code>p</code> bleibt stehen, denn auch sein neuer Nachbar könnte denselben Wert haben. Ist der Wert verschieden, rückt <code>p</code> einen Schritt weiter.</p>
 
 <textarea id="text3" class="deneme">
 var p = x
@@ -48,6 +49,34 @@ while(p.next != null)
     p = p.next
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var p = x
+while(p.next != null)
+{
+  if(p.data == p.next.data)
+  {
+    var q = p.next
+    p.next = q.next  // skip over the duplicate
+    delete q
+  }
+  else
+    p = p.next
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var p = x
+while(p.next != null)
+{
+  if(p.data == p.next.data)
+  {
+    var q = p.next
+    p.next = q.next  // das Duplikat überspringen
+    delete q
+  }
+  else
+    p = p.next
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

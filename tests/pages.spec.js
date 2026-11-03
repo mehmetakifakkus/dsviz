@@ -35,6 +35,14 @@ const EXPECTED = {
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };
 
+// In English and German some pages use English names (tepe -> topNode, bas/son -> front/rear);
+// their expected state differs only in those names.
+const EXPECTED_EN_DE = Object.assign({}, EXPECTED, {
+	'stack.html': ['[walk(topNode), value, output()]', ['', 3, '2,1']],
+	'queue.html': ['[walk(front), rear, value, output()]', ['', null, 10, '20,30,40']],
+	'functions.html': ['[a, b, topNode, output()]', [3, 2, null, '1']]
+});
+
 test('every page has an expected final state in this file', () => {
 	expect(PAGES.filter(f => !(f in EXPECTED)), 'add the new page to EXPECTED').toEqual([]);
 	expect(Object.keys(EXPECTED).filter(f => !PAGES.includes(f)), 'this page does not exist any more').toEqual([]);
@@ -47,20 +55,22 @@ test('the examples menu lists every page', async ({ page }) => {
 	expect(problems).toEqual([]);
 });
 
-for (const file of PAGES) {
-	test(`${file} runs to the end`, async ({ page }) => {
-		const problems = await openPage(page, file);
+for (const lang of ['tr', 'en', 'de']) {
+	for (const file of PAGES) {
+		test(`${file} runs to the end` + (lang === 'tr' ? '' : ` (${lang})`), async ({ page }) => {
+			const problems = await openPage(page, file, lang === 'tr' ? null : { lang });
 
-		expect(await runAllBlocks(page)).toBeGreaterThan(0);
+			expect(await runAllBlocks(page)).toBeGreaterThan(0);
 
-		const steps = await stepCounter(page);
-		expect(steps.total).toBeGreaterThan(0);
-		expect(steps.current).toBe(steps.total);
+			const steps = await stepCounter(page);
+			expect(steps.total).toBeGreaterThan(0);
+			expect(steps.current).toBe(steps.total);
 
-		expect(await page.locator('#output').textContent()).not.toMatch(/Hata|hatası|tanımlı değil|null olan/);
+			expect(await page.locator('#output').textContent()).not.toMatch(/Hata|hatası|tanımlı değil|null olan|Error|Fehler|Satır \d|Line \d|Zeile \d/);
 
-		const [expression, expected] = EXPECTED[file];
-		expect(await valueOf(page, expression)).toEqual(expected);
-		expect(problems).toEqual([]);
-	});
+			const [expression, expected] = (lang === 'tr' ? EXPECTED : EXPECTED_EN_DE)[file];
+			expect(await valueOf(page, expression)).toEqual(expected);
+			expect(problems).toEqual([]);
+		});
+	}
 }

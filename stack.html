@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Yığın (stack) | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Yığın (stack)</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Yığın (stack)</h1>
+<h1 data-lang="en">Stack</h1>
+<h1 data-lang="de">Stapel (Stack)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Yığın (stack) <em>son giren ilk çıkar</em> (LIFO) mantığıyla çalışır: tabak yığını gibi, en son konan en üstte durur ve ilk o alınır. Bağlı listeyle kurulan yığında listenin başı yığının tepesidir. Ekleme (push) başa eklemeyle aynıdır: yeni düğüm tepeye bağlanır ve tepe yeni düğüme taşınır, bu yüzden O(1) zaman alır. <em>Not:</em> İngilizcede tepe <code>top</code> diye geçer, ama <code>top</code> tarayıcıda ayrılmış bir isim olduğu için burada <code>tepe</code> kullanıyoruz.</p>
+<p data-lang="tr">Yığın (stack) <em>son giren ilk çıkar</em> (LIFO) mantığıyla çalışır: tabak yığını gibi, en son konan en üstte durur ve ilk o alınır. Bağlı listeyle kurulan yığında listenin başı yığının tepesidir. Ekleme (push) başa eklemeyle aynıdır: yeni düğüm tepeye bağlanır ve tepe yeni düğüme taşınır, bu yüzden O(1) zaman alır. <em>Not:</em> İngilizcede tepe <code>top</code> diye geçer, ama <code>top</code> tarayıcıda ayrılmış bir isim olduğu için burada <code>tepe</code> kullanıyoruz.</p>
+<p data-lang="en">A stack works on a <em>last in, first out</em> (LIFO) basis: like a pile of plates, the one put down last sits on top and is taken first. In a stack built from a linked list, the head of the list is the top of the stack. Pushing is the same as inserting at the head: the new node is linked to the top and the top moves to the new node, so it takes O(1) time. <em>Note:</em> the usual name is <code>top</code>, but <code>top</code> is a reserved name in the browser, so we use <code>topNode</code> here.</p>
+<p data-lang="de">Ein Stapel (Stack) arbeitet nach dem Prinzip <em>zuletzt hinein, zuerst hinaus</em> (LIFO): wie bei einem Tellerstapel liegt der zuletzt abgelegte oben und wird zuerst genommen. Bei einem Stapel aus einer verketteten Liste ist der Kopf der Liste die Spitze des Stapels. Das Ablegen (push) entspricht dem Einfügen am Anfang: der neue Knoten wird mit der Spitze verbunden und die Spitze wandert zum neuen Knoten, deshalb dauert es O(1). <em>Hinweis:</em> Üblich ist der Name <code>top</code>, aber <code>top</code> ist im Browser reserviert, darum verwenden wir hier <code>topNode</code>.</p>
 
 <textarea id="text1" class="deneme">
 var tepe = null
@@ -29,8 +28,28 @@ for(var i = 1; i <= 3; i++)  // 1, 2 ve 3'ü ekle (push)
   tepe = n
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var topNode = null
+for(var i = 1; i <= 3; i++)  // push 1, 2 and 3
+{
+  var n = new Node(i)
+  n.next = topNode
+  topNode = n
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var topNode = null
+for(var i = 1; i <= 3; i++)  // 1, 2 und 3 ablegen (push)
+{
+  var n = new Node(i)
+  n.next = topNode
+  topNode = n
+}
+</script>
 
-<p>Çıkarma (pop) tepedeki düğümü alır: değeri saklanır, tepe bir alttaki düğüme iner ve eski düğüm silinir. En son eklenen 3 ilk çıkar.</p>
+<p data-lang="tr">Çıkarma (pop) tepedeki düğümü alır: değeri saklanır, tepe bir alttaki düğüme iner ve eski düğüm silinir. En son eklenen 3 ilk çıkar.</p>
+<p data-lang="en">Popping takes the node on top: its value is kept, the top moves down to the next node and the old node is deleted. The 3, added last, comes out first.</p>
+<p data-lang="de">Das Entnehmen (pop) nimmt den obersten Knoten: sein Wert wird gemerkt, die Spitze rückt zum nächsten Knoten und der alte Knoten wird gelöscht. Die zuletzt abgelegte 3 kommt zuerst heraus.</p>
 
 <textarea id="text2" class="deneme">
 var t = tepe        // tepedeki düğüm
@@ -38,8 +57,22 @@ var value = t.data  // çıkan değer
 tepe = tepe.next    // tepe bir aşağı iner
 delete t
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var t = topNode        // the node on top
+var value = t.data     // the popped value
+topNode = topNode.next // the top moves down one
+delete t
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var t = topNode        // der oberste Knoten
+var value = t.data     // der entnommene Wert
+topNode = topNode.next // die Spitze rückt eins nach unten
+delete t
+</script>
 
-<p>Yığını boşalana kadar boşaltalım. Değerler eklenme sırasının tersiyle çıkar ve Çıktı alanına yazılır. Boş bir yığından pop yapılmaya çalışılırsa <code>tepe</code> <code>null</code> olduğu için <code>tepe.data</code> hata verir; gerçek programlarda önce <code>tepe != null</code> kontrol edilir.</p>
+<p data-lang="tr">Yığını boşalana kadar boşaltalım. Değerler eklenme sırasının tersiyle çıkar ve Çıktı alanına yazılır. Boş bir yığından pop yapılmaya çalışılırsa <code>tepe</code> <code>null</code> olduğu için <code>tepe.data</code> hata verir; gerçek programlarda önce <code>tepe != null</code> kontrol edilir.</p>
+<p data-lang="en">Let's empty the stack completely. The values come out in the reverse order of insertion and are written to the Output area. Popping from an empty stack fails at <code>topNode.data</code> because <code>topNode</code> is <code>null</code>; real programs check <code>topNode != null</code> first.</p>
+<p data-lang="de">Leeren wir den Stapel vollständig. Die Werte kommen in umgekehrter Reihenfolge heraus und werden im Bereich Ausgabe angezeigt. Ein pop auf einem leeren Stapel scheitert an <code>topNode.data</code>, weil <code>topNode</code> <code>null</code> ist; echte Programme prüfen vorher <code>topNode != null</code>.</p>
 
 <textarea id="text3" class="deneme">
 while(tepe != null)
@@ -50,6 +83,24 @@ while(tepe != null)
   delete t
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+while(topNode != null)
+{
+  print topNode.data
+  var t = topNode
+  topNode = topNode.next
+  delete t
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+while(topNode != null)
+{
+  print topNode.data
+  var t = topNode
+  topNode = topNode.next
+  delete t
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

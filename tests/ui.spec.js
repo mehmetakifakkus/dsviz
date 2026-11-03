@@ -73,18 +73,24 @@ test('command prompt runs a line and calls a function once', async ({ page }) =>
 	expect(problems).toEqual([]);
 });
 
-test('theme switch is applied and remembered', async ({ page }) => {
+test('theme chosen in the settings panel is applied and remembered', async ({ page }) => {
 	const problems = await openPage(page, 'stack.html');
 	const theme = () => page.evaluate(() => document.documentElement.getAttribute('data-theme'));
-	const before = await theme();
 
-	await page.locator('.topbar button[title="Temayı değiştir"]').click();
-	const after = await theme();
-	expect(after).not.toBe(before);
+	await page.locator('.topbar .settings-btn').click();
+	const panel = page.locator('#settings-panel');
+	await expect(panel).toBeVisible();
+	await panel.getByText('Koyu', { exact: true }).click();
+	expect(await theme()).toBe('dark');
+	await panel.getByText('Açık', { exact: true }).click();
+	expect(await theme()).toBe('light');
+
+	await page.keyboard.press('Escape');
+	await expect(panel).toBeHidden();
 
 	await page.reload();
 	await page.waitForFunction(() => window.dsvReady === true);
-	expect(await theme()).toBe(after);
+	expect(await theme()).toBe('light');
 	expect(problems).toEqual([]);
 });
 

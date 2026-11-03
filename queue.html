@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kuyruk (queue) | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Kuyruk (queue)</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Kuyruk (queue)</h1>
+<h1 data-lang="en">Queue</h1>
+<h1 data-lang="de">Warteschlange (Queue)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Kuyruk (queue) <em>ilk giren ilk çıkar</em> (FIFO) mantığıyla çalışır: market kuyruğu gibi. İki pointer tutulur: <code>bas</code> (front) ilk çıkacak düğümü, <code>son</code> (rear) en son eklenen düğümü gösterir. Ekleme (enqueue) sona yapılır. <code>son</code> sayesinde listeyi dolaşmaya gerek kalmaz, işlem O(1) zaman alır. Kuyruk boşsa yeni düğüm hem baş hem son olur.</p>
+<p data-lang="tr">Kuyruk (queue) <em>ilk giren ilk çıkar</em> (FIFO) mantığıyla çalışır: market kuyruğu gibi. İki pointer tutulur: <code>bas</code> (front) ilk çıkacak düğümü, <code>son</code> (rear) en son eklenen düğümü gösterir. Ekleme (enqueue) sona yapılır. <code>son</code> sayesinde listeyi dolaşmaya gerek kalmaz, işlem O(1) zaman alır. Kuyruk boşsa yeni düğüm hem baş hem son olur.</p>
+<p data-lang="en">A queue works on a <em>first in, first out</em> (FIFO) basis, like the line at a checkout. Two pointers are kept: <code>front</code> points to the node that leaves next, <code>rear</code> to the node added last. Adding (enqueue) happens at the rear. Thanks to <code>rear</code> there is no need to walk the list, so it takes O(1) time. If the queue is empty, the new node becomes both front and rear.</p>
+<p data-lang="de">Eine Warteschlange (Queue) arbeitet nach dem Prinzip <em>zuerst hinein, zuerst hinaus</em> (FIFO), wie die Schlange an der Kasse. Es gibt zwei Pointer: <code>front</code> zeigt auf den Knoten, der als Nächstes herauskommt, <code>rear</code> auf den zuletzt angehängten. Das Einreihen (enqueue) geschieht am Ende. Dank <code>rear</code> muss die Liste nicht durchlaufen werden, es dauert O(1). Ist die Warteschlange leer, wird der neue Knoten zugleich Anfang und Ende.</p>
 
 <textarea id="text1" class="deneme">
 var bas = null
@@ -38,8 +37,46 @@ for(var i = 1; i <= 3; i++)  // 10, 20 ve 30'u ekle (enqueue)
   }
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var front = null
+var rear = null
+for(var i = 1; i <= 3; i++)  // add 10, 20 and 30 (enqueue)
+{
+  var n = new Node(i * 10)
+  if(rear == null)  // the queue is empty
+  {
+    front = n
+    rear = n
+  }
+  else
+  {
+    rear.next = n
+    rear = n
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var front = null
+var rear = null
+for(var i = 1; i <= 3; i++)  // 10, 20 und 30 einreihen (enqueue)
+{
+  var n = new Node(i * 10)
+  if(rear == null)  // die Warteschlange ist leer
+  {
+    front = n
+    rear = n
+  }
+  else
+  {
+    rear.next = n
+    rear = n
+  }
+}
+</script>
 
-<p>Çıkarma (dequeue) baştan yapılır: değer saklanır, <code>bas</code> bir sonraki düğüme geçer ve eski düğüm silinir. İlk eklenen 10 ilk çıkar. Kuyruk boşaldıysa <code>son</code> da <code>null</code> yapılmalıdır, yoksa silinmiş düğümü göstermeye devam eder.</p>
+<p data-lang="tr">Çıkarma (dequeue) baştan yapılır: değer saklanır, <code>bas</code> bir sonraki düğüme geçer ve eski düğüm silinir. İlk eklenen 10 ilk çıkar. Kuyruk boşaldıysa <code>son</code> da <code>null</code> yapılmalıdır, yoksa silinmiş düğümü göstermeye devam eder.</p>
+<p data-lang="en">Removing (dequeue) happens at the front: the value is kept, <code>front</code> moves to the next node and the old node is deleted. The 10, added first, comes out first. If the queue has become empty, <code>rear</code> must be set to <code>null</code> too, otherwise it keeps pointing to the deleted node.</p>
+<p data-lang="de">Das Entnehmen (dequeue) geschieht am Anfang: der Wert wird gemerkt, <code>front</code> rückt zum nächsten Knoten und der alte Knoten wird gelöscht. Die zuerst eingereihte 10 kommt zuerst heraus. Ist die Warteschlange danach leer, muss auch <code>rear</code> auf <code>null</code> gesetzt werden, sonst zeigt es weiter auf den gelöschten Knoten.</p>
 
 <textarea id="text2" class="deneme">
 var t = bas
@@ -49,8 +86,26 @@ if(bas == null)     // kuyruk boşaldı
   son = null
 delete t
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var t = front
+var value = t.data  // the removed value
+front = front.next
+if(front == null)   // the queue is now empty
+  rear = null
+delete t
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var t = front
+var value = t.data  // der entnommene Wert
+front = front.next
+if(front == null)   // die Warteschlange ist jetzt leer
+  rear = null
+delete t
+</script>
 
-<p>Sona yeni bir eleman ekleyip kuyruğu boşaltalım. Değerler eklenme sırasıyla çıkar ve Çıktı alanına yazılır.</p>
+<p data-lang="tr">Sona yeni bir eleman ekleyip kuyruğu boşaltalım. Değerler eklenme sırasıyla çıkar ve Çıktı alanına yazılır.</p>
+<p data-lang="en">Let's add one more element at the rear and then empty the queue. The values come out in the order they were added and are written to the Output area.</p>
+<p data-lang="de">Hängen wir noch ein Element an und leeren dann die Warteschlange. Die Werte kommen in der Reihenfolge heraus, in der sie eingereiht wurden, und werden im Bereich Ausgabe angezeigt.</p>
 
 <textarea id="text3" class="deneme">
 var n = new Node(40)
@@ -66,6 +121,34 @@ while(bas != null)
 }
 son = null
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var n = new Node(40)
+rear.next = n
+rear = n
+
+while(front != null)
+{
+  print front.data
+  var t = front
+  front = front.next
+  delete t
+}
+rear = null
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var n = new Node(40)
+rear.next = n
+rear = n
+
+while(front != null)
+{
+  print front.data
+  var t = front
+  front = front.next
+  delete t
+}
+rear = null
+</script>
 </main>
 
 <script src="js/layout.js"></script>

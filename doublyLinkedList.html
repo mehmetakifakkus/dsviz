@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Çift yönlü liste | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Çift yönlü liste</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Çift yönlü liste</h1>
+<h1 data-lang="en">Doubly linked list</h1>
+<h1 data-lang="de">Doppelt verkettete Liste</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Çift yönlü listede her düğümün iki bağı vardır: <code>next</code> bir sonraki düğümü, <code>prev</code> bir önceki düğümü gösterir. Düğümün sol hücresi <code>prev</code>, sağ hücresi <code>next</code> bağıdır. Bu yüzden her bağ iki kez kurulur: <code>a.next = b</code> ve <code>b.prev = a</code>.</p>
+<p data-lang="tr">Çift yönlü listede her düğümün iki bağı vardır: <code>next</code> bir sonraki düğümü, <code>prev</code> bir önceki düğümü gösterir. Düğümün sol hücresi <code>prev</code>, sağ hücresi <code>next</code> bağıdır. Bu yüzden her bağ iki kez kurulur: <code>a.next = b</code> ve <code>b.prev = a</code>.</p>
+<p data-lang="en">In a doubly linked list every node has two links: <code>next</code> points to the next node and <code>prev</code> to the previous one. The left cell of a node is the <code>prev</code> link, the right cell is the <code>next</code> link. That is why every connection is made twice: <code>a.next = b</code> and <code>b.prev = a</code>.</p>
+<p data-lang="de">In einer doppelt verketteten Liste hat jeder Knoten zwei Verweise: <code>next</code> zeigt auf den nächsten Knoten, <code>prev</code> auf den vorherigen. Die linke Zelle eines Knotens ist der <code>prev</code>-Verweis, die rechte der <code>next</code>-Verweis. Deshalb wird jede Verbindung zweimal hergestellt: <code>a.next = b</code> und <code>b.prev = a</code>.</p>
 
 <textarea id="text1" class="deneme">
 var a = new Node(1)
@@ -34,15 +33,29 @@ c.next = d
 d.prev = c
 </textarea>
 
-<p>Önce <code>p</code> ile listenin sonuna gidelim.</p>
+<p data-lang="tr">Önce <code>p</code> ile listenin sonuna gidelim.</p>
+<p data-lang="en">First, let's go to the end of the list with <code>p</code>.</p>
+<p data-lang="de">Gehen wir zuerst mit <code>p</code> ans Ende der Liste.</p>
 
 <textarea id="text2" class="deneme">
 var p = a
 while(p.next != null)  // sona git
   p = p.next
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var p = a
+while(p.next != null)  // go to the end
+  p = p.next
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var p = a
+while(p.next != null)  // ans Ende gehen
+  p = p.next
+</script>
 
-<p>Şimdi aynı pointer ile <code>prev</code> bağlarını izleyerek geriye doğru dolaşalım. Tek yönlü listede bu mümkün değildir. Değerler Çıktı alanına yazılır.</p>
+<p data-lang="tr">Şimdi aynı pointer ile <code>prev</code> bağlarını izleyerek geriye doğru dolaşalım. Tek yönlü listede bu mümkün değildir. Değerler Çıktı alanına yazılır.</p>
+<p data-lang="en">Now let's walk backwards with the same pointer by following the <code>prev</code> links. This is not possible in a singly linked list. The values are written to the Output area.</p>
+<p data-lang="de">Jetzt laufen wir mit demselben Zeiger rückwärts, indem wir den <code>prev</code>-Verweisen folgen. In einer einfach verketteten Liste ist das nicht möglich. Die Werte werden im Bereich Ausgabe angezeigt.</p>
 
 <textarea id="text3" class="deneme">
 while(p != null)  // geriye doğru dolaş
@@ -51,6 +64,20 @@ while(p != null)  // geriye doğru dolaş
   p = p.prev
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+while(p != null)  // walk backwards
+{
+  print p.data
+  p = p.prev
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+while(p != null)  // rückwärts laufen
+{
+  print p.data
+  p = p.prev
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>
