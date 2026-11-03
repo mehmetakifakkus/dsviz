@@ -106,3 +106,24 @@ test.describe('error messages', () => {
 		});
 	}
 });
+
+test('a comma-separated declaration declares every name, also in functions and for', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, `var a = 1, b = 2
+var x = new Node(1), y = new Node(2), z = x
+x.next = y
+function f(n)
+{
+  var i = 0, s = 0
+  for(var k = 1, m = n; k <= m; k++)
+  {
+    s += k
+  }
+  return s
+}
+var total = f(4), c = a + b
+`);
+	expect(await valueOf(page, '[a, b, c, total, z === x, walk(x)]')).toEqual([1, 2, 3, 10, true, '1>2']);
+	expect((await page.evaluate(() => window.dsvState())).pointers).toEqual(['x', 'y', 'z']);
+	expect(problems).toEqual([]);
+});

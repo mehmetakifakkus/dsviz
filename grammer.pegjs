@@ -9,9 +9,19 @@
 {
   // whitespace-only matches return the string 'ws'; keep only real statement objects
   function isItem(x) { return x !== null && typeof x === 'object'; }
+
+  // a statement may stand for several (var a = 1, b = 2): such lists are spread out
+  function flat(list) {
+    var out = [];
+    list.forEach(function(x) {
+      if (x instanceof Array) out.push.apply(out, x.filter(isItem));
+      else if (isItem(x)) out.push(x);
+    });
+    return out;
+  }
 }
 
-start = s:statement* { return s.filter(isItem); }
+start = s:statement* { return flat(s); }
 
 statement 
   =	block_item
@@ -102,7 +112,7 @@ function_declaration "function"
  = _ ('function' / 'fonksiyon') !idChar _ n:name _ '(' _ params:param_list? _ ')' _ nl
    _ '{' _ [ \n]* _ body:block_item_list _ end:closing_brace _ nl
 {
-	return {'type': 'function', 'name': n, 'params': params || [], 'body': body.filter(isItem),
+	return {'type': 'function', 'name': n, 'params': params || [], 'body': flat(body),
 	        'lineNumber': location().start.line, 'endLine': end};
 }
 
@@ -126,7 +136,7 @@ call_expression
 
 compound_statement
  = nl _'{' _ [ \n]* _ b:block_item_list _ '}' _ nl _{  // block itemlar yerine bos da olabilir
- 	return b.filter(isItem)
+ 	return flat(b)
  }
 
 
@@ -172,16 +182,24 @@ null_statement
 
 
 declaration
- =  _ 'var' !idChar _ dec:init_declarator_list {
-	return {'type': 'declaration', '#evaluation': 0, 'text': dec.text ? 'var ' + dec.text : 'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
+ =  _ 'var' !idChar _ list:init_declarator_list {
+	var line = location().start.line;
+	var items = list.map(function(dec){
+		return {'type': 'declaration', '#evaluation': 0, 'text': dec.text ? 'var ' + dec.text : 'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': line};
+	});
+	return items.length === 1 ? items[0] : items; // var a = 1, b = 2: one statement for each name
  }
  /
-  _ ass:init_declarator_list {
-	return {'type': 'assignment', '#evaluation': 0, 'text': ass.text || ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': location().start.line};
+  _ list:init_declarator_list {
+	var line = location().start.line;
+	var items = list.map(function(ass){
+		return {'type': 'assignment', '#evaluation': 0, 'text': ass.text || ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': line};
+	});
+	return items.length === 1 ? items[0] : items;
  }
 
 init_declarator_list
- = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
+ = 	first:init_declarator rest:(',' _ init_declarator)* _ nl { return [first].concat(rest.map(function(r){ return r[2]; })); }
 
 init_declarator
 	= _ left:name _"="_ exp: (array_constructor / node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(]) { return o; }) / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
@@ -216,7 +234,7 @@ print_item = StringLiteral / expression_statement // taban(x), karekök(x)... ar
 /////////////////////////			 Object reference 		////////////////
 
 object_statement
- = "var " _ name:name _ "=" _ "new"? _ obj:Object_Constructor _ nl{
+ = "var " _ name:name _ "=" _ "new"? _ obj:Object_Constructor _ nl !(_ ',') {   // var x = new Node(1), y = ... is a declaration list
 	return {'type': 'declaration', 'lhs': name, 'rhs': obj, 'lineNumber': location().start.line}
  }
  

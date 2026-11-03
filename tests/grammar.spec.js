@@ -104,6 +104,17 @@ test('math functions are calls inside expressions; a field can start an expressi
 	expect(parse('var v = x.next.data\n')[0].rhs.trim()).toBe('x.next.data');
 });
 
+test('every name of a comma-separated declaration is declared', () => {
+	expect(parse('var a = 1, b = a + 1\n')).toMatchObject([
+		{ type: 'declaration', lhs: 'a', rhs: '1', lineNumber: 1 },
+		{ type: 'declaration', lhs: 'b', rhs: 'a + 1', lineNumber: 1 }]);
+	expect(parse('var x = new Node(1), y = new Node(2), z = x\n').map(d => d.lhs)).toEqual(['x', 'y', 'z']);
+	expect(parse('a = 3, b = 4\n').map(d => [d.type, d.lhs])).toEqual([['assignment', 'a'], ['assignment', 'b']]);
+	expect(parse('function f()\n{\n  var i = 0, j = 5\n  return j\n}\n')[0].body.map(d => d.lhs || d.type)).toEqual(['i', 'j', 'return']);
+	expect(parse('for(var i = 0, j = 9; i < j; i++)\n  print i\n')[0].init.map(d => d.lhs)).toEqual(['i', 'j']);
+	expect(parse('var v = f(1, 2), q = 3\n').map(d => d.rhs)).toEqual(['f(1, 2)', '3']); // the comma of a call is not a separator
+});
+
 test('functions, return and calls', () => {
 	const result = parse('function push(v, w)\n{\n  var n = new Node(v)\n  return n\n}\nfonksiyon f()\n{\n  döndür\n}\nvar a = push(1, 2) + 1\n');
 	expect(result[0]).toMatchObject({ type: 'function', name: 'push', params: ['v', 'w'], lineNumber: 1, endLine: 5 });
