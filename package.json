@@ -5,7 +5,8 @@
   "description": "Bağlı liste görselleştirme: tarayıcı testleri",
   "scripts": {
     "start": "node tests/server.js",
-    "test": "playwright test"
+    "test": "playwright test",
+    "build:grammar": "node tools/build-grammar.js"
   },
   "license": "UNLICENSED",
   "devDependencies": {

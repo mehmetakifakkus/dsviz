@@ -59,6 +59,16 @@ test('every page has an expected final state in this file', () => {
 	expect(Object.keys(EXPECTED).filter(f => !PAGES.includes(f)), 'this page does not exist any more').toEqual([]);
 });
 
+test('pages load the compiled parser, not PEG.js and the grammar', async ({ page }) => {
+	const requests = [];
+	page.on('request', r => requests.push(r.url()));
+	await openPage(page, 'index.html');
+	expect(requests.filter(u => /peg-0\.9\.0|grammer\.pegjs/.test(u))).toEqual([]);
+	expect(requests.some(u => u.endsWith('/js/grammar.js'))).toBe(true);
+	for (const file of PAGES)
+		expect(fs.readFileSync(path.join(ROOT, file), 'utf8'), file).toContain('<script src="js/grammar.js">');
+});
+
 test('the examples menu lists every page', async ({ page }) => {
 	const problems = await openPage(page, 'index.html');
 	const listed = await page.evaluate(() => window.dsvExamples.flatMap(g => g.items.map(it => it[0])));
