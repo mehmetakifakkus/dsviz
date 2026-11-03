@@ -295,15 +295,15 @@ function makeArray(n){
 // numbers (or still empty) as a row of cells over the drawing. Which one is decided by the
 // first value the program puts in it (visual.kind).
 
-// the array drawn as buckets (not in a tree drawing)
-function drawnTable(){
+// the arrays drawn as buckets (not in a tree drawing), side by side in the order they were made
+function bucketTables(){
 	if(treeMode)
-		return null;
-	for(var i = 0; i < allArrays.length; i++)
-		if(allArrays[i].visual.shown && allArrays[i].visual.kind === 'buckets')
-			return allArrays[i];
-	return null;
+		return [];
+	return allArrays.filter(function(a){ return a.visual.shown && a.visual.kind === 'buckets'; });
 }
+
+// the first of them (null: none), for what depends on buckets being drawn at all
+function drawnTable(){ return bucketTables()[0] || null; }
 
 // the arrays drawn as rows at the top, in the order they were made
 function rowArrays(){
@@ -369,11 +369,15 @@ function drawTable(){
 		tableDraw.remove();
 		tableDraw = null;
 	}
-	var table = drawnTable();
-	if(!table)
-		return;
+	var items = [];
+	bucketTables().forEach(function(table){ drawBuckets(table, items); });
+	if(items.length)
+		tableDraw = new Group(items);
+}
 
-	var v = table.visual, items = [], x = COL_X0;
+// one table: a column of cells at its own column (visual.col0, see hashCells)
+function drawBuckets(table, items){
+	var v = table.visual, x = COL_X0 + (v.col0 || 0) * colWidth;
 	var y0 = ROW_Y0 + topOffset();
 	items.push(new PointText({ point: [x + TABLE_W / 2, y0 - 16], justification: 'center', fontSize: 20+'px', fillColor: PAL.named, content: v.name }));
 	for(var i = 0; i < v.cells.length; i = i + 1){
@@ -392,22 +396,29 @@ function drawTable(){
 		else                                     // a plain value
 			items.push(new PointText({ point: [x + TABLE_W / 2, y + 18], justification: 'center', fontSize: 15+'px', fillColor: PAL.text, content: '' + cell }));
 	}
-	tableDraw = new Group(items);
 }
 
-// the bucket rows of a drawn table: cell i's chain on row i (column 0 is the table itself);
-// nodes in no bucket chain go to the rows under the table
-function hashCells(shown, table){
-	var visited = {}, cells = table.visual.cells, i, n;
-	for(i = 0; i < cells.length; i = i + 1){
-		var col = 1;
-		for(n = cells[i]; isNode(n) && n.shown && !visited[n.id]; n = n.visualNext){
-			visited[n.id] = true;
-			n.cell = {row: i, col: col};
-			col = col + 1;
+// The bucket rows of the drawn tables: cell i's chain on row i, right of its table. The
+// tables stand side by side: each one starts a column after the longest chain of the one
+// before (visual.col0). Nodes in no bucket chain go to the rows under the tables.
+function hashCells(shown, tables){
+	var visited = {}, i, n, col0 = 0, rows = 0;
+	tables.forEach(function(table){
+		var cells = table.visual.cells, longest = 1;
+		table.visual.col0 = col0;
+		for(i = 0; i < cells.length; i = i + 1){
+			var col = col0 + 1;
+			for(n = cells[i]; isNode(n) && n.shown && !visited[n.id]; n = n.visualNext){
+				visited[n.id] = true;
+				n.cell = {row: i, col: col};
+				col = col + 1;
+			}
+			longest = Math.max(longest, col - col0 - 1);
 		}
-	}
-	var row = cells.length;
+		rows = Math.max(rows, cells.length);
+		col0 = col0 + 1 + longest + 1; // the table, its longest chain and a free column
+	});
+	var row = rows;
 	var rest = shown.filter(function(m){ return !visited[m.id]; }).sort(function(a, b){ return a.id - b.id; });
 	rest.forEach(function(start){
 		if(visited[start.id])
@@ -607,7 +618,7 @@ var ROW_Y0 = 80, ROW_H = 150, COL_X0 = 50;
 var colWidth = 100;
 
 function maxColWidth(){ return treeMode ? 90 : doublyMode ? 125 : 100; }
-function rowH(){ return treeMode ? 110 : drawnTable() ? 95 : ROW_H; }
+function rowH(){ return treeMode ? 110 : drawnTable() ? 72 : ROW_H; }
 
 // A tree: a node's row is its depth and its column its place in an in-order walk (left
 // subtree, node, right subtree), so a binary search tree reads sorted from left to right
@@ -736,9 +747,9 @@ function layout(tidy){
 	var occupied = {};
 	var i, k;
 
-	var table = drawnTable();
+	var table = drawnTable(), tables = bucketTables();
 	if(table)
-		hashCells(shown, table);
+		hashCells(shown, tables);
 	else if(treeMode)
 		treeCells(shown);
 	else {
@@ -813,10 +824,10 @@ function layout(tidy){
 		maxCol = Math.max(maxCol, shown[i].cell.col);
 		minRow = Math.min(minRow, shown[i].cell.row);
 	}
-	if(table){ // the table is column 0 and its first cell row 0
+	if(table){ // the first table is column 0 and its first cell row 0
 		minCol = 0;
 		minRow = 0;
-		maxCol = Math.max(maxCol, 1);
+		maxCol = Math.max(maxCol, tables[tables.length - 1].visual.col0 + 1);
 	}
 
 	var visibleWidth = Math.max(300, canvasHolderWidth() - COL_X0 - geometry().width - 30);
@@ -839,7 +850,7 @@ function layout(tidy){
 	}
 
 	if(table){
-		var lastRow = table.visual.cells.length - 1;
+		var lastRow = Math.max.apply(null, tables.map(function(t){ return t.visual.cells.length; })) - 1;
 		for(i=0; i < shown.length; i++)
 			lastRow = Math.max(lastRow, shown[i].cell.row);
 		extent = {width: Math.max(extent ? extent.width : 0, COL_X0 + maxCol * colWidth + geometry().width + 40), height: ROW_Y0 + topOffset() + lastRow * rowH() + NODE_H + 40};
@@ -886,7 +897,9 @@ function canvasHolderWidth(){
 function fitCanvas(){
 	var width = canvasHolderWidth();
 	var need = extent || {width: width, height: MIN_HEIGHT};
-	var zoom = Math.min(1, width / need.width);
+	// a very tall drawing (long tables, deep trees) is scaled down to stay on the screen too
+	var tallest = Math.max(360, (window.innerHeight || 800) - 260);
+	var zoom = Math.min(1, width / need.width, tallest / need.height);
 	var height = Math.max(MIN_HEIGHT, Math.ceil(need.height * zoom));
 
 	if(view.viewSize.width !== width || view.viewSize.height !== height)
@@ -1018,7 +1031,8 @@ function redrawPointers(){
 		var up = drawnTable() ? true : !treeMode && group[0].direction === 'up'; // in a tree the parent's link comes from above; next to a table all names go above (rows are close)
 
 		var dx = geometry().dataX; // aim at the data cell
-		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
+		var rise = drawnTable() ? 26 : 40; // bucket rows are close: a shorter arrow keeps the name off the row above
+		var start = pos + (up ? [dx - 10, -rise] : [dx - 10, 55]);
 		var end = pos + (up ? [dx + 10, -3] : [dx + 10, 28]);
 		var focused = group.some(function(p){ return focus.pointers.indexOf(p) >= 0; });
 		var color = focused ? PAL.changed : PAL[group[0].kind];
@@ -1051,7 +1065,7 @@ function redrawPointers(){
 			labels.push(label);
 		}
 		var labelGroup = new Group(labels);
-		labelGroup.position = start + (up ? [-4, -14] : [-4, 14]);
+		labelGroup.position = start + (up ? [-4, drawnTable() ? -11 : -14] : [-4, 14]);
 		if(labelGroup.bounds.left < 8) // a long name under the first column would be cut off at the left edge
 			labelGroup.position = labelGroup.position + [8 - labelGroup.bounds.left, 0];
 

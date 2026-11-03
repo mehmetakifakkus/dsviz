@@ -193,6 +193,59 @@ else
   prev.next = p.next       // der Knoten davor überspringt ihn
 delete p
 </script>
+
+<p data-lang="tr"><em>Yeniden hash'leme</em> (rehashing): değerler çoğaldıkça zincirler uzar. Doluluk oranı bir sınırı geçince iki kat büyük yeni bir tablo açılır ve her düğüm yeni kovasına taşınır; kovası yeni boyuta göre yeniden hesaplanır (<code>p.data % 10</code>). Düğümler kopyalanmaz, yalnızca bağları değişir. İki tablo yan yana çizilir: düğümlerin soldaki tablodan sağdakine geçişini izleyin. 12 ile 22 yeni tabloda da aynı kovaya düşer.</p>
+<p data-lang="en"><em>Rehashing</em>: as values pile up, the chains get longer. When the load factor passes a limit, a new table twice as large is made and every node moves to its new bucket, computed again for the new size (<code>p.data % 10</code>). The nodes are not copied; only their links change. The two tables are drawn side by side: watch the nodes move from the left table to the right one. 12 and 22 land in the same bucket in the new table too.</p>
+<p data-lang="de"><em>Rehashing</em>: wenn die Werte mehr werden, werden die Ketten länger. Überschreitet der Füllgrad eine Grenze, wird eine doppelt so große neue Tabelle angelegt, und jeder Knoten wandert in seinen neuen Eimer, der für die neue Größe neu berechnet wird (<code>p.data % 10</code>). Die Knoten werden nicht kopiert; nur ihre Verbindungen ändern sich. Die beiden Tabellen stehen nebeneinander: beobachten Sie, wie die Knoten von der linken in die rechte Tabelle wandern. 12 und 22 landen auch in der neuen Tabelle im selben Eimer.</p>
+
+<textarea id="text5" class="deneme">
+var big = new Array(10)    // iki kat kova
+for(var k = 0; k &lt; m; k++)
+{
+  var p = table[k]
+  while(p != null)
+  {
+    var nxt = p.next
+    var h = p.data % 10     // yeni boyuta göre kova
+    p.next = big[h]        // yeni tablonun zincirinin başına
+    big[h] = p
+    p = nxt
+  }
+  table[k] = null
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text5" data-lang="en">
+var big = new Array(10)    // twice the buckets
+for(var k = 0; k < m; k++)
+{
+  var p = table[k]
+  while(p != null)
+  {
+    var nxt = p.next
+    var h = p.data % 10     // the bucket for the new size
+    p.next = big[h]        // to the head of a chain in the new table
+    big[h] = p
+    p = nxt
+  }
+  table[k] = null
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text5" data-lang="de">
+var big = new Array(10)    // doppelt so viele Eimer
+for(var k = 0; k < m; k++)
+{
+  var p = table[k]
+  while(p != null)
+  {
+    var nxt = p.next
+    var h = p.data % 10     // der Eimer für die neue Größe
+    p.next = big[h]        // an den Anfang einer Kette der neuen Tabelle
+    big[h] = p
+    p = nxt
+  }
+  table[k] = null
+}
+</script>
 </main>
 
 <script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
