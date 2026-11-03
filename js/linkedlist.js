@@ -1182,7 +1182,8 @@ var ICONS = {
 	play:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>',
 	pause: '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2h4v12H3zM9 2h4v12H9z" fill="currentColor"/></svg>',
 	next:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M11 2h2v12h-2zM2 2v12l8-6z" fill="currentColor"/></svg>',
-	end:   '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2v12l6-6zM7 2v12l6-6zM13 2h2v12h-2z" fill="currentColor"/></svg>'
+	end:   '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2v12l6-6zM7 2v12l6-6zM13 2h2v12h-2z" fill="currentColor"/></svg>',
+	share: '<svg viewBox="0 0 16 16" width="15" height="15"><path d="M6.5 9.5l3-3M7 4.5l1.3-1.3a2.5 2.5 0 013.5 3.5L10.5 8M9 11.5l-1.3 1.3a2.5 2.5 0 01-3.5-3.5L5.5 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
 };
 
 var SPEEDS = [1400, 900, 550, 300, 120]; // ms per step
@@ -1698,7 +1699,7 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2',
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink',
                       'taban', 'tavan', 'karekök', 'mutlak'];
 
 // the language's math functions (Turkish names): taban(7 / 2) is 3
@@ -2192,6 +2193,105 @@ window.dsvState = function(){
 	};
 };
 
+///////////////////////////////////////  Sharing  ///////////////////////////////////////
+//
+// A link carries the blocks that differ from the page's own code, after the #:
+// page.html#b2=...&b3=... (the code as UTF-8 in base64url). Opening it puts that code into
+// the blocks; it does not run it: the code runs as JavaScript in the visitor's browser, so
+// the visitor reads it first and presses Run. Nothing is sent to a server.
+
+var blockOriginals = [];
+
+function encodeCode(text){
+	return btoa(unescape(encodeURIComponent(text))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeCode(data){
+	var b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+	while(b64.length % 4)
+		b64 = b64 + '=';
+	return decodeURIComponent(escape(atob(b64)));
+}
+
+function sharedHash(){
+	var parts = [];
+	blockEditors.forEach(function(editor, i){
+		var code = editor.getValue();
+		if(code !== blockOriginals[i])
+			parts.push('b' + (i + 1) + '=' + encodeCode(code));
+	});
+	return parts.join('&');
+}
+
+var toastTimer = null;
+function toast(text){
+	var box = document.getElementById('dsv-toast');
+	if(!box){
+		box = document.createElement('div');
+		box.id = 'dsv-toast';
+		box.className = 'dsv-toast';
+		box.setAttribute('role', 'status');
+		document.body.appendChild(box);
+	}
+	box.textContent = text;
+	box.classList.add('show');
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(function(){ box.classList.remove('show'); }, 2500);
+}
+
+function shareLink(){
+	var hash = sharedHash();
+	var url = location.href.split('#')[0] + (hash ? '#' + hash : '');
+	if(history.replaceState)
+		history.replaceState(null, '', url); // the address bar shows the link too
+	var copied = function(){ toast(t(hash ? 'shareCopied' : 'shareCopiedPage')); };
+	var manual = function(){ window.prompt(t('shareManual'), url); };
+	if(navigator.clipboard && navigator.clipboard.writeText)
+		navigator.clipboard.writeText(url).then(copied, manual);
+	else
+		manual();
+	return url;
+}
+window.dsvShareLink = shareLink;
+
+function openSharedCode(){
+	var hash = location.hash.replace(/^#/, '');
+	if(!hash)
+		return;
+	var changed = 0;
+	hash.split('&').forEach(function(part){
+		var m = /^b(\d+)=([A-Za-z0-9_-]*)$/.exec(part);
+		var editor = m && blockEditors[Number(m[1]) - 1];
+		if(!editor)
+			return;
+		try {
+			editor.setValue(decodeCode(m[2]));
+			changed = changed + 1;
+		} catch(e) {} // a broken link: that block keeps its own code
+	});
+	if(!changed)
+		return;
+
+	var lesson = document.querySelector('main.lesson');
+	var h1 = lesson && lesson.querySelector('h1');
+	if(!h1)
+		return;
+	var banner = document.createElement('div');
+	banner.className = 'share-banner';
+	banner.setAttribute('role', 'note');
+	banner.innerHTML = '<span>' + escapeHTML(t('sharedBanner', {n: changed})) + '</span>';
+	var back = document.createElement('button');
+	back.className = 'link-btn';
+	back.textContent = t('sharedRestore');
+	back.addEventListener('click', function(){
+		blockEditors.forEach(function(editor, i){ editor.setValue(blockOriginals[i]); });
+		if(history.replaceState)
+			history.replaceState(null, '', location.href.split('#')[0]);
+		banner.parentNode.removeChild(banner);
+	});
+	banner.appendChild(back);
+	insertAfter(banner, h1);
+}
+
 function setEditors(items){
 
 	// every textarea with the class "deneme" becomes a CodeMirror editor with a run button
@@ -2222,8 +2322,18 @@ function setEditors(items){
 		insertAfter(button, editor.getWrapperElement());
 		button.addEventListener("click", run);
 
+		// shares the page's code as a link (see shareLink)
+		var share = document.createElement("button");
+		share.className = "dsv-share";
+		share.innerHTML = ICONS.share;
+		share.title = t('shareTitle');
+		share.setAttribute('aria-label', t('shareTitle'));
+		insertAfter(share, button);
+		share.addEventListener("click", function(){ shareLink(); });
+
 		// appears once the code was changed: puts the example's own code back
 		var original = editor.getValue();
+		blockOriginals.push(original);
 		var restore = document.createElement("button");
 		restore.className = "dsv-restore";
 		restore.textContent = t('restore');
@@ -2238,3 +2348,4 @@ function setEditors(items){
 }
 
 setEditors(qsa(".deneme"));
+openSharedCode();

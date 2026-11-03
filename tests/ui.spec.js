@@ -105,6 +105,46 @@ test('theme chosen in the settings panel is applied and remembered', async ({ pa
 	expect(problems).toEqual([]);
 });
 
+test('code is shared as a link, opened without running, and can be put back', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const problems = await openPage(page, 'reverseALinkedList.html');
+	const code = i => page.evaluate(i => document.querySelectorAll('.CodeMirror')[i].CodeMirror.getValue(), i);
+	const original = await code(0);
+	await page.evaluate(() => {
+		const cm = document.querySelectorAll('.CodeMirror')[0].CodeMirror;
+		cm.setValue(cm.getValue().replace('new Node(4)', 'new Node(40)') + '// ğüşıöç\n');
+	});
+	const changed = await code(0);
+
+	await page.locator('.dsv-share').nth(1).click(); // any block's button shares the whole page
+	await expect(page.locator('#dsv-toast')).toHaveText('Bağlantı kopyalandı: değiştirdiğiniz bloklar bağlantının içinde.');
+	const url = await page.evaluate(() => navigator.clipboard.readText());
+	expect(url).toMatch(/\/reverseALinkedList\.html#b1=[A-Za-z0-9_-]+$/); // only the changed block
+	expect(await page.evaluate(() => location.href)).toBe(url);
+
+	await page.goto('/index.html');
+	await page.goto(url);
+	await page.waitForFunction(() => window.dsvReady === true);
+	expect(await code(0)).toBe(changed);
+	await expect(page.locator('.share-banner')).toContainText('1 blokta paylaşılan kod var');
+	await expect(page.locator('.dsv-restore').first()).toBeVisible();
+	expect((await stepCounter(page)).total).toBe(0); // shared code is not run by itself
+	await runAllBlocks(page);
+	expect(await valueOf(page, 'walk(prev)')).toBe('40>3>2>1');
+
+	await page.locator('.share-banner button').click();
+	expect(await code(0)).toBe(original);
+	await expect(page.locator('.share-banner')).toHaveCount(0);
+	expect(await page.evaluate(() => location.hash)).toBe('');
+	expect(problems).toEqual([]);
+});
+
+test('a broken shared link is ignored', async ({ page }) => {
+	const problems = await openPage(page, 'index.html#b1=%%%&b9=abc&x=1');
+	await expect(page.locator('.share-banner')).toHaveCount(0);
+	expect(problems).toEqual([]);
+});
+
 test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const problems = await openPage(page, 'queue.html');
 	await page.locator('.menu-btn').click();
