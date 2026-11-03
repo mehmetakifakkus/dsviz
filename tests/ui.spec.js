@@ -233,6 +233,22 @@ test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const examples = await page.evaluate(() => window.dsvExamples.reduce((n, g) => n + g.items.length, 0));
 	await expect(page.locator('.drawer a')).toHaveCount(examples + 1); // + the main page
 	await expect(page.locator('.drawer a.active')).toHaveAttribute('href', 'queue.html');
+	await expect(page.locator('.drawer a.active')).toBeVisible();
+
+	// the groups fold: only the current page's group is open, the others open on a click
+	const groups = page.locator('.drawer-group');
+	await expect(groups).toHaveCount(await page.evaluate(() => window.dsvExamples.length));
+	await expect(page.locator('.drawer-group.open')).toHaveCount(1);
+	const trees = groups.filter({ hasText: 'Ağaçlar' });
+	await expect(trees.locator('.drawer-count')).toHaveText('4');
+	await expect(trees.locator('a').first()).toBeHidden();
+	await trees.locator('.drawer-group-btn').click();
+	await expect(trees.locator('a').first()).toBeVisible();
+	await expect(trees.locator('.drawer-group-btn')).toHaveAttribute('aria-expanded', 'true');
+	await page.reload(); // an opened group stays open
+	await page.waitForFunction(() => window.dsvReady === true);
+	await page.locator('.menu-btn').click();
+	await expect(page.locator('.drawer-group.open')).toHaveCount(2);
 
 	await page.keyboard.press('Escape');
 	await expect(page.locator('body')).not.toHaveClass(/drawer-open/);

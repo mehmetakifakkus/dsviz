@@ -82,6 +82,7 @@
 	var ICON = {
 		menu: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
 		close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+		chevron: '<svg class="drawer-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
 		gear: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 	};
 
@@ -163,11 +164,32 @@
 	head.appendChild(closeBtn);
 	drawer.appendChild(head);
 	drawer.appendChild(el('a', {href: 'index.html', 'class': page === 'index.html' ? 'active' : ''}, esc(t('homeLink'))));
-	EXAMPLES.forEach(function(g){
-		drawer.appendChild(el('h6', {}, esc(pick(g.group))));
+	// Each group folds: its title is a button with the number of pages, and only the group of
+	// the current page is open at first. The groups the user opened stay open (localStorage).
+	var openGroups = [];
+	try { openGroups = JSON.parse(localStorage.getItem('dsv-menu-open') || '[]'); } catch(e) {}
+	EXAMPLES.forEach(function(g, gi){
+		var key = g.items[0][0]; // the group's first page names it, whatever the language
+		var here = g.items.some(function(it){ return it[0] === page; });
+		var open = here || openGroups.indexOf(key) >= 0;
+		var box = el('div', {'class': 'drawer-group' + (open ? ' open' : '') + (here ? ' current' : '')});
+		var btn = el('button', {'class': 'drawer-group-btn', type: 'button', 'aria-expanded': open ? 'true' : 'false', 'aria-controls': 'menu-group-' + gi},
+			'<span>' + esc(pick(g.group)) + '</span><span class="drawer-count">' + g.items.length + '</span>' + ICON.chevron);
+		var items = el('div', {'class': 'drawer-items', id: 'menu-group-' + gi});
 		g.items.forEach(function(it){
-			drawer.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1]))));
+			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1]))));
 		});
+		btn.addEventListener('click', function(){
+			var now = !box.classList.contains('open');
+			box.classList.toggle('open', now);
+			btn.setAttribute('aria-expanded', now ? 'true' : 'false');
+			openGroups = openGroups.filter(function(k){ return k !== key; });
+			if(now) openGroups.push(key);
+			try { localStorage.setItem('dsv-menu-open', JSON.stringify(openGroups)); } catch(e) {}
+		});
+		box.appendChild(btn);
+		box.appendChild(items);
+		drawer.appendChild(box);
 	});
 
 	function setDrawer(open){ document.body.classList.toggle('drawer-open', open); }
