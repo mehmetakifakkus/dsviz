@@ -142,3 +142,32 @@ test('Node(value, next) links the new node, also in a field and an array cell', 
 	await expect(page.locator('#output')).toContainText("Node'un ikinci değeri yeni düğümün next'idir; bir düğüm ya da null olmalı (5 verildi).");
 	expect(problems).toEqual([]);
 });
+
+test('a field of a call\'s result is read, and nested new nodes are drawn linked', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, `var x = new Node(1, new Node(2, new Node(3)))
+function find(v)
+{
+  var p = x
+  while(p != null && p.data != v)
+  {
+    p = p.next
+  }
+  return p
+}
+var a = find(2).data
+var q = find(2).next
+var b = find(1).next.next.data + 10
+if(find(3).data == 3)
+  print "found: " + find(3).data
+`);
+	expect(await valueOf(page, '[a, q.data, b, walk(x)]')).toEqual([2, 3, 13, '1>2>3']);
+	const drawn = await page.evaluate(() => window.dsvState());
+	expect(drawn.rows).toEqual([[1, 2, 3]]);
+	expect(drawn.pointers).toEqual(['q', 'x']);
+	expect(await outputText(page)).toBe('found: 3\n');
+
+	await runCode(page, 'var c = find(99).data\n'); // find returns null
+	await expect(page.locator('#output')).toContainText("null olan bir pointer'ın .data alanı okunmaya çalışıldı");
+	expect(problems).toEqual([]);
+});

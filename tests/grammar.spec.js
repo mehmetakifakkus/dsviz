@@ -122,6 +122,16 @@ test('the second value of Node is the new node\'s next', () => {
 	expect(parse('var m = new Node(4)\n')[0].rhs.next).toBe(null);
 });
 
+test('a field of a call\'s result can be read; new nodes can be nested', () => {
+	expect(parse('var v = pop().data\n')[0]).toMatchObject({ type: 'declaration', lhs: 'v', rhs: 'pop().data' });
+	expect(parse('var s = middle(x).next.data + 1\n')[0].rhs).toBe('middle(x).next.data + 1');
+	expect(parse('if(pop().data > 2)\n  print 1\n')[0].text).toBe('pop().data > 2');
+	expect(parse('return f(a).data\n')[0].text).toBe('f(a).data');
+	expect(parse('pop()\n')[0]).toMatchObject({ type: 'expression', text: 'pop()' });
+	const nested = parse('var x = new Node(1, new Node(2, Node(3)))\n')[0].rhs;
+	expect(nested).toMatchObject({ data: 1, next: { type: 'node', data: 2, next: { type: 'node', data: 3, next: null } } });
+});
+
 test('functions, return and calls', () => {
 	const result = parse('function push(v, w)\n{\n  var n = new Node(v)\n  return n\n}\nfonksiyon f()\n{\n  döndür\n}\nvar a = push(1, 2) + 1\n');
 	expect(result[0]).toMatchObject({ type: 'function', name: 'push', params: ['v', 'w'], lineNumber: 1, endLine: 5 });
