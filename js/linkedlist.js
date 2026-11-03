@@ -1124,12 +1124,14 @@ window.showNode = function(node){
 
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
+var userGlobals = {}; // names of the user's global variables and functions
 var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvExamples', 'activeEditor', 'editor2'];
 
 function assignGlobal(name, value){
 	if(ENGINE_GLOBALS.indexOf(name) >= 0)
 		throw new Error('Satır ' + currentLine + ': "' + name + '" adı uygulamanın kendisi tarafından kullanılıyor, başka bir isim seçin.');
 	window[name] = value;
+	userGlobals[name] = true; // removed when a block runs again (see runBlock)
 	if(window[name] !== value)
 		throw new Error('Satır ' + currentLine + ': "' + name + '" adı tarayıcıya ayrılmış, değişken olarak kullanılamaz. ' +
 		                'Başka bir isim seçin' + (name === 'top' ? ' (ör. tepe).' : '.'));
@@ -1473,6 +1475,66 @@ function insertAfter(el, referenceNode) {
     referenceNode.parentNode.insertBefore(el, referenceNode.nextSibling);
 }
 
+// Running block k starts the page from a clean state: the blocks before it run again at
+// once (their steps are skipped), then block k runs with its animation. So running a block
+// twice does not draw a second copy of the list, a block always starts from what the
+// blocks above it produce (also after they were edited), and block 2 can be run first.
+var blockEditors = [];
+
+function runBlock(k){
+	resetProgram();
+
+	for(var i = 0; i < k; i++){
+		window.activeEditor = blockEditors[i].doc; // set it before parsing: the steps remember it
+		if(!parse(blockEditors[i].getValue())){
+			var output = document.getElementById('output');
+			if(output)
+				output.textContent = 'Blok ' + (i + 1) + ' çalıştırılırken: ' + output.textContent;
+			player.toEnd();
+			return;
+		}
+		player.toEnd();
+	}
+
+	window.activeEditor = blockEditors[k].doc;
+	parse(blockEditors[k].getValue());
+}
+
+// forget the program (the user's variables, functions and nodes) and everything drawn
+function resetProgram(){
+	finishTween();
+	player.pause();
+	resetVisuals();
+	clearHighlights(true);
+
+	for(var name in userGlobals)
+		delete window[name];
+	userGlobals = {};
+	delete window.temp_node; // made by the command prompt for Node(5)
+
+	allNodes = [];
+	pointers = [];
+	pointerMap = {};
+	frames = [];
+	unfinishedCalls = [];
+	doublyRequested = false;
+	currentLine = null;
+
+	player.steps = [];
+	player.cursor = 0;
+	player.lastStep = 0;
+	player.updateUI();
+}
+
+// for the tests: what is drawn right now
+window.dsvState = function(){
+	return {
+		nodes: allNodes.filter(function(n){ return n.shown; }).map(function(n){ return n.shownData; }),
+		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
+		doubly: doublyMode
+	};
+};
+
 function setEditors(items){
 
 	// every textarea with the class "deneme" becomes a CodeMirror editor with a run button
@@ -1490,10 +1552,9 @@ function setEditors(items){
 			viewportMargin: Infinity
 		});
 
-		function run(){
-			window.activeEditor = editor.doc; // set it before parsing: the steps remember it
-			parse(editor.getValue());
-		}
+		var index = blockEditors.length;
+		blockEditors.push(editor);
+		function run(){ runBlock(index); }
 
 		editor.addKeyMap({"Ctrl-Enter": run, "Cmd-Enter": run});
 

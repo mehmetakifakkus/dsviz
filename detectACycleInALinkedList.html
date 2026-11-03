@@ -16,7 +16,7 @@
 <body>
 <main class="lesson">
 <h1>Döngü tespiti</h1>
-<p class="lead">Blokları sırayla çalıştırın. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
 <p>Son düğümü ikinci düğümü gösteren bir liste oluşturalım. Bu liste hiç bitmez.</p>
 
@@ -33,7 +33,7 @@ z.next = w
 w.next = v
 v.next = y  // döngü burada</textarea>
 
-<p>Floyd algoritması: <code>slow</code> her adımda bir düğüm, <code>fast</code> iki düğüm ilerler. Liste bir yerde bitiyorsa <code>fast</code> <code>null</code>'a ulaşır ve döngü yoktur. Döngü varsa <code>fast</code> döngünün içinde <code>slow</code>'a yetişir ve buluşurlar; o anda <code>break</code> ile döngüden çıkılır. Döngüsüz durumu görmek için sayfayı yenileyin, ilk bloğun son satırını silin ve iki bloğu da çalıştırın.</p>
+<p>Floyd algoritması: <code>slow</code> her adımda bir düğüm, <code>fast</code> iki düğüm ilerler. Liste bir yerde bitiyorsa <code>fast</code> <code>null</code>'a ulaşır ve döngü yoktur. Döngü varsa <code>fast</code> döngünün içinde <code>slow</code>'a yetişir ve buluşurlar; o anda <code>break</code> ile döngüden çıkılır. Döngüsüz durumu görmek için ilk bloğun son satırını silip ikinci bloğu yeniden çalıştırın.</p>
 
 <textarea id="text2" class="deneme">
 var slow = x

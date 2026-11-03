@@ -1,6 +1,6 @@
 // The user interface: player, panels, command prompt, theme, menu and layout.
 const { test } = require('@playwright/test');
-const { expect, openPage, runBlock, runAllBlocks, runCode, valueOf, stepCounter } = require('./helpers');
+const { expect, openPage, skipToEnd, runBlock, runAllBlocks, runCode, valueOf, stepCounter } = require('./helpers');
 
 const player = (page, title) => page.locator(`.dsv-player button[title="${title}"]`);
 
@@ -68,7 +68,7 @@ test('command prompt runs a line and calls a function once', async ({ page }) =>
 
 	await page.keyboard.type('var k = x.next.data');
 	await page.keyboard.press('Enter');
-	await player(page, 'Sona atla').click();
+	await skipToEnd(page);
 	await expect(page.locator('#variables li').filter({ hasText: 'k =' })).toHaveText('k =2');
 	expect(problems).toEqual([]);
 });
@@ -131,6 +131,81 @@ test.describe('phone', () => {
 
 		await runAllBlocks(page);
 		expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
+		expect(problems).toEqual([]);
+	});
+});
+
+test.describe('running a block again', () => {
+	const setBlock = (page, i, code) => page.evaluate(([i, code]) => document.querySelectorAll('.CodeMirror')[i].CodeMirror.setValue(code), [i, code]);
+	const drawn = page => page.evaluate(() => window.dsvState());
+
+	test('running a block twice draws the list once', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runBlock(page, 0);
+		const once = await stepCounter(page);
+		await runBlock(page, 0);
+
+		expect((await drawn(page)).nodes).toEqual([1, 2, 3, 4]);
+		expect(await stepCounter(page)).toEqual(once);
+		expect(problems).toEqual([]);
+	});
+
+	test('running block 2 first runs block 1 too', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runBlock(page, 1);
+		expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
+		expect((await drawn(page)).nodes).toHaveLength(4);
+		expect(problems).toEqual([]);
+	});
+
+	test('block 2 always starts from what block 1 produces', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runBlock(page, 0);
+		await runBlock(page, 1);
+		const first = await stepCounter(page);
+		await runBlock(page, 1); // the list is not reversed back
+
+		expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
+		expect((await drawn(page)).nodes).toHaveLength(4);
+		expect(await stepCounter(page)).toEqual(first);
+		expect(problems).toEqual([]);
+	});
+
+	test('an edited block is used by the blocks below it', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runBlock(page, 0);
+		await runBlock(page, 1);
+		await setBlock(page, 0, 'var x = new Node(7)\nvar y = new Node(8)\nx.next = y\n');
+		await runBlock(page, 1);
+
+		expect(await valueOf(page, 'walk(prev)')).toBe('8>7');
+		expect((await drawn(page)).nodes.sort()).toEqual([7, 8]);
+		expect(await valueOf(page, '[typeof z, typeof w]')).toEqual(['undefined', 'undefined']); // variables of the old run are gone
+		expect(problems).toEqual([]);
+	});
+
+	test('an error in a block above stops and names the block', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await setBlock(page, 0, 'var x = \n');
+		await runBlock(page, 1);
+		await expect(page.locator('#output')).toHaveText(/^Blok 1 çalıştırılırken: Yazım hatası/);
+		expect((await drawn(page)).nodes).toEqual([]);
+		expect(problems).toEqual([]);
+	});
+
+	test('functions and the doubly linked look of an old run are gone', async ({ page }) => {
+		const problems = await openPage(page, 'doublyLinkedList.html');
+		await runBlock(page, 0);
+		expect((await drawn(page)).doubly).toBe(true);
+
+		await setBlock(page, 0, 'function f()\n{\n  return 1\n}\nvar a = new Node(1)\n');
+		await runBlock(page, 0);
+		expect((await drawn(page)).doubly).toBe(false);
+		expect(await valueOf(page, 'typeof f')).toBe('function');
+
+		await setBlock(page, 0, 'var a = new Node(1)\n');
+		await runBlock(page, 0);
+		expect(await valueOf(page, 'typeof f')).toBe('undefined');
 		expect(problems).toEqual([]);
 	});
 });
