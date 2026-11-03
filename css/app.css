@@ -323,7 +323,6 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .frame-head { font: 600 13px ui-monospace, Menlo, Consolas, monospace; color: var(--viz-local); }
 .frame-vars { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; font: 12px ui-monospace, Menlo, Consolas, monospace; color: var(--text); }
 .frame-var.is-null { color: var(--viz-pointer); }
-.frame-var.is-captured { color: var(--muted); font-style: italic; } /* a closure's outer variable */
 #callstack-note { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; }
 #callstack-note:empty { display: none; }
 
