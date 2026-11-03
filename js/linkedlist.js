@@ -1421,6 +1421,7 @@ var grammer = null, parser = null;
 	request.onload = function(){
 		grammer = request.responseText;
 		parser = PEG.buildParser(grammer);
+		window.dsvReady = true; // the page can run code now (the tests wait for this)
 	};
 	request.send();
 })();

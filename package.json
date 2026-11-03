@@ -1,0 +1,14 @@
+{
+  "name": "dsviz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bağlı liste görselleştirme: tarayıcı testleri",
+  "scripts": {
+    "start": "node tests/server.js",
+    "test": "playwright test"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

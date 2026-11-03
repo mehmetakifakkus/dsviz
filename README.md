@@ -24,7 +24,24 @@ Sayfalar `grammer.pegjs` ve `js/linkedlist.js` dosyalarını tarayıcıdan yükl
 python3 -m http.server 8000
 ```
 
-Ardından http://localhost:8000 adresini açın.
+Ardından http://localhost:8000 adresini açın. Node.js kuruluysa `npm start` de olur (http://localhost:8765).
+
+## Testler
+
+Testler [Playwright](https://playwright.dev) ile gerçek bir tarayıcıda çalışır ve GitHub Actions'ta her PR'da kendiliğinden çalıştırılır.
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+- `tests/grammar.spec.js`: tarayıcısız gramer testleri; örnek sayfalardaki her kod bloğunun ayrıştırılabildiğini ve zor girdilerin doğru okunduğunu kontrol eder.
+- `tests/pages.spec.js`: her sayfanın bütün bloklarını çalıştırır; hata olmamasını, sitenin dışına istek gitmemesini ve sayfanın beklenen son durumda bitmesini kontrol eder. **Yeni bir sayfa eklerken** beklenen son durumunu bu dosyadaki `EXPECTED` listesine yazın, yoksa test başarısız olur.
+- `tests/language.spec.js`: dil özellikleri (döngüler, fonksiyonlar, özyineleme, koşullar) ve Türkçe hata mesajları.
+- `tests/ui.spec.js`: oynatıcı, çağrı yığını, değişkenler paneli, komut satırı, tema, örnek menüsü, telefon düzeni.
+
+Testler kendi küçük sunucularını (`tests/server.js`) başlatır; elle açmak için `npm start` yeterli.
 
 ## Nasıl çalışıyor?
 

@@ -1,0 +1,108 @@
+// The language: code runs on the main page (like the command prompt does) and the result
+// is checked in the page. Error cases check the Turkish message in the Çıktı panel.
+const { test } = require('@playwright/test');
+const { expect, openPage, runCode, valueOf, outputText } = require('./helpers');
+
+const LIST = 'var x = new Node(1)\nvar y = new Node(2)\nvar z = new Node(3)\nx.next = y\ny.next = z\n';
+
+const STACK = `var tepe = null
+function push(v)
+{
+  var n = new Node(v)
+  n.next = tepe
+  tepe = n
+}
+function pop()
+{
+  var t = tepe
+  tepe = tepe.next
+  var v = t.data
+  delete t
+  return v
+}
+function isEmpty()
+{
+  return tepe == null
+}
+`;
+
+// [name, code blocks, expression, expected value]
+const RESULTS = [
+	// loops
+	['for over a list', [LIST, 'var c = 0\nfor(var p = x; p != null; p = p.next)\n  c++\n'], '[c, p]', [3, null]],
+	['for with an index', [LIST, 'var f = x\nfor(var i = 0; i < 2; i++)\n  f = f.next\n'], '[i, f.data]', [2, 3]],
+	['break', [LIST, 'var p = x\nwhile(p != null)\n{\n  if(p.data == 2)\n    break\n  p = p.next\n}\n'], 'p.data', 2],
+	['continue', [LIST, 'var s = 0\nfor(var p = x; p != null; p = p.next)\n{\n  if(p.data == 2)\n    continue\n  s += p.data\n}\n'], 's', 4],
+	['break leaves only the inner loop', [LIST, 'var pairs = 0\nfor(var a = x; a != null; a = a.next)\n{\n  for(var b = x; b != null; b = b.next)\n  {\n    if(b == a)\n      break\n    pairs++\n  }\n}\n'], 'pairs', 3],
+	['++ -- += -=', ['var n = 10\nn--\nn -= 3\nn += 2 * 2\nn++\n'], 'n', 11],
+	['else if', ['var a = 0\nvar r = 0\nif(a > 1)\n  r = 1\nelse if(a == 0)\n  r = 2\nelse\n  r = 3\n'], 'r', 2],
+
+	// names that start with a keyword or an operator word
+	['identifiers that start with keywords', ['var settle = 1\nvar geçici = 2\nvariable = 3\nvar orta = 4\nvar doğrusu = 5\nvar forward = 6\n'], '[settle, geçici, variable, orta, doğrusu, forward]', [1, 2, 3, 4, 5, 6]],
+	['comments with any characters', ['var a = 1 // İlk değer: bir? (evet!)\n'], 'a', 1],
+
+	// conditions without a comparison
+	['while(p)', [LIST, 'var c = 0\nvar p = x\nwhile(p)\n{\n  c++\n  p = p.next\n}\n'], 'c', 3],
+	['while(p.next)', [LIST, 'var p = x\nwhile(p.next)\n  p = p.next\n'], 'p.data', 3],
+	['bare for condition', [LIST, 'var s = 0\nfor(var r = x; r; r = r.next)\n  s += r.data\n'], 's', 6],
+	['&& and !', [LIST, 'var found = false\nvar p = x\nwhile(p && !found)\n{\n  if(p.data == 2)\n    found = true\n  else\n    p = p.next\n}\n'], '[found, p.data]', [true, 2]],
+	['değil / and / or', ['var a = false\nvar b = true\nvar r = 0\nif(değil a and (b or a))\n  r = 1\n'], 'r', 1],
+
+	// nodes
+	['new Node(expression)', ['var v = 4\nvar n = new Node(v * 2 + 1)\n'], 'n.data', 9],
+	['x.next.next = new Node(...)', [LIST, 'x.next.next.next = new Node(7)\n'], 'walk(x)', '1>2>3>7'],
+	['p.next = q.next', [LIST, 'x.next = y.next\n'], 'walk(x)', '1>3'],
+	['doubly linked prev', ['var a = new Node(1)\nvar b = new Node(2)\na.next = b\nb.prev = a\n'], 'back(b)', '2>1'],
+	['print', [LIST, 'print "değer: " + x.data + " ve " + y.data\n'], 'output()', 'değer: 1 ve 2'],
+
+	// functions
+	['stack functions', [STACK, 'push(1)\npush(2)\npush(3)\nvar a = pop()\nvar b = pop() * 10\n'], '[a, b, tepe.data, typeof n, typeof t]', [3, 20, 1, 'undefined', 'undefined']],
+	['while(!isEmpty())', [STACK, 'push(1)\npush(2)\npush(3)\nwhile(!isEmpty())\n  print pop()\n'], 'output()', '3,2,1'],
+	['hoisting', ['var r = twice(4)\nfunction twice(a)\n{\n  return a * 2\n}\n'], 'r', 8],
+	['two parameters, local var', ['function add(a, b)\n{\n  var s = a + b\n  return s\n}\nvar s = 100\nvar t = add(2, 3)\n'], '[t, s]', [5, 100]],
+	['a parameter hides a global', ['var p = 5\nfunction f(p)\n{\n  p = p + 1\n  return p\n}\nvar q = f(10)\n'], '[p, q]', [5, 11]],
+	['a function changes a global', ['var total = 0\nfunction addTo(v)\n{\n  total = total + v\n}\naddTo(3)\naddTo(4)\n'], 'total', 7],
+	['Turkish keywords fonksiyon / döndür', ['fonksiyon kare(a)\n{\n  döndür a * a\n}\nvar k = kare(5)\n'], 'k', 25],
+	['recursion: count', [LIST, 'function count(p)\n{\n  if(p == null)\n    return 0\n  return 1 + count(p.next)\n}\nvar k = count(x)\n'], 'k', 3],
+	['recursion: print backwards', [LIST, 'function printReverse(p)\n{\n  if(p == null)\n    return\n  printReverse(p.next)\n  print p.data\n}\nprintReverse(x)\n'], 'output()', '3,2,1'],
+	['recursion: reverse a list', [LIST, 'function reverse(p)\n{\n  if(p == null || p.next == null)\n    return p\n  var rest = reverse(p.next)\n  p.next.next = p\n  p.next = null\n  return rest\n}\nx = reverse(x)\n'], 'walk(x)', '3>2>1']
+];
+
+// [name, code, the message in Çıktı]
+const ERRORS = [
+	['syntax error with line, column and caret', 'var x = new Node(1)\nwhile(p = null)\n  p = p.next\n', /Yazım hatası \(satır 2, sütun 9\): burada "=" beklenmiyordu\.\s+while\(p = null\)\s+\^/],
+	['reading a field of null', LIST + 'var p = z.next\nvar d = p.data\n', /Satır 7: null olan bir pointer'ın \.data alanı okunmaya çalışıldı/],
+	['setting a field of null', LIST + 'var p = z.next\np.next = x\n', /Satır 7: null olan bir pointer'ın \.next alanı değiştirilmeye çalışıldı/],
+	['undefined variable', 'var a = b + 1\n', /Satır 1: "b" tanımlı değil/],
+	['infinite loop', 'var i = 0\nwhile(i < 10)\n  i = i + 0\n', /Satır 2: döngü 1000 kereden fazla döndü/],
+	['break outside a loop', 'var k = 1\nbreak\n', /Satır 2: break yalnızca bir döngünün/],
+	['return outside a function', 'var a = 1\nreturn a\n', /Satır 2: return yalnızca bir fonksiyonun içinde/],
+	['break that would leave a function', 'function g()\n{\n  break\n}\nfor(var i = 0; i < 3; i++)\n  g()\n', /Satır 3: break yalnızca bir döngünün/],
+	['endless recursion', 'function down(n)\n{\n  return down(n + 1)\n}\ndown(0)\n', /iç içe 200 fonksiyon çağrısı aşıldı/],
+	['a name the browser owns (top)', 'var top = null\n', /"top" adı tarayıcıya ayrılmış.*tepe/],
+	['a name the app uses (parse)', 'function parse(a)\n{\n  return a\n}\n', /"parse" adı uygulamanın kendisi tarafından kullanılıyor/],
+	['ifif is not a keyword', 'ifif(1 < 2)\n  print "x"\n', /Yazım hatası/]
+];
+
+test.describe('results', () => {
+	for (const [name, blocks, expression, expected] of RESULTS) {
+		test(name, async ({ page }) => {
+			const problems = await openPage(page, 'index.html');
+			await runCode(page, blocks);
+			expect(await outputText(page)).not.toMatch(/Hata|hatası|tanımlı değil|null olan/);
+			expect(await valueOf(page, expression)).toEqual(expected);
+			expect(problems).toEqual([]);
+		});
+	}
+});
+
+test.describe('error messages', () => {
+	for (const [name, code, message] of ERRORS) {
+		test(name, async ({ page }) => {
+			const problems = await openPage(page, 'index.html');
+			await runCode(page, code);
+			expect(await outputText(page)).toMatch(message);
+			expect(problems).toEqual([]); // errors are shown to the learner, the page itself does not fail
+		});
+	}
+});
