@@ -198,7 +198,7 @@ function Node(content, next){
 
 		if(self.lost){ // no variable and no link reaches this node any more
 			items[0].dashArray = [5, 4];
-			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: t('unreachable')}));
+			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: t(lostText('unreachable'))}));
 		}
 
 		self.boxDraw = new Group(items);
@@ -1432,6 +1432,14 @@ function runStep(i){
 	player.steps[i]();
 }
 
+// the code language of the page when it is not Düğüm: {name, from, display, mode} (see js/codelang.js)
+function codeLangInfo(){
+	return window.dsvCode && window.dsvCode.langs[window.dsvCodeLang] || null;
+}
+
+// Java has no delete: a node nothing reaches is the garbage collector's
+function lostText(key){ return window.dsvCodeLang === 'java' ? key + 'Java' : key; }
+
 function settingOn(key){ return !window.dsv || window.dsv.settings[key] !== false; }
 var lastNarration = '', lastWarning = '';
 
@@ -1442,7 +1450,7 @@ function finishStep(){
 
 	var warning = '';
 	if(lost.length && settingOn('warnings'))
-		warning = t(lost.length > 1 ? 'nLostMany' : 'nLostOne', {nodes: lost.map(nodeLabel).join(', ')});
+		warning = t(lostText(lost.length > 1 ? 'nLostMany' : 'nLostOne'), {nodes: lost.map(nodeLabel).join(', ')});
 	lastNarration = narration;
 	lastWarning = warning;
 	showNarration(settingOn('narration') ? narration : '', warning);
@@ -1477,8 +1485,8 @@ function nodeLabel(n){ return isNode(n) ? '[' + n.data + ']' : 'null'; }
 function showNarration(text, warning){
 	var box = document.getElementById('narration');
 	if(!box) return;
-	var cpp = window.dsvCodeLang === 'cpp' && window.dsvCode;
-	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, function(m, c){ return '<code>' + (cpp ? window.dsvCode.displayCpp(c) : c) + '</code>'; }); };
+	var shown = codeLangInfo();
+	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, function(m, c){ return '<code>' + (shown ? shown.display(c) : c) + '</code>'; }); };
 	box.innerHTML = (text ? '<span>' + code(text) + '</span>' : '') +
 	                (warning ? '<span class="narration-warning">⚠ ' + code(warning) + '</span>' : '');
 }
@@ -2184,8 +2192,8 @@ window.parse = function(text) {
 	try {
 		var text = text || editor.getValue();
 		original = text;
-		if(window.dsvCodeLang === 'cpp' && window.dsvCode) // C++ runs as the Düğüm it stands for, line by line
-			text = window.dsvCode.fromCpp(text);
+		if(codeLangInfo()) // C++ / Java run as the Düğüm they stand for, line by line
+			text = codeLangInfo().from(text);
 		var result = parser.parse(text);
 
 		if(!result)
@@ -2346,13 +2354,14 @@ function decodeCode(data){
 }
 
 function sharedHash(){
-	var parts = window.dsvCodeLang === 'cpp' ? ['c=cpp'] : [];
+	var lang = codeLangInfo() ? 'c=' + window.dsvCodeLang : '';
+	var parts = lang ? [lang] : [];
 	blockEditors.forEach(function(editor, i){
 		var code = editor.getValue();
 		if(code !== blockOriginals[i])
 			parts.push('b' + (i + 1) + '=' + encodeCode(code));
 	});
-	return parts.length === 1 && parts[0] === 'c=cpp' ? 'c=cpp' : parts.join('&');
+	return parts.join('&');
 }
 
 var toastTimer = null;
@@ -2431,7 +2440,7 @@ function setEditors(items){
 	items.forEach(function (editorEl) {
 
 		var editor = CodeMirror.fromTextArea(editorEl, {
-			mode: window.dsvCodeLang === 'cpp' ? 'text/x-c++src' : "javascript",
+			mode: codeLangInfo() ? codeLangInfo().mode : "javascript",
 			extraKeys: {"Ctrl-Space": "autocomplete"},
 			styleActiveLine: true,
 			lineNumbers: true,

@@ -28,7 +28,8 @@ function loadCodeLang() {
 	return context.window;
 }
 
-test('every example translates to C++ and back to code that parses', () => {
+for (const [lang, name, forbidden] of [['cpp', 'C++', /^\s*var\s|\bnull\b|\bfunction\b/m], ['java', 'Java', /^\s*var\s|->|\bnullptr\b|\bfunction\b|\bcout\b|^\s*delete\b/m]])
+test(`every example translates to ${name} and back to code that parses`, () => {
 	const w = loadCodeLang();
 	const pages = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && f !== 'language.html');
 	let blocks = 0;
@@ -36,10 +37,10 @@ test('every example translates to C++ and back to code that parses', () => {
 		const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
 		const code = [...html.matchAll(/<textarea id="(\w+)" class="deneme">\n?([\s\S]*?)<\/textarea>/g)]
 			.map(m => m[2].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
-		w.dsvCode.toCpp(code).forEach((cpp, i) => {
+		w.dsvCode.langs[lang].to(code).forEach((cpp, i) => {
 			const codeOnly = cpp.split('\n').map(l => l.replace(/\/\/.*$/, '')).join('\n'); // comments may say "null"
-			expect(codeOnly, `${file} #${i + 1}`).not.toMatch(/^\s*var\s|\bnull\b|\bfunction\b/m);
-			const back = w.dsvCode.fromCpp(cpp);
+			expect(codeOnly, `${file} #${i + 1}`).not.toMatch(forbidden);
+			const back = w.dsvCode.langs[lang].from(cpp);
 			expect(back.split('\n').length, `${file} #${i + 1} keeps its lines`).toBe(cpp.split('\n').length);
 			expect(() => w.dsvParser.parse(back), `${file} #${i + 1}`).not.toThrow();
 			blocks++;
@@ -96,6 +97,46 @@ add(5);
 int c = count(head); bool e = isEmpty();
 cout << "count: " << c << endl;
 `);
+});
+
+test('Java types are inferred from the code', () => {
+	const w = loadCodeLang();
+	const [java] = w.dsvCode.toJava([`var head = null
+var t = new Array(3)
+var s = new Array(2)
+function push(v)
+{
+  head = new Node(v, head)
+}
+function isEmpty()
+{
+  return head == null
+}
+t[0] = head
+s[0] = 4
+push(5)
+var e = isEmpty()
+print "top: " + head.data + ", sum: " + s[0] + 1
+delete head
+`]);
+	expect(java).toBe(`Node head = null;
+Node[] t = new Node[3];
+int[] s = new int[2];
+static void push(int v)
+{
+  head = new Node(v, head);
+}
+static boolean isEmpty()
+{
+  return head == null;
+}
+t[0] = head;
+s[0] = 4;
+push(5);
+boolean e = isEmpty();
+System.out.println("top: " + head.data + ", sum: " + (s[0] + 1));
+// delete head: Java'da gerekmez, çöp toplayıcı ulaşılamayan düğümü siler
+`.replace("Java'da gerekmez, çöp toplayıcı ulaşılamayan düğümü siler", 'not needed in Java'));
 });
 
 test('js/grammar.js is compiled from the current grammer.pegjs', () => {
@@ -210,6 +251,13 @@ test('a field of a call\'s result can be read; new nodes can be nested', () => {
 	expect(parse('pop()\n')[0]).toMatchObject({ type: 'expression', text: 'pop()' });
 	const nested = parse('var x = new Node(1, new Node(2, Node(3)))\n')[0].rhs;
 	expect(nested).toMatchObject({ data: 1, next: { type: 'node', data: 2, next: { type: 'node', data: 3, next: null } } });
+});
+
+test('a condition can be the value of a variable', () => {
+	expect(parse('var ok = counts[0] == 2\n')[0]).toMatchObject({ type: 'declaration', lhs: 'ok', rhs: 'counts[0] == 2' });
+	expect(parse('var e = p.data == 4\n')[0].rhs.replace(/\s+/g, ' ')).toBe('p.data == 4');
+	expect(parse('found = p != null && p.data > 3\n')[0]).toMatchObject({ type: 'assignment', lhs: 'found' });
+	expect(parse('var s = a + 1\n')[0].rhs).toBe('a + 1'); // still a plain expression
 });
 
 test('functions, return and calls', () => {

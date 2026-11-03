@@ -172,7 +172,20 @@ body.drawer-open .drawer { transform: none; }
 body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px 8px; }
 .drawer-head strong { font-size: 15px; }
-.drawer h6 { margin: 16px 8px 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
+/* menu groups fold like submenus */
+.drawer-group { margin-top: 2px; }
+.drawer-group-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+  background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.drawer-group-btn:hover { background: var(--surface-2); }
+.drawer-group-btn > span:first-child { flex: 1; }
+.drawer-group.current > .drawer-group-btn { color: var(--accent-text); }
+.drawer-count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; text-align: center; }
+.drawer-chevron { flex: none; color: var(--muted); transition: transform .15s; }
+.drawer-group.open .drawer-chevron { transform: rotate(90deg); }
+.drawer-items { display: none; margin: 0 0 6px 10px; padding-left: 8px; border-left: 2px solid var(--border); }
+.drawer-group.open .drawer-items { display: block; }
 .drawer a { display: block; padding: 7px 10px; border-radius: 8px; color: var(--text); font-size: 14px; line-height: 1.35; }
 .drawer a:hover { background: var(--surface-2); text-decoration: none; }
 .drawer a.active { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
