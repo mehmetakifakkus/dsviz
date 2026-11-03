@@ -42,6 +42,10 @@
 			['insertDeleteInADoublyLinkedList.html', {tr: 'Ekleme ve O(1) silme', en: 'Insert and O(1) delete', de: 'Einfügen und Löschen in O(1)'}],
 			['reverseADoublyLinkedList.html', {tr: 'Çift yönlü listeyi ters çevirme', en: 'Reverse a doubly linked list', de: 'Doppelt verkettete Liste umkehren'}]
 		]},
+		{ group: {tr: 'Dairesel liste', en: 'Circular list', de: 'Zirkuläre Liste'}, items: [
+			['circularLinkedList.html', {tr: 'Dolaşma, ekleme ve silme', en: 'Traverse, insert and delete', de: 'Durchlaufen, einfügen und löschen'}],
+			['josephus.html', {tr: 'Josephus problemi', en: 'The Josephus problem', de: 'Das Josephus-Problem'}]
+		]},
 		{ group: {tr: 'Yığın ve kuyruk', en: 'Stack and queue', de: 'Stapel und Warteschlange'}, items: [
 			['stack.html', {tr: 'Yığın (stack): push ve pop', en: 'Stack: push and pop', de: 'Stapel (Stack): push und pop'}],
 			['queue.html', {tr: 'Kuyruk (queue): enqueue ve dequeue', en: 'Queue: enqueue and dequeue', de: 'Warteschlange (Queue): enqueue und dequeue'}]
