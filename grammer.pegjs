@@ -10,6 +10,11 @@
   // whitespace-only matches return the string 'ws'; keep only real statement objects
   function isItem(x) { return x !== null && typeof x === 'object'; }
 
+  // new Node(1, new Node(2)) as text, for the statement's text
+  function nodeText(n) {
+    return 'new Node(' + n.data + (n.next ? ', ' + (typeof n.next === 'string' ? n.next : nodeText(n.next)) : '') + ')';
+  }
+
   // a statement may stand for several (var a = 1, b = 2): such lists are spread out
   function flat(list) {
     var out = [];
@@ -132,7 +137,7 @@ return_statement "return"
 // count(p.next), push(5): a call inside an expression; the engine turns every user
 // function into a JavaScript function, so the call runs when the expression is evaluated
 call_expression
- = n:name _ '(' _ args:(expression_statement (_ ',' _ expression_statement)*)? _ ')' { return text(); }
+ = n:name _ '(' _ args:(expression_statement (_ ',' _ expression_statement)*)? _ ')' ('.' name)* { return text(); }   // pop().data, find(3).next too
 
 compound_statement
  = nl _'{' _ [ \n]* _ b:block_item_list _ '}' _ nl _{  // block itemlar yerine bos da olabilir
@@ -207,7 +212,7 @@ init_declarator
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
     else if(exp.type == 'node') // x = new Node(9): without this it was read as "x = new" and "Node(9)"
-        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Node(' + exp.data + (exp.next ? ', ' + exp.next : '') + ')'};
+        return {'lhs': left, 'rhs': exp, 'text': left + ' = ' + nodeText(exp)};
     else if(exp.type == 'array') // table = new Array(5)
         return {'lhs': left, 'rhs': exp, 'text': left + ' = new Array(' + exp.size + ')'};
     else
@@ -255,16 +260,24 @@ index_access
 index_assignment
  = _ a:name _ '[' _ i:expression_statement _ ']' _ '=' !'=' _ right:(Object_Constructor / e:expression_statement { return e.text.trim(); }) _ nl {
 	return {'type': 'array assignment', '#evaluation': 0, 'array': a, 'index': i.text, 'rhs': right,
-	        'text': a + '[' + i.text + '] = ' + (typeof right === 'string' ? right : 'new Node(' + right.data + (right.next ? ', ' + right.next : '') + ')'), 'lineNumber': location().start.line};
+	        'text': a + '[' + i.text + '] = ' + (typeof right === 'string' ? right : nodeText(right)), 'lineNumber': location().start.line};
  }
  
 // Node(5), Node(i), Node(p.data + 1): a number literal stays a number, anything else is
 // kept as an expression and evaluated when the statement runs
-// the second value is the new node's next: new Node(0, head), Node(5, p.next), Node(1, null)
+// the second value is the new node's next: new Node(0, head), Node(5, p.next), Node(1, null),
+// or another new node: new Node(1, new Node(2, new Node(3)))
 node
- = _ 'new'? _ 'Node' '('_ value:node_value _ next:("," _ e:expression_statement { return e.text.trim(); })? _ ")" _ comment? _ nl{
-	return {'type': 'node', 'data': value, 'next': next, 'lineNumber': location().start.line}
- } 
+ = _ 'new'? _ n:node_call _ comment? _ nl { n.lineNumber = location().start.line; return n; }
+
+node_call
+ = 'Node' '('_ value:node_value _ next:("," _ nx:node_next { return nx; })? _ ")" {
+	return {'type': 'node', 'data': value, 'next': next, 'lineNumber': location().start.line};
+ }
+
+node_next
+ = 'new'? _ n:node_call !(_ [-+*/%.]) { return n; }
+ / e:expression_statement { return e.text.trim(); }
 
 node_value
  = n:integer &(_ (')' / ',')) { return n; }

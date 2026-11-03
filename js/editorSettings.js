@@ -131,7 +131,7 @@ function evaluateCommand(){
 
 	if(res.type == 'node')
 	{
-		window.eval("var temp_node = new Node(" + res.data + (res.next ? ", " + res.next : "") + ");");
+		window.eval("var temp_node = new Node(" + res.data + (typeof res.next === "string" ? ", " + res.next : "") + ");");
 		window.showNode(window.temp_node);
 
 		//console.error(item.lhs + str + prop + ' = temp_node')

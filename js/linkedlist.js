@@ -232,19 +232,25 @@ function Node(content, next){
 window.Node = Node;
 
 // new Node(value) or new Node(value, next) from the grammar's node object
-function makeNode(rhs){
-	var next = rhs.next ? evalExpr(rhs.next) : null;
+function makeNode(rhs, nested){
+	var next = !rhs.next ? null
+		: typeof rhs.next === 'object' ? makeNode(rhs.next, true) // new Node(1, new Node(2))
+		: evalExpr(rhs.next);
 	if(next === undefined)
 		next = null;
 	if(next !== null && !isNode(next))
 		throw ownError(currentLine, 'eNodeNext', {value: formatValue(next)});
-	return new Node(evalExpr(rhs.data), next);
+	var node = new Node(evalExpr(rhs.data), next);
+	node.nested = !!nested; // made inside another new Node(...): appears together with it
+	return node;
 }
 
-// a new node appears with the link it was made with
+// a new node appears with the link it was made with (and the nodes made inside it)
 function showNewNode(n){
 	n.shown = true;
 	n.visualNext = n.firstNext;
+	if(n.firstNext && n.firstNext.nested && !n.firstNext.shown)
+		showNewNode(n.firstNext);
 }
 
 function enableTreeMode(){
