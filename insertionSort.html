@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eklemeli sıralama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Eklemeli sıralama</h1>
+<h1 data-lang="en">Insertion sort</h1>
+<h1 data-lang="de">Insertion Sort</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Eklemeli sıralama (insertion sort) düğümleri sırasız listeden teker teker alır ve yeni, sıralı bir listede doğru yerlerine ekler; elde iskambil kâğıtlarını sıraya dizmek gibi. Değerler hiç yer değiştirmez, yalnızca bağlar değişir.</p>
+<p data-lang="en">Insertion sort takes the nodes from the unsorted list one by one and inserts each at its place in a new, sorted list, like sorting a hand of playing cards. No value moves; only the links change.</p>
+<p data-lang="de">Insertion Sort nimmt die Knoten einzeln aus der unsortierten Liste und fügt jeden an seiner Stelle in eine neue, sortierte Liste ein, so wie man Spielkarten auf der Hand ordnet. Kein Wert bewegt sich; nur die Verbindungen ändern sich.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(4)   // sırasız bir liste
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(4)   // an unsorted list
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(4)   // eine unsortierte Liste
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</script>
+
+<p data-lang="tr">Sıralı liste değeri önemsiz bir <em>bekçi</em> (sentinel) düğümle başlar: <code>sorted</code>. Böylece en başa ekleme de ortaya ekleme gibi "bir düğümün arkasına ekleme" olur ve ayrı bir durum gerekmez. Her tur için: <code>curr</code>'ün devamı <code>nxt</code>'de saklanır (bağı değişince kaybolmasın), <code>p</code> sıralı listede <code>curr</code>'den küçük son düğüme kadar ilerler ve <code>curr</code> onun arkasına bağlanır. Çizimde sıralı liste ile kalan liste iki ayrı satırda büyür ve küçülür. Sonunda <code>x</code> bekçinin arkasındaki ilk düğüme taşınır ve bekçi silinir. Liste zaten sıralıysa her ekleme uzun sürer; en kötü durumda <em>n</em>² adım gerekir.</p>
+<p data-lang="en">The sorted list starts with a <em>sentinel</em> node whose value does not matter: <code>sorted</code>. That way inserting at the very front is also "inserting after a node", like inserting in the middle, and needs no special case. In each round, the rest of the list after <code>curr</code> is kept in <code>nxt</code> (so it is not lost when the link changes), <code>p</code> moves along the sorted list to the last node smaller than <code>curr</code>, and <code>curr</code> is linked in after it. In the drawing the sorted list and the remaining list grow and shrink on two rows. At the end <code>x</code> moves to the first node after the sentinel and the sentinel is deleted. In the worst case it takes about <em>n</em>² steps.</p>
+<p data-lang="de">Die sortierte Liste beginnt mit einem <em>Wächterknoten</em> (Sentinel), dessen Wert keine Rolle spielt: <code>sorted</code>. So ist auch das Einfügen ganz vorne ein „Einfügen hinter einem Knoten“, wie in der Mitte, und braucht keinen Sonderfall. In jeder Runde wird der Rest der Liste nach <code>curr</code> in <code>nxt</code> gemerkt (damit er nicht verloren geht, wenn sich die Verbindung ändert), <code>p</code> läuft in der sortierten Liste bis zum letzten Knoten, der kleiner als <code>curr</code> ist, und <code>curr</code> wird dahinter eingehängt. In der Zeichnung wachsen und schrumpfen die sortierte und die restliche Liste in zwei Zeilen. Am Ende wandert <code>x</code> zum ersten Knoten nach dem Wächter, und der Wächter wird gelöscht. Im schlechtesten Fall braucht es etwa <em>n</em>² Schritte.</p>
+
+<textarea id="text2" class="deneme">
+var sorted = new Node(0)    // bekçi düğüm: değeri önemsiz
+var curr = x
+while(curr != null)
+{
+  var nxt = curr.next       // listenin geri kalanı
+  var p = sorted
+  while(p.next != null &amp;&amp; p.next.data &lt; curr.data)
+  {
+    p = p.next              // curr'ün yerini ara
+  }
+  curr.next = p.next        // curr'ü p'nin arkasına ekle
+  p.next = curr
+  curr = nxt
+}
+x = sorted.next
+delete sorted
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var sorted = new Node(0)    // sentinel: its value does not matter
+var curr = x
+while(curr != null)
+{
+  var nxt = curr.next       // the rest of the list
+  var p = sorted
+  while(p.next != null && p.next.data < curr.data)
+  {
+    p = p.next              // look for curr's place
+  }
+  curr.next = p.next        // insert curr after p
+  p.next = curr
+  curr = nxt
+}
+x = sorted.next
+delete sorted
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var sorted = new Node(0)    // Wächter: sein Wert ist egal
+var curr = x
+while(curr != null)
+{
+  var nxt = curr.next       // der Rest der Liste
+  var p = sorted
+  while(p.next != null && p.next.data < curr.data)
+  {
+    p = p.next              // die Stelle für curr suchen
+  }
+  curr.next = p.next        // curr hinter p einfügen
+  p.next = curr
+  curr = nxt
+}
+x = sorted.next
+delete sorted
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

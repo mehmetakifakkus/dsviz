@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kabarcık sıralama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Kabarcık sıralama</h1>
+<h1 data-lang="en">Bubble sort</h1>
+<h1 data-lang="de">Bubblesort</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir listeyi sıralamanın iki yolu var: düğümler yerinde kalır ve <em>değerleri</em> yer değiştirir, ya da değerler yerinde kalır ve <em>bağlar</em> değişir. Kabarcık sıralama (bubble sort) birinci yolu izler. Önce sırasız bir liste kuralım.</p>
+<p data-lang="en">There are two ways to sort a list: the nodes stay where they are and their <em>values</em> are swapped, or the values stay and the <em>links</em> change. Bubble sort takes the first way. First we build an unsorted list.</p>
+<p data-lang="de">Eine Liste lässt sich auf zwei Arten sortieren: die Knoten bleiben, wo sie sind, und ihre <em>Werte</em> werden getauscht, oder die Werte bleiben und die <em>Verbindungen</em> ändern sich. Bubblesort geht den ersten Weg. Zuerst bauen wir eine unsortierte Liste.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(4)   // sırasız bir liste
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(4)   // an unsorted list
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(4)   // eine unsortierte Liste
+x.next = new Node(1)
+x.next.next = new Node(3)
+x.next.next.next = new Node(5)
+x.next.next.next.next = new Node(2)
+</script>
+
+<p data-lang="tr"><code>p</code> listeyi baştan sona dolaşır ve yan yana duran iki değeri karşılaştırır; soldaki büyükse <code>tmp</code> yardımıyla değerleri değiş tokuş eder. Bir turun sonunda en büyük değer kabarcık gibi sona çıkar. Hiç değiş tokuş olmayan bir tur, listenin sıralı olduğunu gösterir. Çizimde düğümlerin yerinin ve okların hiç değişmediğine, yalnızca kutulardaki sayıların değiştiğine dikkat edin. <em>n</em> düğüm için en kötü durumda yaklaşık <em>n</em>² karşılaştırma yapılır.</p>
+<p data-lang="en"><code>p</code> walks the list from start to end and compares two neighbouring values; if the left one is greater, the values are swapped with the help of <code>tmp</code>. At the end of a pass the greatest value has bubbled up to the end. A pass without any swap shows that the list is sorted. Notice that the nodes and the arrows never move in the drawing; only the numbers in the boxes change. For <em>n</em> nodes it takes about <em>n</em>² comparisons in the worst case.</p>
+<p data-lang="de"><code>p</code> läuft vom Anfang bis zum Ende durch die Liste und vergleicht zwei benachbarte Werte; ist der linke größer, werden die Werte mit Hilfe von <code>tmp</code> getauscht. Am Ende eines Durchlaufs ist der größte Wert wie eine Blase ans Ende aufgestiegen. Ein Durchlauf ganz ohne Tausch zeigt, dass die Liste sortiert ist. Achten Sie darauf, dass sich Knoten und Pfeile in der Zeichnung nie bewegen; nur die Zahlen in den Kästchen ändern sich. Bei <em>n</em> Knoten braucht es im schlechtesten Fall etwa <em>n</em>² Vergleiche.</p>
+
+<textarea id="text2" class="deneme">
+var swapped = true
+while(swapped)            // değiş tokuş oldukça
+{
+  swapped = false
+  var p = x
+  while(p.next != null)
+  {
+    if(p.data &gt; p.next.data)
+    {
+      var tmp = p.data      // iki değeri değiş tokuş et
+      p.data = p.next.data
+      p.next.data = tmp
+      swapped = true
+    }
+    p = p.next
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var swapped = true
+while(swapped)            // while values were swapped
+{
+  swapped = false
+  var p = x
+  while(p.next != null)
+  {
+    if(p.data > p.next.data)
+    {
+      var tmp = p.data      // swap the two values
+      p.data = p.next.data
+      p.next.data = tmp
+      swapped = true
+    }
+    p = p.next
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var swapped = true
+while(swapped)            // solange getauscht wurde
+{
+  swapped = false
+  var p = x
+  while(p.next != null)
+  {
+    if(p.data > p.next.data)
+    {
+      var tmp = p.data      // die beiden Werte tauschen
+      p.data = p.next.data
+      p.next.data = tmp
+      swapped = true
+    }
+    p = p.next
+  }
+}
+</script>
+
+<p data-lang="tr">Değerleri değiş tokuş etmek bir düğümde tek bir sayı varken kolaydır. Düğümler büyük kayıtlar taşıdığında (bir öğrencinin bütün bilgileri gibi) ya da başka yerlerden bu düğümlere pointer'lar varken bağları değiştirmek daha doğrudur; sonraki örnek bunu yapıyor.</p>
+<p data-lang="en">Swapping values is easy while a node holds a single number. When nodes carry large records (all the details of a student, say), or other pointers lead to these nodes, it is better to change the links; the next example does that.</p>
+<p data-lang="de">Werte zu tauschen ist einfach, solange ein Knoten nur eine Zahl enthält. Tragen die Knoten große Datensätze (etwa alle Angaben zu einer Studentin) oder zeigen andere Zeiger auf diese Knoten, ist es besser, die Verbindungen zu ändern; das nächste Beispiel macht genau das.</p>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

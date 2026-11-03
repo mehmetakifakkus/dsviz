@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birleştirmeli sıralama (merge sort) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Birleştirmeli sıralama (merge sort)</h1>
+<h1 data-lang="en">Merge sort</h1>
+<h1 data-lang="de">Mergesort</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Birleştirmeli sıralama (merge sort) "böl ve fethet" fikrine dayanır: listeyi ikiye böl, iki yarıyı ayrı ayrı (özyinelemeyle) sırala, sonra iki sıralı listeyi birleştir. Bağlı listeler için en uygun sıralamadır: ek bellek gerekmez ve her zaman <em>n</em> log <em>n</em> adımda biter.</p>
+<p data-lang="en">Merge sort is based on "divide and conquer": split the list in two, sort the two halves separately (recursively), then merge the two sorted lists. It is the best fit for linked lists: it needs no extra memory and always finishes in <em>n</em> log <em>n</em> steps.</p>
+<p data-lang="de">Mergesort beruht auf „Teile und herrsche“: die Liste in zwei Hälften teilen, beide Hälften getrennt (rekursiv) sortieren und dann die zwei sortierten Listen zusammenführen. Für verkettete Listen ist es das passendste Verfahren: es braucht keinen zusätzlichen Speicher und ist immer nach <em>n</em> log <em>n</em> Schritten fertig.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(5)   // sırasız bir liste
+x.next = new Node(2)
+x.next.next = new Node(6)
+x.next.next.next = new Node(1)
+x.next.next.next.next = new Node(4)
+x.next.next.next.next.next = new Node(3)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(5)   // an unsorted list
+x.next = new Node(2)
+x.next.next = new Node(6)
+x.next.next.next = new Node(1)
+x.next.next.next.next = new Node(4)
+x.next.next.next.next.next = new Node(3)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(5)   // eine unsortierte Liste
+x.next = new Node(2)
+x.next.next = new Node(6)
+x.next.next.next = new Node(1)
+x.next.next.next.next = new Node(4)
+x.next.next.next.next.next = new Node(3)
+</script>
+
+<p data-lang="tr">İki yardımcı fonksiyon: <code>middle</code>, ortadaki düğümü bulma örneğindeki yavaş/hızlı pointer yöntemiyle ilk yarının son düğümünü döndürür. <code>merge</code> iki sıralı listeyi birleştirir: küçük olan baş kalır ve onun <code>next</code>'i listelerin geri kalanının birleşimi olur. Bu blok yalnızca fonksiyonları tanımlar; çizimde bir şey değişmez.</p>
+<p data-lang="en">Two helper functions: <code>middle</code> returns the last node of the first half, using the slow/fast pointer method from the middle-node example. <code>merge</code> merges two sorted lists: the smaller head stays first, and its <code>next</code> becomes the merge of what is left of the lists. This block only defines the functions; nothing changes in the drawing.</p>
+<p data-lang="de">Zwei Hilfsfunktionen: <code>middle</code> liefert den letzten Knoten der ersten Hälfte, mit der Methode aus langsamem und schnellem Zeiger aus dem Beispiel zum mittleren Knoten. <code>merge</code> führt zwei sortierte Listen zusammen: der kleinere Kopf bleibt vorne, und sein <code>next</code> wird das Zusammenführen dessen, was von den Listen übrig ist. Dieser Block definiert nur die Funktionen; in der Zeichnung ändert sich nichts.</p>
+
+<textarea id="text2" class="deneme">
+function middle(h)        // ilk yarının son düğümü
+{
+  var slow = h
+  var fast = h.next
+  while(fast != null &amp;&amp; fast.next != null)
+  {
+    slow = slow.next
+    fast = fast.next.next
+  }
+  return slow
+}
+
+function merge(a, b)      // iki sıralı listeyi birleştir
+{
+  if(a == null)
+    return b
+  if(b == null)
+    return a
+  if(a.data &lt;= b.data)
+  {
+    a.next = merge(a.next, b)
+    return a
+  }
+  b.next = merge(a, b.next)
+  return b
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function middle(h)        // the last node of the first half
+{
+  var slow = h
+  var fast = h.next
+  while(fast != null && fast.next != null)
+  {
+    slow = slow.next
+    fast = fast.next.next
+  }
+  return slow
+}
+
+function merge(a, b)      // merge two sorted lists
+{
+  if(a == null)
+    return b
+  if(b == null)
+    return a
+  if(a.data <= b.data)
+  {
+    a.next = merge(a.next, b)
+    return a
+  }
+  b.next = merge(a, b.next)
+  return b
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function middle(h)        // der letzte Knoten der ersten Hälfte
+{
+  var slow = h
+  var fast = h.next
+  while(fast != null && fast.next != null)
+  {
+    slow = slow.next
+    fast = fast.next.next
+  }
+  return slow
+}
+
+function merge(a, b)      // zwei sortierte Listen zusammenführen
+{
+  if(a == null)
+    return b
+  if(b == null)
+    return a
+  if(a.data <= b.data)
+  {
+    a.next = merge(a.next, b)
+    return a
+  }
+  b.next = merge(a, b.next)
+  return b
+}
+</script>
+
+<p data-lang="tr"><code>sort</code> boş ya da tek düğümlü bir listeyi olduğu gibi döndürür (zaten sıralıdır). Daha uzun bir listeyi ortadan keser (<code>mid.next = null</code>), iki yarıyı kendisini çağırarak sıralar ve birleştirir. Çağrı yığını panelinde bölünmenin derinleştiğini, çizimde listenin parçalara ayrılıp sıralı olarak yeniden bağlandığını görebilirsiniz. Liste sonunda sağdan sola dizilmişse soldan sağa okunacak biçimde yeniden yerleşir.</p>
+<p data-lang="en"><code>sort</code> returns an empty or one-node list as it is (it is already sorted). A longer list is cut in the middle (<code>mid.next = null</code>), the two halves are sorted by calling <code>sort</code> itself, and then merged. In the Call stack panel you can see the splitting get deeper, and in the drawing the list falls into pieces and is linked together again in order. If the list ends up drawn right to left, it is rearranged to read left to right.</p>
+<p data-lang="de"><code>sort</code> gibt eine leere Liste oder eine Liste mit einem Knoten unverändert zurück (sie ist schon sortiert). Eine längere Liste wird in der Mitte geteilt (<code>mid.next = null</code>), die beiden Hälften werden sortiert, indem <code>sort</code> sich selbst aufruft, und dann zusammengeführt. Im Aufrufstapel sehen Sie, wie die Teilung tiefer wird, und in der Zeichnung, wie die Liste in Stücke zerfällt und sortiert wieder verbunden wird. Liegt die Liste am Ende von rechts nach links, wird sie so umgeordnet, dass sie von links nach rechts zu lesen ist.</p>
+
+<textarea id="text3" class="deneme">
+function sort(h)
+{
+  if(h == null || h.next == null)
+    return h              // 0 ya da 1 düğüm: zaten sıralı
+  var mid = middle(h)
+  var second = mid.next
+  mid.next = null         // listeyi ikiye böl
+  var left = sort(h)
+  var right = sort(second)
+  return merge(left, right)
+}
+x = sort(x)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function sort(h)
+{
+  if(h == null || h.next == null)
+    return h              // 0 or 1 node: already sorted
+  var mid = middle(h)
+  var second = mid.next
+  mid.next = null         // split the list in two
+  var left = sort(h)
+  var right = sort(second)
+  return merge(left, right)
+}
+x = sort(x)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function sort(h)
+{
+  if(h == null || h.next == null)
+    return h              // 0 oder 1 Knoten: schon sortiert
+  var mid = middle(h)
+  var second = mid.next
+  mid.next = null         // die Liste in zwei Hälften teilen
+  var left = sort(h)
+  var right = sort(second)
+  return merge(left, right)
+}
+x = sort(x)
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
