@@ -4,7 +4,6 @@
 
 ## Dil
 
-- [ ] Koşullar bir karşılaştırma operatörü istiyor: `if(isEmpty())` ya da `while(p)` yazılamıyor, `if(isEmpty() == true)` yazmak gerekiyor.
 - [ ] Fonksiyon içinde fonksiyon tanımı (closure) yok: fonksiyonlar yalnızca kendi yerel değişkenlerini ve globalleri görür.
 - [ ] Çağrı sonucunun alanına erişim (`pop().data`) gramerde yok.
 - [ ] `var a = 1, b = 2` yalnızca `a`'yı tanımlıyor; virgülle ayrılan tanımların hepsi işlenmeli.
@@ -28,7 +27,6 @@
 
 ## Altyapı
 
-- [ ] Tarayıcı testlerini (Playwright) repoya eklemek ve GitHub Actions'ta her PR'da çalıştırmak: her sayfa hatasız çalışmalı ve beklenen son durumu vermeli.
 - [ ] Grameri önceden derlemek: şu an `grammer.pegjs` her sayfa açılışında tarayıcıda derleniyor.
 
 ## Bilinen sorunlar
@@ -50,3 +48,5 @@
 - [x] Koyu tema (sistem ayarına uyar, elle değiştirilebilir) ve mobil uyum.
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
+- [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
+- [x] Tarayıcı testleri (Playwright, 82 test) ve her PR'da çalışan GitHub Actions iş akışı.

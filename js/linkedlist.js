@@ -1394,7 +1394,7 @@ function explainError(err, source){
 	if((m = /Cannot read propert(?:y|ies) of (?:null|undefined) \(reading '([^']+)'\)/.exec(msg)) ||
 	   (m = /can't access property "([^"]+)", .* is (?:null|undefined)/.exec(msg)))
 		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı okunmaya çalışıldı. ' +
-		       'Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. p != null).';
+		       'Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. p != null ya da kısaca p).';
 
 	if((m = /Cannot set propert(?:y|ies) of (?:null|undefined) \(setting '([^']+)'\)/.exec(msg)))
 		return where + 'null olan bir pointer\'ın .' + m[1] + ' alanı değiştirilmeye çalışıldı. Pointer bir düğümü göstermiyor.';
@@ -1421,6 +1421,7 @@ var grammer = null, parser = null;
 	request.onload = function(){
 		grammer = request.responseText;
 		parser = PEG.buildParser(grammer);
+		window.dsvReady = true; // the page can run code now (the tests wait for this)
 	};
 	request.send();
 })();
