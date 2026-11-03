@@ -139,6 +139,29 @@ System.out.println("top: " + head.data + ", sum: " + (s[0] + 1));
 `.replace("Java'da gerekmez, çöp toplayıcı ulaşılamayan düğümü siler", 'not needed in Java'));
 });
 
+test('C++ and Java: integer division where both sides are integers', () => {
+	const w = loadCodeLang();
+	const cpp = w.dsvCode.fromCpp(`int a = 7, b = 2;
+double d = a / 2.0;
+Node* p = new Node(9);
+int h = p->data / 2;
+int f = a * b / 3 + a / b / 2;
+double avg = (a + b) / 2;
+int half(int x) {
+  return x / 2;
+}
+cout << "x" << half(a) / b << endl;`).split('\n');
+	expect(cpp[1]).toBe('var d = a / 2.0'); // a double side: a real division
+	expect(cpp[3]).toBe('var h = tamBöl(p.data, 2)');
+	expect(cpp[4]).toBe('var f = tamBöl(a * b, 3) + tamBöl(tamBöl(a, b), 2)'); // left to right
+	expect(cpp[5]).toBe('var avg = tamBöl((a + b), 2)'); // int / int, even into a double
+	expect(cpp[7]).toBe('  return tamBöl(x, 2)'); // a parameter
+	expect(cpp[9]).toBe('print "x" + "" + tamBöl(half(a), b)'); // an int function
+	const java = w.dsvCode.fromJava('double q = 7.0 / 2;\nint z = 9 / 2;\nint m = -9 / 2;').split('\n');
+	expect(java).toEqual(['var q = 7.0 / 2', 'var z = tamBöl(9, 2)', 'var m = tamBöl(-9, 2)']);
+	expect(w.dsvCode.displayCpp('c = tamBöl(tamBöl(a, b), 2)')).toBe('c = a / b / 2');
+});
+
 test('js/grammar.js is compiled from the current grammer.pegjs', () => {
 	const { compileGrammar } = require('../tools/build-grammar.js');
 	const built = fs.readFileSync(path.join(ROOT, 'js/grammar.js'), 'utf8');

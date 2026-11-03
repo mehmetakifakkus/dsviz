@@ -272,3 +272,24 @@ public class Main {
 	expect((await page.evaluate(() => window.dsvState())).lost.sort((a, b) => a - b)).toEqual([1, 2, 7]); // main has returned: its nodes are garbage too
 	expect(problems).toEqual([]);
 });
+
+test('C++ and Java: integer division cuts toward zero, by zero is an error', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
+	await runCode(page, `int a = 7, b = 2;
+int c = a / b;
+int e = -7 / 2;
+double d = a / 2.0;
+double avg = (a + b) / 2;
+cout << c << " " << e << " " << d << " " << avg << endl;
+`);
+	expect(await outputText(page)).toBe('3 -3 3.5 4\n');
+	await runCode(page, 'int zero = 0;\nint bad = 5 / zero;\n');
+	await expect(page.locator('#output')).toContainText('Satır 2: Sıfıra bölme: bir tam sayı sıfıra bölünemez.');
+
+	await page.evaluate(() => localStorage.setItem('dsv-settings', JSON.stringify({ codeLang: 'java' })));
+	await page.reload();
+	await page.waitForFunction(() => window.dsvReady === true);
+	await runCode(page, 'int n = 9;\nint half = n / 2;\nSystem.out.println(half + " " + n / 2.0);\n');
+	expect(await outputText(page)).toBe('4 4.5\n');
+	expect(problems).toEqual([]);
+});

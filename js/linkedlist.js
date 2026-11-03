@@ -1810,13 +1810,19 @@ window.showNode = function(node){
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
 var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink', 'dsvRunBlock', 'dsvApplyLessonMode', 'dsvCode', 'dsvCodeLang', 'dsvParser',
-                      'taban', 'tavan', 'karekök', 'mutlak'];
+                      'taban', 'tavan', 'karekök', 'mutlak', 'tamBöl'];
 
 // the language's math functions (Turkish names): taban(7 / 2) is 3
 window.taban = Math.floor;
 window.tavan = Math.ceil;
 window['karekök'] = Math.sqrt;
 window.mutlak = Math.abs;
+// integer division of C++ / Java (a / b with two int sides, see js/codelang.js): cut toward zero
+window['tamBöl'] = function(a, b){
+	if(b === 0)
+		throw ownError(currentLine, 'eDivZero');
+	return Math.trunc(a / b);
+};
 
 // an error of our own: "Line 3: ..." in the chosen language, shown as it is
 function ownError(line, key, vars){

@@ -443,6 +443,178 @@
 		});
 	}
 
+	// ---------- integer division (C++ and Java) ----------
+	//
+	// In C++ and Java 7 / 2 is 3 when both sides are integers (cut toward zero: -7 / 2 is -3);
+	// in the engine (JavaScript) it is 3.5. The types of the C++ / Java source are collected
+	// (variables, parameters, int arrays, the return types of functions, the data and height
+	// fields of nodes), and a / b with two integer sides becomes tamBöl(a, b) in the Düğüm.
+
+	function typeKind(type, mark){
+		if(mark && mark.indexOf('*') >= 0) return 'ptr';
+		if(/^(int|long|short|char)$/.test(type)) return 'int';
+		if(/^(double|float)$/.test(type)) return 'double';
+		return 'other';
+	}
+
+	function collectTypes(lines){
+		var types = {globals: {}, funcs: {}}, fn = null, depth = 0, fnDepth = -1;
+		var HEADER = new RegExp('^\\s*(?:(?:public|private|protected|static|final|inline)\\s+)*(void|int|long|short|char|double|float|bool|boolean|Node)\\s*(\\*+|\\[\\s*\\])?\\s*(' + NAME + ')\\s*\\(');
+		lines.forEach(function(line){
+			var code = splitComment(line)[0].replace(/"(?:[^"\\]|\\.)*"/g, '""');
+			var header = HEADER.exec(code);
+			if(header && !/=/.test(code.slice(0, code.indexOf('(')))){
+				fn = header[3];
+				fnDepth = depth;
+				types.funcs[fn] = {ret: typeKind(header[1], header[2]), vars: {}};
+			}
+			var declRe = /\b(int|long|short|char|double|float|bool|boolean|Node|auto)\b\s*(\*+|\[\s*\])?\s*/g, m;
+			while((m = declRe.exec(code))){
+				var rest = code.slice(m.index + m[0].length).split(/[;{]/)[0];
+				splitTop(rest, ',').forEach(function(d){
+					d = d.trim().replace(/^\*+\s*/, '');
+					var name = new RegExp('^(' + NAME + ')\\s*(\\[|\\(|=|,|\\)|$)').exec(d);
+					if(!name || name[2] === '(') return; // a function name, or no declaration
+					var scope = fn ? types.funcs[fn].vars : types.globals;
+					var array = name[2] === '[' || (m[2] && m[2].indexOf('[') >= 0);
+					scope[name[1]] = array ? 'arr:' + typeKind(m[1]) : typeKind(m[1], m[2]);
+				});
+			}
+			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length;
+			depth += opens - closes;
+			if(fn && !header && depth <= fnDepth && closes){ fn = null; fnDepth = -1; }
+		});
+		return types;
+	}
+
+	// is this (Düğüm) expression an integer, given the collected types?
+	function isIntExpr(expr, fn, types){
+		var s = expr.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+		if(/""/.test(s) || new RegExp('(^|[^' + ID + '.])\\d+\\.\\d*').test(s)) return false; // text, or a number like 2.0
+		var lookup = function(name){
+			var f = fn && types.funcs[fn];
+			if(f && f.vars[name] !== undefined) return f.vars[name];
+			return types.globals[name];
+		};
+		var re = new RegExp('(\\.?)\\s*([A-Za-z_şğçöüıŞĞÇÖÜİ][' + ID + ']*|\\d+)\\s*([\\(\\[.]?)', 'g'), m, any = false;
+		while((m = re.exec(s))){
+			any = true;
+			var word = m[2];
+			if(/^\d+$/.test(word)) continue;
+			if(m[3] === '.'){ re.lastIndex--; continue; } // p.data: the last field decides, not p
+			if(m[1] === '.'){ if(/^(data|height|length)$/.test(word)) continue; return false; }
+			if(m[3] === '('){
+				if(/^(tamBöl|taban|tavan|mutlak)$/.test(word)) continue;
+				if(types.funcs[word] && types.funcs[word].ret === 'int') continue;
+				return false;
+			}
+			if(m[3] === '['){ if(lookup(word) === 'arr:int') continue; return false; }
+			if(lookup(word) !== 'int') return false;
+		}
+		return any;
+	}
+
+	function isIdChar(ch){ return !!ch && new RegExp('[' + ID + '.]').test(ch); }
+
+	// the bracket that opens the one closing at `close` (going left)
+	function openingBack(s, close){
+		var depth = 0;
+		for(var i = close; i >= 0; i--){
+			var ch = s.charAt(i);
+			if(ch === ')' || ch === ']') depth++;
+			else if(ch === '(' || ch === '['){ depth--; if(depth === 0) return i; }
+		}
+		return 0;
+	}
+
+	// the start of the primary (name.field[i](args)...) that ends at `end`
+	function primaryStart(s, end){
+		var k = end;
+		while(k >= 0){
+			var ch = s.charAt(k);
+			if(ch === ')' || ch === ']'){ k = openingBack(s, k) - 1; continue; }
+			if(isIdChar(ch)){ k--; continue; }
+			break;
+		}
+		return k + 1;
+	}
+
+	// the end (exclusive) of the primary that starts at `start`
+	function primaryEnd(s, start){
+		var k = start;
+		if(s.charAt(k) === '-' || s.charAt(k) === '!') k++;
+		while(k < s.length){
+			var ch = s.charAt(k);
+			if(ch === '(' || ch === '['){ var c = closing(s, k); if(c < 0) return s.length; k = c + 1; continue; }
+			if(isIdChar(ch)){ k++; continue; }
+			break;
+		}
+		return k;
+	}
+
+	// the / operators of a line, outside strings, from the right
+	function lastDivision(s, before){
+		var inString = false, found = -1;
+		for(var i = 0; i < before; i++){
+			var ch = s.charAt(i);
+			if(ch === '"' && s.charAt(i - 1) !== '\\') inString = !inString;
+			else if(!inString && ch === '/' && s.charAt(i + 1) !== '=' && s.charAt(i + 1) !== '/' && s.charAt(i - 1) !== '/') found = i;
+		}
+		return found;
+	}
+
+	function integerDivision(code, fn, types){
+		var i = code.length;
+		while((i = lastDivision(code, i)) >= 0){
+			// left: a chain of * / % over primaries (left to right, so a * b / c is (a * b) / c)
+			var k = i - 1;
+			while(code.charAt(k) === ' ') k--;
+			var ls = primaryStart(code, k);
+			for(;;){
+				var j = ls - 1;
+				while(code.charAt(j) === ' ') j--;
+				if('*/%'.indexOf(code.charAt(j)) >= 0 && code.charAt(j) && code.charAt(j - 1) !== '/'){
+					var j2 = j - 1;
+					while(code.charAt(j2) === ' ') j2--;
+					var start = primaryStart(code, j2);
+					if(start > j2) break;
+					ls = start;
+				}
+				else break;
+			}
+			// a unary minus belongs to the left side: -7 / 2 is (-7) / 2
+			var u = ls - 1;
+			while(code.charAt(u) === ' ') u--;
+			if(code.charAt(u) === '-'){
+				var v = u - 1;
+				while(code.charAt(v) === ' ') v--;
+				if(v < 0 || '=(,+-*/%<>!&|?:'.indexOf(code.charAt(v)) >= 0 || /\b(return|print)$/.test(code.slice(0, v + 1)))
+					ls = u;
+			}
+			var rs = i + 1;
+			while(code.charAt(rs) === ' ') rs++;
+			var re = primaryEnd(code, rs);
+			var left = code.slice(ls, i).trim(), right = code.slice(rs, re).trim();
+			if(left && right && isIntExpr(left, fn, types) && isIntExpr(right, fn, types)){
+				code = code.slice(0, ls) + 'tamBöl(' + left + ', ' + right + ')' + code.slice(re);
+				i = ls + 'tamBöl('.length + left.length; // go on with the / inside the left side
+			}
+		}
+		return code;
+	}
+
+	// tamBöl(a, b) back to a / b, for showing a statement
+	function showDivision(text){
+		var at;
+		while((at = text.indexOf('tamBöl(')) >= 0){
+			var end = closing(text, at + 'tamBöl'.length);
+			if(end < 0) break;
+			var args = splitTop(text.slice(at + 'tamBöl('.length, end), ',');
+			text = text.slice(0, at) + args[0].trim() + ' / ' + (args[1] || '').trim() + text.slice(end + 1);
+		}
+		return text;
+	}
+
 	// ---------- C++ -> Düğüm (before running) ----------
 
 	var DECL = new RegExp('^(\\s*)(?:const\\s+|unsigned\\s+|static\\s+)*(' + TYPE + ')\\s*(\\**)\\s*(' + NAME + '[\\s\\S]*)$');
@@ -450,8 +622,18 @@
 
 	function fromCpp(text){
 		var inStruct = false, hasMain = false;
-		var out = text.split('\n').map(function(line){
+		var lines = text.split('\n'), types = collectTypes(lines), fn = null, depth = 0, fnDepth = -1;
+		var out = lines.map(function(line){
 			var split = splitComment(line), code = split[0], comment = split[1];
+			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length, before = depth;
+			depth += opens - closes;
+			var finish = function(c){ // the function the line is in, then integer division
+				var header = new RegExp('^\\s*function\\s+(' + NAME + ')\\s*\\(').exec(c);
+				if(header){ fn = header[1]; fnDepth = before; }
+				c = integerDivision(c, fn, types);
+				if(fn && !header && depth <= fnDepth && closes){ fn = null; fnDepth = -1; }
+				return c;
+			};
 			// lines with nothing to run become empty comments (a blank first line is not a statement)
 			if(inStruct){
 				if(/\}\s*;/.test(code)) inStruct = false;
@@ -478,9 +660,10 @@
 				var converted = pieces.map(function(piece){ return convertStatement(indent + piece.trim()); });
 				if(converted.every(function(c){ return /^\s*var\s/.test(c); }))
 					code = indent + 'var ' + converted.map(function(c){ return c.replace(/^\s*var\s+/, ''); }).join(', ');
+				code = finish(code);
 				return code + (comment ? ' ' + comment.replace(/^\s*/, '') : '');
 			}
-			code = convertStatement(code);
+			code = finish(convertStatement(code));
 			return code + (comment ? (code.trim() ? ' ' : '') + comment.replace(/^\s*/, '') : '');
 		});
 		var result = out.join('\n');
@@ -530,11 +713,19 @@
 
 	function fromJava(text){
 		var inNodeClass = false, hasMain = false, depth = 0, wrappers = [];
-		var out = text.split('\n').map(function(line){
+		var lines = text.split('\n'), types = collectTypes(lines), fn = null, fnDepth = -1;
+		var out = lines.map(function(line){
 			var split = splitComment(line), code = split[0], comment = split[1];
 			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length;
 			var before = depth;
 			depth += opens - closes;
+			var finish = function(c){ // the function the line is in, then integer division
+				var header = new RegExp('^\\s*function\\s+(' + NAME + ')\\s*\\(').exec(c);
+				if(header){ fn = header[1]; fnDepth = before; }
+				c = integerDivision(c, fn, types);
+				if(fn && !header && depth <= fnDepth && closes){ fn = null; fnDepth = -1; }
+				return c;
+			};
 			// class Node { ... } is built in; a class around the methods (public class Main { ... }) is left out
 			if(inNodeClass){
 				if(depth <= inNodeClass - 1){ inNodeClass = false; }
@@ -568,9 +759,10 @@
 				var converted = pieces.map(function(piece){ return convertStatement(indent + piece.trim()); });
 				if(converted.every(function(c){ return /^\s*var\s/.test(c); }))
 					code = indent + 'var ' + converted.map(function(c){ return c.replace(/^\s*var\s+/, ''); }).join(', ');
+				code = finish(code);
 				return code + (comment ? ' ' + comment.replace(/^\s*/, '') : '');
 			}
-			code = convertStatement(code);
+			code = finish(convertStatement(code));
 			return code + (comment ? (code.trim() ? ' ' : '') + comment.replace(/^\s*/, '') : '');
 		});
 		var result = out.join('\n');
@@ -607,8 +799,8 @@
 	}
 
 	// a piece of Düğüm in the narration, shown the way of the chosen language (p->next, nullptr)
-	function displayCpp(text){ return exprCpp(text).replace(/^var\s+/, ''); }
-	function displayJava(text){ return exprIn(text, 'java').replace(/^var\s+/, ''); }
+	function displayCpp(text){ return exprCpp(showDivision(text)).replace(/^var\s+/, ''); }
+	function displayJava(text){ return exprIn(showDivision(text), 'java').replace(/^var\s+/, ''); }
 
 	var LANGS = {
 		cpp: {name: 'C++', to: toCpp, from: fromCpp, display: displayCpp, mode: 'text/x-c++src'},
@@ -616,5 +808,5 @@
 	};
 
 	window.dsvCode = {toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, toJava: toJava, fromJava: fromJava,
-	                  displayJava: displayJava, inferTypes: inferTypes, langs: LANGS};
+	                  displayJava: displayJava, inferTypes: inferTypes, langs: LANGS, integerDivision: integerDivision, collectTypes: collectTypes};
 })();
