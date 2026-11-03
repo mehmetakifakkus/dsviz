@@ -171,3 +171,23 @@ if(find(3).data == 3)
 	await expect(page.locator('#output')).toContainText("null olan bir pointer'ın .data alanı okunmaya çalışıldı");
 	expect(problems).toEqual([]);
 });
+
+test('a function inside a function is an explained error, before anything runs', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, `var ran = 1
+function outer(n)
+{
+  if(n > 0)
+  {
+    function inner(v)
+    {
+      return v
+    }
+  }
+  return n
+}
+`);
+	await expect(page.locator('#output')).toContainText('Satır 6: "inner" bir fonksiyonun içinde tanımlanmış; Düğüm\'de fonksiyonlar yalnızca en dışta tanımlanır.');
+	expect(await page.evaluate(() => typeof window.ran)).toBe('undefined'); // nothing ran
+	expect(problems).toEqual([]);
+});
