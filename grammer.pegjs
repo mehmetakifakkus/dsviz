@@ -239,7 +239,7 @@ left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
   } 
 
 left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11) veya data guncellemek icin
- = prop:object_poperty "=" _ right: (Object_Constructor / name / Integer) _ nl{
+ = prop:object_poperty "=" _ right: (Object_Constructor / call_expression / name / Integer) _ nl{   // x.next = merge(a, b) too
   	return {'type': 'object property left', '#evaluation': 0, 'lhs': prop.variable, 'property': prop.property, 'rhs': right, 'lineNumber': location().start.line}
   } 
 

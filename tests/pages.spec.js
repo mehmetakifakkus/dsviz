@@ -34,6 +34,9 @@ const EXPECTED = {
 	'compareLinkedListCheckOneIsGreater.html': ['flag', true],
 	'circularLinkedList.html': ['[head.data, tail.data, tail.next === head, walk(head).slice(0, 9), count]', [1, 5, true, '1>2>3>4>5', 4]],
 	'josephus.html': ['[p.data, p.next === p, head, output()]', [4, true, null, '3,6,2,7,5,1,4']],
+	'bubbleSort.html': ['walk(x)', '1>2>3>4>5'],
+	'insertionSort.html': ['walk(x)', '1>2>3>4>5'],
+	'mergeSort.html': ['walk(x)', '1>2>3>4>5>6'],
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };
 

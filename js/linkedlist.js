@@ -253,12 +253,12 @@ function nodeArrow(from, to, kind, color){
 		line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
-	else if(sameRow && isNext && dx < 0) {                // back to an earlier node (a circle): a loop over the pointers
+	else if(sameRow && isNext && dx < -colWidth - 1) {    // back past other nodes (a circle): a loop over the pointers
 		var r = returnLoop(from, to, start);
 		line = r.line; end = r.end; angle = r.angle;
 		line.strokeColor = color; line.strokeWidth = 2;
 	}
-	else if(sameRow) {                                    // skipping nodes forwards (or prev backwards): an arc
+	else if(sameRow) {                                    // to the left neighbour (a reversed list) or skipping forwards: an arc
 		end = b + [g.width / 2, isNext ? 0 : NODE_H];
 		var bulge = 18 + Math.abs(dx) * 0.1;
 		var through = new Point((start.x + end.x) / 2, isNext ? a.y - bulge : a.y + NODE_H + bulge);
@@ -475,7 +475,9 @@ function isIsolated(node, shown){
 	return true;
 }
 
-function layout(){
+// tidy: a whole chain drawn right to left (a reversed or re-linked list) is laid out left
+// to right again, in the same cells. Used at the end of a run (see parse).
+function layout(tidy){
 	var shown = allNodes.filter(function(n){ return n.shown; });
 	var chains = chainsOf(shown);
 	var occupied = {};
@@ -498,7 +500,12 @@ function layout(){
 		var chain = plan.chain, run = plan.run;
 		var row, firstCol, dir;
 
-		if(run){
+		if(run && tidy && run.dir === -1 && run.length === chain.length && chain.length > 1){
+			row = run.row;
+			dir = 1;
+			firstCol = run.col - (chain.length - 1);
+		}
+		else if(run){
 			row = run.row;
 			dir = run.dir;
 			firstCol = run.col - run.start * dir;
@@ -737,13 +744,31 @@ function redrawPointers(){
 		var line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: focused ? 3 : 2});
 		var items = [line, arrowTip(end, (end - start).angle, color)];
 
+		// The names share the width of one column; what does not fit is shown as "+2" (all
+		// values are in the call stack panel). The pointer the step changed comes first, then
+		// the locals of the running call, the globals, and the locals of the calls below it.
+		var top = visualFrames.length ? visualFrames[visualFrames.length - 1].id : null;
+		function rank(p){
+			if(focus.pointers.indexOf(p) >= 0) return 0;
+			if(p.scope && p.scope.id === top) return 1;
+			if(!p.scope) return 2;
+			return 3 + 1 / (1 + p.scope.depth); // deeper calls (more recent) first
+		}
+		var sorted = group.slice().sort(function(a, b){ return rank(a) - rank(b); });
+		var room = Math.max(60, colWidth - 12);
 		var labels = [], x = 0;
-		group.forEach(function(p, index){
-			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.label + (index < group.length - 1 ? ',' : ''),
+		for(var li = 0; li < sorted.length; li++){
+			var p = sorted[li], more = sorted.length - li - 1;
+			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.label + (more ? ',' : ''),
 			                            fontWeight: focus.pointers.indexOf(p) >= 0 ? 'bold' : 'normal'});
+			if(li > 0 && x + label.bounds.width + (more ? 30 : 0) > room){ // no room: "+n" for this one and the rest
+				label.remove();
+				labels.push(new PointText({ point: [x, 0], fontSize: 16+'px', fillColor: PAL.text, opacity: 0.7, content: '+' + (more + 1)}));
+				break;
+			}
 			x += label.bounds.width + 5;
 			labels.push(label);
-		});
+		}
 		var labelGroup = new Group(labels);
 		labelGroup.position = start + (up ? [-4, -14] : [-4, 14]);
 		if(labelGroup.bounds.left < 8) // a long name under the first column would be cut off at the left edge
@@ -1406,6 +1431,11 @@ function drawGraphics(line, result){
 				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
+			else if(res.prop == '.data' && res.target.boxDraw) // p.data = p.next.data
+			{
+				res.target.shownData = res.value;
+				res.target.render();
+			}
 		}
 		else if(line.type == 'free object') // removes the object // free p1 / free p1.next
 		{
@@ -1793,7 +1823,16 @@ window.parse = function(text) {
 		result.forEach(function(item){ if(item.type === 'function') defineFunction(item); });
 
 		player.play();
+		var firstStep = player.steps.length;
 		recursivelyProcess(result);
+
+		// after the last step of a run, a list left drawn right to left is turned to read
+		// left to right (part of the step, so stepping back and forth gives the same picture)
+		var lastIndex = player.steps.length - 1;
+		if(lastIndex >= firstStep){
+			var lastStep = player.steps[lastIndex];
+			player.steps[lastIndex] = function(){ lastStep(); layout(true); };
+		}
 
 		return result;
 	} catch (err) {
@@ -1874,7 +1913,15 @@ window.dsvState = function(){
 		doubly: doublyMode,
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
-		narration: (document.getElementById('narration') || {}).textContent || ''
+		narration: (document.getElementById('narration') || {}).textContent || '',
+		// the drawn values row by row, left to right
+		rows: (function(){
+			var byRow = {};
+			allNodes.forEach(function(n){ if(n.shown && n.cell) (byRow[n.cell.row] = byRow[n.cell.row] || []).push(n); });
+			return Object.keys(byRow).sort(function(a, b){ return a - b; }).map(function(r){
+				return byRow[r].sort(function(a, b){ return a.cell.col - b.cell.col; }).map(function(n){ return n.shownData; });
+			});
+		})()
 	};
 };
 

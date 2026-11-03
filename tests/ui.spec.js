@@ -231,6 +231,23 @@ test.describe('learning aids', () => {
 	const state = page => page.evaluate(() => window.dsvState());
 	const narration = page => page.locator('#narration');
 
+	test('a list left drawn right to left reads left to right after the last step', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runAllBlocks(page);
+		expect((await state(page)).rows).toEqual([[4, 3, 2, 1]]);
+		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before the last step: only the arrows were flipped
+		expect((await state(page)).rows).toEqual([[1, 2, 3, 4]]);
+		expect(problems).toEqual([]);
+	});
+
+	test('a value copied from another node is drawn (p.data = p.next.data)', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var x = new Node(1)\nx.next = new Node(2)\nx.data = x.next.data\n');
+		expect((await state(page)).rows).toEqual([[2, 2]]);
+		await expect(page.locator('#narration')).toContainText('2');
+		expect(problems).toEqual([]);
+	});
+
 	test('every step is narrated', async ({ page }) => {
 		const problems = await openPage(page, 'reverseALinkedList.html');
 		await runAllBlocks(page);

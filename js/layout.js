@@ -58,6 +58,11 @@
 			['checkIfTwoLinkedListAreEqual.html', {tr: 'İki liste eşit mi?', en: 'Are two lists equal?', de: 'Sind zwei Listen gleich?'}],
 			['compareLinkedListCheckOneIsGreater.html', {tr: 'İlk liste daha mı büyük?', en: 'Is the first list greater?', de: 'Ist die erste Liste größer?'}],
 			['mergeTwoSortedLinkedLists.html', {tr: 'İki sıralı listeyi birleştirme', en: 'Merge two sorted lists', de: 'Zwei sortierte Listen zusammenführen'}]
+		]},
+		{ group: {tr: 'Sıralama', en: 'Sorting', de: 'Sortieren'}, items: [
+			['bubbleSort.html', {tr: 'Kabarcık sıralama (değerleri değiştirerek)', en: 'Bubble sort (swapping values)', de: 'Bubblesort (Werte tauschen)'}],
+			['insertionSort.html', {tr: 'Eklemeli sıralama (bağları değiştirerek)', en: 'Insertion sort (relinking nodes)', de: 'Insertion Sort (Knoten umhängen)'}],
+			['mergeSort.html', {tr: 'Birleştirmeli sıralama (merge sort)', en: 'Merge sort', de: 'Mergesort'}]
 		]}
 	];
 

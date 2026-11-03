@@ -86,6 +86,11 @@ test('print joins its parts with + and does not swallow the next line', () => {
 	expect(result[1].type).toBe('object property right');
 });
 
+test('a link can be set to the result of a call', () => {
+	expect(parse('a.next = merge(a.next, b)\n')[0]).toMatchObject({ type: 'object property left', lhs: 'a', rhs: 'merge(a.next, b)' });
+	expect(parse('a.next = b\n')[0]).toMatchObject({ type: 'object property left', rhs: 'b' });
+});
+
 test('functions, return and calls', () => {
 	const result = parse('function push(v, w)\n{\n  var n = new Node(v)\n  return n\n}\nfonksiyon f()\n{\n  döndür\n}\nvar a = push(1, 2) + 1\n');
 	expect(result[0]).toMatchObject({ type: 'function', name: 'push', params: ['v', 'w'], lineNumber: 1, endLine: 5 });
