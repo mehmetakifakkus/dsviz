@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İkili arama ağacı | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">İkili arama ağacı</h1>
+<h1 data-lang="en">Binary search tree</h1>
+<h1 data-lang="de">Binärer Suchbaum</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Ağaçta her düğümün bir yerine iki bağı vardır: <code>left</code> (sol çocuk) ve <code>right</code> (sağ çocuk). En üstteki düğüme <em>kök</em> (root), çocuğu olmayanlara <em>yaprak</em> denir. İkili arama ağacında (binary search tree) her düğümün sol alt ağacındaki bütün değerler ondan küçük, sağ alt ağacındakiler ise büyük ya da eşittir. Kodda <code>.left</code> ya da <code>.right</code> geçince düğümler üç hücreli çizilir: [sol | değer | sağ]; her düğüm derinliğine göre bir satıra, değerine göre soldan sağa yerleşir.</p>
+<p data-lang="en">In a tree every node has two links instead of one: <code>left</code> (the left child) and <code>right</code> (the right child). The node at the top is the <em>root</em>; nodes without children are <em>leaves</em>. In a binary search tree all values in a node's left subtree are smaller than the node, and all values in its right subtree are greater or equal. As soon as the code uses <code>.left</code> or <code>.right</code>, nodes are drawn with three cells, [left | value | right], each on the row of its depth and from left to right by value.</p>
+<p data-lang="de">In einem Baum hat jeder Knoten statt einer Verbindung zwei: <code>left</code> (das linke Kind) und <code>right</code> (das rechte Kind). Der oberste Knoten ist die <em>Wurzel</em> (root), Knoten ohne Kinder sind <em>Blätter</em>. In einem binären Suchbaum sind alle Werte im linken Teilbaum eines Knotens kleiner als er, alle im rechten Teilbaum größer oder gleich. Sobald der Code <code>.left</code> oder <code>.right</code> verwendet, werden Knoten mit drei Zellen gezeichnet, [links | Wert | rechts], jeder in der Zeile seiner Tiefe und von links nach rechts nach Wert.</p>
+
+<p data-lang="tr">Ekleme özyinelemeyle yazılır: boş bir yere (<code>null</code>) gelince yeni düğüm oluşturulup döndürülür; değilse değer küçükse sola, büyükse sağa inilir ve dönen alt ağaç ilgili bağa yazılır. Yeni düğüm hep bir yaprak olur. Değerlerin geliş sırası ağacın biçimini belirler: aynı değerler sıralı gelseydi ağaç tek kollu bir listeye dönüşürdü.</p>
+<p data-lang="en">Insertion is written recursively: on reaching an empty place (<code>null</code>) a new node is made and returned; otherwise we go left if the value is smaller and right if it is greater, and the returned subtree is stored in that link. A new node is always a leaf. The order in which values arrive decides the shape of the tree: had the same values come in sorted order, the tree would have become a one-armed list.</p>
+<p data-lang="de">Das Einfügen wird rekursiv geschrieben: an einer leeren Stelle (<code>null</code>) wird ein neuer Knoten erzeugt und zurückgegeben; sonst geht es nach links, wenn der Wert kleiner ist, und nach rechts, wenn er größer ist, und der zurückgegebene Teilbaum wird in diese Verbindung geschrieben. Ein neuer Knoten ist immer ein Blatt. Die Reihenfolge der Werte bestimmt die Form des Baums: wären dieselben Werte sortiert gekommen, wäre der Baum zu einer einarmigen Liste geworden.</p>
+
+<textarea id="text1" class="deneme">
+function insert(t, v)
+{
+  if(t == null)           // boş yer bulundu: yeni düğüm
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v &lt; t.data)
+    t.left = insert(t.left, v)    // küçükse sol alt ağaca
+  else
+    t.right = insert(t.right, v)  // büyük ya da eşitse sağa
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+function insert(t, v)
+{
+  if(t == null)           // an empty place: the new node
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // smaller: into the left subtree
+  else
+    t.right = insert(t.right, v)  // greater or equal: to the right
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+function insert(t, v)
+{
+  if(t == null)           // ein freier Platz: der neue Knoten
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // kleiner: in den linken Teilbaum
+  else
+    t.right = insert(t.right, v)  // größer oder gleich: nach rechts
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+
+<p data-lang="tr">Arama da aynı yolu izler: aranan değer düğümden küçükse sola, büyükse sağa gidilir. Her adımda bir alt ağaç tamamen elenir; dengeli bir ağaçta <em>n</em> düğüm arasında yaklaşık log₂ <em>n</em> adımda bulunur (listede <em>n</em> adım gerekir). En küçük değer en soldaki düğümdedir: sola gidilebildiği kadar gidilir.</p>
+<p data-lang="en">Searching follows the same path: if the value we look for is smaller than the node we go left, if greater we go right. Every step rules out a whole subtree; in a balanced tree a value among <em>n</em> nodes is found in about log₂ <em>n</em> steps (a list needs <em>n</em>). The smallest value is in the leftmost node: go left as far as possible.</p>
+<p data-lang="de">Die Suche folgt demselben Weg: ist der gesuchte Wert kleiner als der Knoten, geht es nach links, ist er größer, nach rechts. Jeder Schritt schließt einen ganzen Teilbaum aus; in einem ausgeglichenen Baum findet man einen Wert unter <em>n</em> Knoten in etwa log₂ <em>n</em> Schritten (eine Liste braucht <em>n</em>). Der kleinste Wert steht im Knoten ganz links: so weit wie möglich nach links gehen.</p>
+
+<textarea id="text2" class="deneme">
+var key = 6
+var p = root
+while(p != null &amp;&amp; p.data != key)
+{
+  if(key &lt; p.data)
+    p = p.left            // aranan küçük: sola
+  else
+    p = p.right           // aranan büyük: sağa
+}
+print p.data
+
+var m = root              // en küçük değer: hep sola
+while(m.left != null)
+{
+  m = m.left
+}
+print m.data
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var key = 6
+var p = root
+while(p != null && p.data != key)
+{
+  if(key < p.data)
+    p = p.left            // smaller: go left
+  else
+    p = p.right           // greater: go right
+}
+print p.data
+
+var m = root              // the smallest value: always left
+while(m.left != null)
+{
+  m = m.left
+}
+print m.data
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var key = 6
+var p = root
+while(p != null && p.data != key)
+{
+  if(key < p.data)
+    p = p.left            // kleiner: nach links
+  else
+    p = p.right           // größer: nach rechts
+}
+print p.data
+
+var m = root              // der kleinste Wert: immer links
+while(m.left != null)
+{
+  m = m.left
+}
+print m.data
+</script>
+
+<p data-lang="tr"><code>key</code>'i ağaçta olmayan bir değerle (ör. 5) değiştirin: <code>p</code> bir yaprağın boş çocuğuna inip <code>null</code> olur ve <code>p.data</code> hata verir. Gerçek bir programda döngüden sonra önce <code>p != null</code> kontrol edilir.</p>
+<p data-lang="en">Change <code>key</code> to a value that is not in the tree (e.g. 5): <code>p</code> goes down to an empty child of a leaf, becomes <code>null</code>, and <code>p.data</code> fails. A real program checks <code>p != null</code> after the loop first.</p>
+<p data-lang="de">Ändern Sie <code>key</code> in einen Wert, der nicht im Baum ist (z. B. 5): <code>p</code> läuft zu einem leeren Kind eines Blatts, wird <code>null</code>, und <code>p.data</code> schlägt fehl. Ein echtes Programm prüft nach der Schleife zuerst <code>p != null</code>.</p>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

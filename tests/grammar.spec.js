@@ -91,6 +91,13 @@ test('a link can be set to the result of a call', () => {
 	expect(parse('a.next = b\n')[0]).toMatchObject({ type: 'object property left', rhs: 'b' });
 });
 
+test('math functions are calls inside expressions; a field can start an expression', () => {
+	expect(parse('var r = karekök(16) + mutlak(-2)\n')[0]).toMatchObject({ type: 'declaration', lhs: 'r', rhs: 'karekök(16) + mutlak(-2)' });
+	expect(parse('print taban(7 / 2) + 1\n')[0].list).toEqual([{ subtype: 'var', text: 'taban(7 / 2) + 1', lineNumber: 1 }]);
+	expect(parse('var w = p.data * 2\n')[0]).toMatchObject({ lhs: 'w', rhs: 'p.data * 2' });
+	expect(parse('var v = x.next.data\n')[0].rhs.trim()).toBe('x.next.data');
+});
+
 test('functions, return and calls', () => {
 	const result = parse('function push(v, w)\n{\n  var n = new Node(v)\n  return n\n}\nfonksiyon f()\n{\n  döndür\n}\nvar a = push(1, 2) + 1\n');
 	expect(result[0]).toMatchObject({ type: 'function', name: 'push', params: ['v', 'w'], lineNumber: 1, endLine: 5 });

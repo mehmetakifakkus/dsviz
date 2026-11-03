@@ -8,17 +8,19 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 
 ## Neler var?
 
+- Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
 - Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `for`, `if`, `function`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).
 - Her adım bir cümleyle açıklanır; o adımda değişen bağ ya da pointer vurgulanır. `null` bağlar çapraz çizgiyle gösterilir, artık hiçbir yerden ulaşılamayan düğümler için uyarı çıkar.
 - Bir kod bloğu çalıştırılınca çizim temiz başlar: üstündeki bloklar kendiliğinden yeniden çalışır, böylece bir bloğu değiştirip tekrar çalıştırmak her zaman aynı noktadan başlar.
 - Düğümler otomatik yerleşir: her liste kendi satırında soldan sağa durur, değişiklikler animasyonla gösterilir. Dairesel bir listede son düğümden başa dönen bağ, pointer adlarının üstünden dolaşan bir okla çizilir; satır `tail`'in gösterdiği düğümden sonra başlar.
+- Kodda `.left` ya da `.right` geçince düğümler ağaç düğümü olarak çizilir ([sol | değer | sağ]); her düğüm derinliğine göre bir satıra, sıralı dolaşımdaki yerine göre bir sütuna yerleşir, böylece ikili arama ağacı soldan sağa sıralı okunur.
 - Değişkenler görselleştirmenin altındaki panelde listelenir; tüm örneklere üst çubuktaki menüden ulaşılır. Açık ve koyu tema vardır, telefonda da kullanılabilir.
 - Hatalar anlaşılır biçimde açıklanır (hangi satırda, ne yanlış gitti).
 - Üç dil: Türkçe, İngilizce ve Almanca. Arayüz, adım anlatımı, hata mesajları, ders metinleri ve kod yorumları çevrilmiştir. İlk açılışta tarayıcının dili seçilir.
 - Üst çubuğun sağındaki dişli düğmesi ayarları açar: dil, tema (sistem / açık / koyu), varsayılan animasyon hızı, kod yazı boyutu, adım anlatımı ve kopan düğüm uyarısı. Ayarlar tarayıcıda saklanır.
-- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
+- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, ikili arama ağacı (ekleme, arama, dolaşma, yükseklik), yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
 
 ## Yerelde çalıştırma
 
@@ -50,7 +52,7 @@ Testler kendi küçük sunucularını (`tests/server.js`) başlatır; elle açma
 
 ## Nasıl çalışıyor?
 
-- `grammer.pegjs`: dilin PEG.js grameri. Kod sayfa açılınca tarayıcıda derlenir.
+- `grammer.pegjs`: Düğüm dilinin PEG.js grameri. Kod sayfa açılınca tarayıcıda derlenir.
 - `js/linkedlist.js`: kodu çalıştıran, adımları kuyruğa alan ve paper.js ile çizen motor.
 - `js/layout.js`: her sayfanın üst çubuğunu, örnek menüsünü ve görselleştirme kartını kurar. Örneklerin listesi de buradadır; yeni bir örnek eklemek için sayfayı oluşturup listeye bir satır eklemek yeterli.
 - `js/i18n.js`: ayarlar ve arayüz metinleri (tr / en / de). Sayfadan önce yüklenir; yeni bir metin eklerken üç dili de yazın.

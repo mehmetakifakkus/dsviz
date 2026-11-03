@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ağacı dolaşma | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Ağacı dolaşma</h1>
+<h1 data-lang="en">Tree traversal</h1>
+<h1 data-lang="de">Baumdurchlauf</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir listeyi dolaşmanın tek yolu vardır; bir ağacı dolaşmanın ise birkaç. Üçü de özyinelemeyle birkaç satırda yazılır ve hepsi her düğümü bir kez ziyaret eder; fark, düğümün kendisinin alt ağaçlarından önce mi, arada mı, sonra mı işlendiğidir. Önce ekleme örneğindeki ağacı kuralım.</p>
+<p data-lang="en">There is one way to walk a list, but several ways to walk a tree. All three below are written recursively in a few lines and visit every node once; the difference is whether the node itself is handled before, between or after its subtrees. First we build the tree from the insertion example.</p>
+<p data-lang="de">Eine Liste lässt sich nur auf eine Art durchlaufen, ein Baum auf mehrere. Alle drei folgenden Arten sind rekursiv in wenigen Zeilen geschrieben und besuchen jeden Knoten genau einmal; der Unterschied ist, ob der Knoten selbst vor, zwischen oder nach seinen Teilbäumen behandelt wird. Zuerst bauen wir den Baum aus dem Einfügebeispiel.</p>
+
+<textarea id="text1" class="deneme">
+function insert(t, v)
+{
+  if(t == null)           // boş yer bulundu: yeni düğüm
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v &lt; t.data)
+    t.left = insert(t.left, v)    // küçükse sol alt ağaca
+  else
+    t.right = insert(t.right, v)  // büyük ya da eşitse sağa
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+function insert(t, v)
+{
+  if(t == null)           // an empty place: the new node
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // smaller: into the left subtree
+  else
+    t.right = insert(t.right, v)  // greater or equal: to the right
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+function insert(t, v)
+{
+  if(t == null)           // ein freier Platz: der neue Knoten
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // kleiner: in den linken Teilbaum
+  else
+    t.right = insert(t.right, v)  // größer oder gleich: nach rechts
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+
+<p data-lang="tr"><em>Sıralı dolaşma</em> (in-order): önce sol alt ağaç, sonra düğüm, sonra sağ alt ağaç. İkili arama ağacında değerleri küçükten büyüğe verir; Çıktı alanına bakın. Çağrı yığını panelinde her düğüm için açılan çağrıyı ve <code>null</code> çocuklarda hemen dönen çağrıları izleyebilirsiniz.</p>
+<p data-lang="en"><em>In-order</em>: first the left subtree, then the node, then the right subtree. In a binary search tree it gives the values from smallest to greatest; look at the Output area. In the Call stack panel you can follow the call made for each node and the calls that return at once for <code>null</code> children.</p>
+<p data-lang="de"><em>In-Order</em>: zuerst der linke Teilbaum, dann der Knoten, dann der rechte Teilbaum. In einem binären Suchbaum liefert er die Werte vom kleinsten zum größten; sehen Sie in den Bereich Ausgabe. Im Aufrufstapel können Sie den Aufruf für jeden Knoten verfolgen und die Aufrufe, die bei <code>null</code>-Kindern sofort zurückkehren.</p>
+
+<textarea id="text2" class="deneme">
+function inorder(t)
+{
+  if(t == null)
+    return
+  inorder(t.left)         // önce küçükler
+  print t.data
+  inorder(t.right)        // sonra büyükler
+}
+inorder(root)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function inorder(t)
+{
+  if(t == null)
+    return
+  inorder(t.left)         // the smaller values first
+  print t.data
+  inorder(t.right)        // then the greater ones
+}
+inorder(root)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function inorder(t)
+{
+  if(t == null)
+    return
+  inorder(t.left)         // zuerst die kleineren Werte
+  print t.data
+  inorder(t.right)        // dann die größeren
+}
+inorder(root)
+</script>
+
+<p data-lang="tr"><em>Önce düğüm</em> (pre-order) düğümü alt ağaçlarından önce yazar; ağacı aynı biçimde yeniden kurmak için bu sıra kullanılır (bu sırayla ekleme yapılırsa aynı ağaç çıkar). <em>Sonra düğüm</em> (post-order) önce iki alt ağacı bitirir; bir ağacı silerken ya da her düğüm için alt ağaçlarının sonucunu gerektiren hesaplarda kullanılır.</p>
+<p data-lang="en"><em>Pre-order</em> writes the node before its subtrees; this order is used to rebuild the tree in the same shape (inserting the values in this order gives the same tree). <em>Post-order</em> finishes both subtrees first; it is used to delete a tree, or for calculations where each node needs the results of its subtrees.</p>
+<p data-lang="de"><em>Pre-Order</em> schreibt den Knoten vor seinen Teilbäumen; diese Reihenfolge benutzt man, um den Baum in derselben Form wieder aufzubauen (fügt man die Werte in dieser Reihenfolge ein, entsteht derselbe Baum). <em>Post-Order</em> erledigt zuerst beide Teilbäume; man verwendet sie zum Löschen eines Baums oder für Berechnungen, bei denen jeder Knoten die Ergebnisse seiner Teilbäume braucht.</p>
+
+<textarea id="text3" class="deneme">
+function preorder(t)
+{
+  if(t == null)
+    return
+  print t.data            // önce düğüm
+  preorder(t.left)
+  preorder(t.right)
+}
+function postorder(t)
+{
+  if(t == null)
+    return
+  postorder(t.left)
+  postorder(t.right)
+  print t.data            // en son düğüm
+}
+preorder(root)
+postorder(root)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function preorder(t)
+{
+  if(t == null)
+    return
+  print t.data            // the node first
+  preorder(t.left)
+  preorder(t.right)
+}
+function postorder(t)
+{
+  if(t == null)
+    return
+  postorder(t.left)
+  postorder(t.right)
+  print t.data            // the node last
+}
+preorder(root)
+postorder(root)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function preorder(t)
+{
+  if(t == null)
+    return
+  print t.data            // zuerst der Knoten
+  preorder(t.left)
+  preorder(t.right)
+}
+function postorder(t)
+{
+  if(t == null)
+    return
+  postorder(t.left)
+  postorder(t.right)
+  print t.data            // der Knoten zuletzt
+}
+preorder(root)
+postorder(root)
+</script>
+
+<p data-lang="tr">Post-order'a bir örnek: ağacın <em>yüksekliği</em>, kökten en uzak yaprağa kadar olan düğüm sayısıdır. Boş ağacın yüksekliği 0'dır; bir düğümün yüksekliği, çocuklarının yüksekliklerinden büyük olanın bir fazlasıdır. Arama ve ekleme bu kadar adım sürer; bu yüzden ağacın dengeli (alçak) kalması önemlidir.</p>
+<p data-lang="en">A post-order example: the <em>height</em> of a tree is the number of nodes from the root down to the farthest leaf. An empty tree has height 0; a node's height is one more than the greater of its children's heights. Search and insertion take that many steps, which is why it matters that a tree stays balanced (low).</p>
+<p data-lang="de">Ein Beispiel für Post-Order: die <em>Höhe</em> eines Baums ist die Anzahl der Knoten von der Wurzel bis zum entferntesten Blatt. Ein leerer Baum hat die Höhe 0; die Höhe eines Knotens ist um eins größer als die größere Höhe seiner Kinder. Suchen und Einfügen dauern so viele Schritte; deshalb ist es wichtig, dass ein Baum ausgeglichen (niedrig) bleibt.</p>
+
+<textarea id="text4" class="deneme">
+function height(t)
+{
+  if(t == null)
+    return 0
+  var a = height(t.left)
+  var b = height(t.right)
+  if(a &gt; b)               // büyük olan alt ağaç + bu düğüm
+    return a + 1
+  return b + 1
+}
+var h = height(root)
+print h
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="en">
+function height(t)
+{
+  if(t == null)
+    return 0
+  var a = height(t.left)
+  var b = height(t.right)
+  if(a > b)               // the higher subtree + this node
+    return a + 1
+  return b + 1
+}
+var h = height(root)
+print h
+</script>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="de">
+function height(t)
+{
+  if(t == null)
+    return 0
+  var a = height(t.left)
+  var b = height(t.right)
+  if(a > b)               // der höhere Teilbaum + dieser Knoten
+    return a + 1
+  return b + 1
+}
+var h = height(root)
+print h
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

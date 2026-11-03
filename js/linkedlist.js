@@ -138,8 +138,12 @@ window.dsvApplyTheme = function(){
 // uses ".prev". The switch happens inside a step, so stepping back undoes it too.
 var doublyMode = false;      // drawn state
 var doublyRequested = false; // program state: some code on this page used .prev
+var treeMode = false;        // drawn state: nodes have left and right links (a binary tree)
+var treeRequested = false;   // program state: some code on this page used .left / .right
 
 function geometry(){
+	if(treeMode)
+		return {width: 66, dataX: 18, nextX: 48, nextY: 12, prevY: 12}; // [left 18 | data 30 | right 18]
 	return doublyMode
 		? {width: 70, dataX: 20, nextX: 50, nextY: 8,  prevY: 17}  // [prev 20 | data 30 | next 20]
 		: {width: 50, dataX: 0,  nextX: 30, nextY: 12, prevY: 12}; // [data 30 | next 20]
@@ -154,11 +158,15 @@ function Node(content, next){
 	this.data = (content === undefined || content === null) ? '' : content;
 	this.next = next || null;
 	this.prev = null;
+	this.left = null;  // a tree node's children
+	this.right = null;
 
 	// visual state (see the comment at the top of the file)
 	this.shown = false;
 	this.visualNext = null;
 	this.visualPrev = null;
+	this.visualLeft = null;
+	this.visualRight = null;
 	this.shownData = this.data;
 	this.cell = null;      // {row, col} on the layout grid
 	this.position = null;  // top left corner of the box
@@ -178,7 +186,7 @@ function Node(content, next){
 		// the dot (or the null slash) of a link cell is drawn with the link, see redrawArrows
 		items.push(new Path.Line({from: [p.x + g.nextX, p.y], to: [p.x + g.nextX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
 
-		if(doublyMode)
+		if(doublyMode || treeMode)
 			items.push(new Path.Line({from: [p.x + g.dataX, p.y], to: [p.x + g.dataX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
 
 		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: PAL.text, content:''+ self.shownData}));
@@ -205,8 +213,8 @@ function Node(content, next){
 		self.position = null;
 		self.everLinked = false;
 		self.lost = false;
-		[self.boxDraw, self.arrowDraw, self.prevArrowDraw].forEach(function(item){ if(item) item.remove(); });
-		self.boxDraw = self.arrowDraw = self.prevArrowDraw = null;
+		[self.boxDraw, self.arrowDraw, self.prevArrowDraw, self.leftArrowDraw, self.rightArrowDraw].forEach(function(item){ if(item) item.remove(); });
+		self.boxDraw = self.arrowDraw = self.prevArrowDraw = self.leftArrowDraw = self.rightArrowDraw = null;
 	}
 
 	this.setName = function(name){
@@ -217,6 +225,12 @@ function Node(content, next){
 }
 
 window.Node = Node;
+
+function enableTreeMode(){
+	treeMode = true;
+	allNodes.forEach(function(n){ if(n.shown && n.position) n.render(); });
+	layout();
+}
 
 function enableDoublyMode(){
 	if(doublyMode)
@@ -327,9 +341,32 @@ function selfLoop(n, color){
 // a link cell whose link is null: a slash across the cell instead of a dot
 function nullMark(n, kind, color){
 	var g = geometry(), p = n.position;
-	var x = p.x + (kind === 'next' ? g.nextX : 0);
+	var x = p.x + (kind === 'next' || kind === 'right' ? g.nextX : 0);
 	return new Path.Line({from: [x + 4, p.y + NODE_H - 4], to: [x + 16, p.y + 4], strokeColor: color || PAL.stroke,
 	                      strokeWidth: color && color !== PAL.stroke ? 3 : 1.5});
+}
+
+// the link fields of a node and where the drawing keeps them
+var VISUAL_FIELD = {'.next': 'visualNext', '.prev': 'visualPrev', '.left': 'visualLeft', '.right': 'visualRight'};
+
+// a tree link: from the middle of the left or right cell straight to the top of the child
+function treeArrow(from, to, side, color){
+	color = color || PAL.stroke;
+	var g = geometry();
+	var start = from.position + [side === 'left' ? 9 : g.nextX + 9, NODE_H / 2];
+	var end = to.position + [g.width / 2, 0];
+	var line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: color !== PAL.stroke ? 3 : 2});
+	return new Group([line, arrowTip(end, (end - start).angle, color), new Path.Circle({radius: 4, fillColor: color, center: start})]);
+}
+
+function redrawTreeArrows(n){
+	['left', 'right'].forEach(function(side){
+		var key = side + 'ArrowDraw', child = n[side === 'left' ? 'visualLeft' : 'visualRight'];
+		var color = isFocusedEdge(n, side) ? PAL.changed : PAL.stroke;
+		n[key] = child && child.shown && child !== n ? treeArrow(n, child, side, color) : nullMark(n, side, color);
+		if(n.lost)
+			n[key].opacity = LOST_OPACITY;
+	});
 }
 
 function redrawArrows(){
@@ -340,10 +377,19 @@ function redrawArrows(){
 			n.arrowDraw.remove();
 		if(n.prevArrowDraw)
 			n.prevArrowDraw.remove();
-		n.arrowDraw = n.prevArrowDraw = null;
+		if(n.leftArrowDraw)
+			n.leftArrowDraw.remove();
+		if(n.rightArrowDraw)
+			n.rightArrowDraw.remove();
+		n.arrowDraw = n.prevArrowDraw = n.leftArrowDraw = n.rightArrowDraw = null;
 
 		if(!n.shown || !n.position)
 			continue;
+
+		if(treeMode){ // a tree node has no next cell: its links are left and right
+			redrawTreeArrows(n);
+			continue;
+		}
 
 		var nextColor = isFocusedEdge(n, 'next') ? PAL.changed : PAL.stroke;
 		n.arrowDraw = n.visualNext === n ? selfLoop(n, nextColor)
@@ -376,7 +422,30 @@ function redrawArrows(){
 var ROW_Y0 = 80, ROW_H = 150, COL_X0 = 50;
 var colWidth = 100;
 
-function maxColWidth(){ return doublyMode ? 125 : 100; }
+function maxColWidth(){ return treeMode ? 90 : doublyMode ? 125 : 100; }
+function rowH(){ return treeMode ? 110 : ROW_H; }
+
+// A tree: a node's row is its depth and its column its place in an in-order walk (left
+// subtree, node, right subtree), so a binary search tree reads sorted from left to right
+// and no two nodes share a column. Separate trees (and lone nodes) stand side by side.
+function treeCells(shown){
+	var isChild = {}, visited = {}, col = 0;
+	shown.forEach(function(n){
+		[n.visualLeft, n.visualRight].forEach(function(c){ if(c && c.shown && c !== n) isChild[c.id] = true; });
+	});
+	function place(n, depth){
+		if(!n || !n.shown || visited[n.id])
+			return;
+		visited[n.id] = true;
+		place(n.visualLeft, depth + 1);
+		n.cell = {row: depth, col: col};
+		col = col + 1;
+		place(n.visualRight, depth + 1);
+	}
+	var roots = shown.filter(function(n){ return !isChild[n.id]; }).sort(function(a, b){ return a.id - b.id; });
+	roots.forEach(function(r){ place(r, 0); });
+	shown.forEach(function(n){ place(n, 0); }); // only a cycle of child links is left
+}
 var lastPlaced = null, placementCounter = 0;
 
 var TAIL_NAMES = ['tail', 'last', 'rear', 'son'];
@@ -483,6 +552,10 @@ function layout(tidy){
 	var occupied = {};
 	var i, k;
 
+	if(treeMode)
+		treeCells(shown);
+	else {
+
 	var plans = chains.map(function(chain, index){ return {chain: chain, run: keptRun(chain), index: index}; });
 
 	// keep the biggest already-drawn chains first, new chains last
@@ -544,6 +617,8 @@ function layout(tidy){
 		maxRow = Math.max(maxRow, row);
 	});
 
+	} // not a tree
+
 	// grid cells -> canvas positions (the leftmost column and the top row start at the origin)
 	var minCol = Infinity, maxCol = -Infinity, minRow = Infinity;
 	for(i=0; i < shown.length; i++){
@@ -561,13 +636,13 @@ function layout(tidy){
 	for(i=0; i < shown.length; i++)
 		maxRowUsed = Math.max(maxRowUsed, shown[i].cell.row);
 	extent = shown.length
-		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * ROW_H + NODE_H + 85}
+		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 85}
 		: null;
 
 	var moves = [], fades = [];
 	for(i=0; i < shown.length; i++){
 		var node = shown[i];
-		var target = new Point(COL_X0 + (node.cell.col - minCol) * colWidth, ROW_Y0 + (node.cell.row - minRow) * ROW_H);
+		var target = new Point(COL_X0 + (node.cell.col - minCol) * colWidth, ROW_Y0 + (node.cell.row - minRow) * rowH());
 
 		if(!node.boxDraw){                     // a new node: appears in place
 			node.position = target;
@@ -723,7 +798,7 @@ function redrawPointers(){
 	pointers.forEach(function(p){
 		if(!p.active || !p.points || !p.points.shown || !p.points.position)
 			return;
-		var key = p.points.id + p.direction;
+		var key = p.points.id + (treeMode ? '' : p.direction);
 		if(!groups[key]){
 			groups[key] = [];
 			order.push(key);
@@ -734,7 +809,7 @@ function redrawPointers(){
 	order.forEach(function(key){
 		var group = groups[key];
 		var pos = group[0].points.position;
-		var up = group[0].direction === 'up';
+		var up = !treeMode && group[0].direction === 'up'; // in a tree the parent's link comes from above
 
 		var dx = geometry().dataX; // aim at the data cell
 		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
@@ -1167,7 +1242,7 @@ function updateReachability(){
 		var n = todo.pop();
 		if(reached[n.id]) continue;
 		reached[n.id] = true;
-		[n.visualNext, n.visualPrev].forEach(function(m){ if(m && m.shown && !reached[m.id]) todo.push(m); });
+		[n.visualNext, n.visualPrev, n.visualLeft, n.visualRight].forEach(function(m){ if(m && m.shown && !reached[m.id]) todo.push(m); });
 	}
 
 	var newlyLost = [];
@@ -1241,10 +1316,13 @@ function resetVisuals(){
 		n.hide();
 		n.visualNext = null;
 		n.visualPrev = null;
+		n.visualLeft = null;
+		n.visualRight = null;
 		n.shownData = n.data;
 	});
 	lastPlaced = null;
 	doublyMode = false;
+	treeMode = false;
 
 	pointerMap = {};
 	pointers = [];
@@ -1352,6 +1430,7 @@ function drawGraphics(line, result){
 	// other statements would run the calls in it twice (push(3))
 	var lhs_temp = line.type == 'free object' ? safeEval(line.text) : null;
 	var doubly = doublyRequested;
+	var tree = treeRequested;
 	var scope = scopeOf(line.lhs);                  // null for a global variable
 	var sentence = describe(line, res, lhs_temp);   // what happened, with the values of now
 
@@ -1359,6 +1438,8 @@ function drawGraphics(line, result){
 
 		if(doubly && !doublyMode)
 			enableDoublyMode();
+		if(tree && !treeMode)
+			enableTreeMode();
 		narrate(sentence);
 
 		if(line.type == 'declaration' || line.type == 'assignment')
@@ -1398,12 +1479,12 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 
-			if(res.prop == '.next' || res.prop == '.prev')
+			if(VISUAL_FIELD[res.prop])
 			{
 				if(res.newNode)
 					res.newNode.shown = true;
 
-				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
+				res.target[VISUAL_FIELD[res.prop]] = res.value;
 				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
@@ -1426,8 +1507,8 @@ function drawGraphics(line, result){
 		{
 			highlight(doc, line);
 
-			if(res.prop == '.next' || res.prop == '.prev'){
-				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
+			if(VISUAL_FIELD[res.prop]){
+				res.target[VISUAL_FIELD[res.prop]] = res.value;
 				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
@@ -1467,7 +1548,14 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2'];
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2',
+                      'taban', 'tavan', 'karekök', 'mutlak'];
+
+// the language's math functions (Turkish names): taban(7 / 2) is 3
+window.taban = Math.floor;
+window.tavan = Math.ceil;
+window['karekök'] = Math.sqrt;
+window.mutlak = Math.abs;
 
 // an error of our own: "Line 3: ..." in the chosen language, shown as it is
 function ownError(line, key, vars){
@@ -1811,6 +1899,8 @@ window.parse = function(text) {
 
 		if(/\.prev\b/.test(text))
 			doublyRequested = true;
+		if(/\.(left|right)\b/.test(text))
+			treeRequested = true;
 
 		frames = []; // a previous run may have stopped inside a call
 		if(unfinishedCalls.length){ // ... and left its frames in the panel: remove them first
@@ -1897,6 +1987,7 @@ function resetProgram(){
 	frames = [];
 	unfinishedCalls = [];
 	doublyRequested = false;
+	treeRequested = false;
 	currentLine = null;
 
 	player.steps = [];
@@ -1911,6 +2002,7 @@ window.dsvState = function(){
 		nodes: allNodes.filter(function(n){ return n.shown; }).map(function(n){ return n.shownData; }),
 		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
 		doubly: doublyMode,
+		tree: treeMode,
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
 		narration: (document.getElementById('narration') || {}).textContent || '',

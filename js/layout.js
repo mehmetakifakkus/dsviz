@@ -20,6 +20,9 @@
 	var t = dsv.t, lang = dsv.settings.lang;
 
 	var EXAMPLES = [
+		{ group: {tr: 'Başlarken', en: 'Getting started', de: 'Erste Schritte'}, items: [
+			['language.html', {tr: 'Düğüm dili rehberi', en: 'Guide to the Düğüm language', de: 'Leitfaden zur Sprache Düğüm'}]
+		]},
 		{ group: {tr: 'Listeyi dolaşma', en: 'Traversal', de: 'Durchlaufen'}, items: [
 			['lengthOfALinkedList.html', {tr: 'Listenin uzunluğunu bulma', en: 'Length of a list', de: 'Länge einer Liste'}],
 			['sumMaxAndSearchInALinkedList.html', {tr: 'Toplam, en büyük değer ve arama', en: 'Sum, maximum and search', de: 'Summe, Maximum und Suche'}]
@@ -63,6 +66,10 @@
 			['bubbleSort.html', {tr: 'Kabarcık sıralama (değerleri değiştirerek)', en: 'Bubble sort (swapping values)', de: 'Bubblesort (Werte tauschen)'}],
 			['insertionSort.html', {tr: 'Eklemeli sıralama (bağları değiştirerek)', en: 'Insertion sort (relinking nodes)', de: 'Insertion Sort (Knoten umhängen)'}],
 			['mergeSort.html', {tr: 'Birleştirmeli sıralama (merge sort)', en: 'Merge sort', de: 'Mergesort'}]
+	]},
+		{ group: {tr: 'Ağaçlar', en: 'Trees', de: 'Bäume'}, items: [
+			['binarySearchTree.html', {tr: 'İkili arama ağacı: ekleme ve arama', en: 'Binary search tree: insert and search', de: 'Binärer Suchbaum: einfügen und suchen'}],
+			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}]
 		]}
 	];
 
