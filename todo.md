@@ -19,7 +19,6 @@
 
 ## Yeni konular
 
-- [ ] Dairesel (circular) bağlı liste.
 - [ ] Bağlı liste sıralama: insertion sort, merge sort.
 - [ ] İkili arama ağacı (BST): ekleme, arama, dolaşma (yeni bir yerleşim türü gerekir).
 - [ ] Hash tablosu (zincirleme / chaining).
@@ -32,7 +31,7 @@
 
 ## Bilinen sorunlar
 
-- [ ] Komut satırında döngülü bir listeyi yazdırmak (`x`) sonsuz özyinelemeye giriyor (`createSummary` döngüyü fark etmiyor).
+- [ ] Dairesel çift yönlü listede ilk düğümün `prev`'i (sona dönen bağ) hâlâ satırın altından bir yay olarak çiziliyor.
 - [ ] Çift yönlü listede ters çevirmeden sonra tüm oklar yay olarak çiziliyor (düğümler yerinde kaldığı için); okunuyor ama kalabalık.
 
 ## Tamamlananlar
@@ -50,9 +49,10 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 145 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 152 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
 - [x] Üç dil (Türkçe, İngilizce, Almanca): arayüz, anlatım, hata mesajları, 22 sayfanın metinleri ve kod yorumları; ayarlar paneli (dil, tema, hız, yazı boyutu, anlatım, uyarılar).
 - [x] `x = new Node(9)` (`var` olmadan) artık doğru okunuyor; hız kaydırıcısı çalışıyor (PaperScript tekli `+` / `++` yeniden yazımı).
+- [x] Dairesel bağlı liste (dolaşma, başa/sona O(1) ekleme, silme) ve Josephus problemi; başa dönen bağ pointer adlarının üstünden çizilir, halka `tail`'den sonra başlar; komut satırı döngülü listeleri sonsuza gitmeden yazdırır.

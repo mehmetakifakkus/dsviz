@@ -73,6 +73,17 @@ test('command prompt runs a line and calls a function once', async ({ page }) =>
 	expect(problems).toEqual([]);
 });
 
+test('command prompt prints a circular list without looping forever', async ({ page }) => {
+	const problems = await openPage(page, 'circularLinkedList.html');
+	await runBlock(page, 0);
+	await page.locator('.tab[data-tab="tab-command"]').click();
+	await page.keyboard.type('head');
+	await page.keyboard.press('Enter');
+	const printed = JSON.parse(await page.locator('#output').textContent());
+	expect(printed.next.next.next).toEqual({ data: 4, next: '↺ yine [1] düğümüne döner' });
+	expect(problems).toEqual([]);
+});
+
 test('theme chosen in the settings panel is applied and remembered', async ({ page }) => {
 	const problems = await openPage(page, 'stack.html');
 	const theme = () => page.evaluate(() => document.documentElement.getAttribute('data-theme'));

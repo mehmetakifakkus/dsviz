@@ -253,7 +253,12 @@ function nodeArrow(from, to, kind, color){
 		line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
-	else if(sameRow) {                                    // backwards or skipping nodes: an arc
+	else if(sameRow && isNext && dx < 0) {                // back to an earlier node (a circle): a loop over the pointers
+		var r = returnLoop(from, to, start);
+		line = r.line; end = r.end; angle = r.angle;
+		line.strokeColor = color; line.strokeWidth = 2;
+	}
+	else if(sameRow) {                                    // skipping nodes forwards (or prev backwards): an arc
 		end = b + [g.width / 2, isNext ? 0 : NODE_H];
 		var bulge = 18 + Math.abs(dx) * 0.1;
 		var through = new Point((start.x + end.x) / 2, isNext ? a.y - bulge : a.y + NODE_H + bulge);
@@ -271,6 +276,41 @@ function nodeArrow(from, to, kind, color){
 		line.strokeWidth = 3;
 	var dot = new Path.Circle({radius: 4, fillColor: color, center: start});
 	return new Group([line, arrowTip(end, angle, color), dot]);
+}
+
+// a path through the points with rounded corners
+function roundedPath(points, radius){
+	var path = new Path({segments: [points[0]]});
+	for(var i = 1; i < points.length - 1; i++){
+		var corner = points[i];
+		var r = Math.min(radius, (points[i - 1] - corner).length / 2, (points[i + 1] - corner).length / 2);
+		var p1 = corner + (points[i - 1] - corner).normalize(r);
+		var p2 = corner + (points[i + 1] - corner).normalize(r);
+		var center = p1 + (p2 - corner);
+		path.lineTo(p1);
+		path.arcTo(center + (corner - center).normalize(r), p2);
+	}
+	path.lineTo(points[points.length - 1]);
+	return path;
+}
+
+// The link from the end of a row back to an earlier node, as in a circular list: up past the
+// right of the last node, along over the row, and down into the top of the target's next
+// cell (pointers aim at the data cell, and the names of pointers stay to the left of it).
+var LOOP_RISE = 74, LOOP_RISE_LOW = 24; // over the names of pointers drawn above the row / just over the nodes
+function returnLoop(from, to, start){
+	var a = from.position, b = to.position, g = geometry();
+	// stay low unless a pointer drawn above the row lies under the loop
+	var left = b.x - 50, rightEdge = a.x + g.width + 20;
+	var crowded = pointers.some(function(p){
+		var n = p.active && p.direction === 'up' && p.points;
+		return n && n.shown && n.position && Math.abs(n.position.y - a.y) < 1 && n.position.x >= left && n.position.x <= rightEdge;
+	});
+	var top = a.y - (crowded ? LOOP_RISE : LOOP_RISE_LOW);
+	var right = a.x + g.width + 14;
+	var end = b + [g.nextX + 10, 0];
+	var points = [start, new Point(right, start.y), new Point(right, top), new Point(end.x, top), end];
+	return {line: roundedPath(points, 10), end: end, angle: 90};
 }
 
 // n.next = n: a small loop from the next cell back into the node's top
@@ -339,6 +379,8 @@ var colWidth = 100;
 function maxColWidth(){ return doublyMode ? 125 : 100; }
 var lastPlaced = null, placementCounter = 0;
 
+var TAIL_NAMES = ['tail', 'last', 'rear', 'son'];
+
 function chainsOf(shown){
 	var indeg = {}, visited = {}, chains = [];
 	var i, n;
@@ -364,11 +406,32 @@ function chainsOf(shown){
 		chains.push(chain);
 	}
 
+	// Cycles first, so that a node that only points into a ring (a node being inserted, or
+	// one being cut out) does not decide where the ring's row begins. A ring starts after
+	// the node a pointer called tail (last, rear, son) points to, as a circular list is
+	// usually kept; otherwise at its leftmost drawn node.
+	var onCycle = {};
+	for(i=0; i < shown.length; i++){
+		n = shown[i].visualNext;
+		for(var steps = 0; n && n.shown && steps < shown.length && n !== shown[i]; steps++)
+			n = n.visualNext;
+		if(n === shown[i])
+			onCycle[n.id] = true;
+	}
+	for(i=0; i < pointers.length; i++){
+		var tp = pointers[i];
+		if(!tp.scope && tp.active && tp.points && onCycle[tp.points.id] && TAIL_NAMES.indexOf(tp.name) >= 0 && !visited[tp.points.id])
+			walk(tp.points.visualNext);
+	}
+	for(i=0; i < ordered.length; i++)
+		if(onCycle[ordered[i].id] && !visited[ordered[i].id])
+			walk(ordered[i]);
+
 	for(i=0; i < ordered.length; i++)          // chains that start at a head
 		if(!indeg[ordered[i].id] && !visited[ordered[i].id])
 			walk(ordered[i]);
 
-	for(i=0; i < ordered.length; i++)          // what is left belongs to cycles
+	for(i=0; i < ordered.length; i++)          // anything left (not expected)
 		if(!visited[ordered[i].id])
 			walk(ordered[i]);
 
@@ -563,8 +626,7 @@ function applyTween(t){
 		if(tween.fades[j].boxDraw)
 			tween.fades[j].boxDraw.opacity = e * (tween.fades[j].lost ? LOST_OPACITY : 1);
 
-	redrawArrows();
-	redrawPointers();
+	redrawPointers(); // redraws the arrows too
 }
 
 function finishTween(){
@@ -645,6 +707,7 @@ window.Pointer = Pointer;
 // pointers that point to the same node in the same direction share one arrow: "prev, curr"
 var pointerDrawings = [];
 function redrawPointers(){
+	redrawArrows(); // a link back to an earlier node routes around the pointers' names
 	for(var i=0; i < pointerDrawings.length; i++)
 		pointerDrawings[i].remove();
 	pointerDrawings = [];
@@ -683,8 +746,8 @@ function redrawPointers(){
 		});
 		var labelGroup = new Group(labels);
 		labelGroup.position = start + (up ? [-4, -14] : [-4, 14]);
-		if(labelGroup.bounds.left < 4) // a long name under the first column would be cut off at the left edge
-			labelGroup.position = labelGroup.position + [4 - labelGroup.bounds.left, 0];
+		if(labelGroup.bounds.left < 8) // a long name under the first column would be cut off at the left edge
+			labelGroup.position = labelGroup.position + [8 - labelGroup.bounds.left, 0];
 
 		items.push(labelGroup);
 		pointerDrawings.push(new Group(items));
@@ -709,6 +772,8 @@ function pointTo(name, node, color, direction, scope){
 	else
 		pointer.draw(node);
 	focus.pointers.push(pointer);
+	if(!scope && TAIL_NAMES.indexOf(name) >= 0)
+		layout(); // a circular list's row starts after its tail
 	return pointer;
 }
 

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dairesel bağlı liste | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Dairesel bağlı liste</h1>
+<h1 data-lang="en">Circular linked list</h1>
+<h1 data-lang="de">Zirkuläre verkettete Liste</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Dairesel (circular) bağlı listede son düğümün <code>next</code>'i <code>null</code> değildir, listenin ilk düğümünü gösterir; liste bir halka olur. Başı ya da sonu olmayan, sırayla dönen işler için kullanılır: sırayla oyuncu değiştiren bir oyun, işlemciyi sırayla paylaşan programlar (round robin), çalma listesinde tekrar. Önce dört düğümlü bir liste kuralım ve son satırda halkayı kapatalım: son düğümden başa dönen ok, pointer adlarının üstünden dolaşarak çizilir.</p>
+<p data-lang="en">In a circular linked list the <code>next</code> of the last node is not <code>null</code>: it points to the first node, and the list becomes a ring. It is used for things that take turns with no real start or end: players taking turns in a game, programs sharing the processor in turn (round robin), a playlist on repeat. First we build a list of four nodes and close the ring in the last line; the arrow from the last node back to the first is drawn around the pointer names.</p>
+<p data-lang="de">In einer zirkulären verketteten Liste ist <code>next</code> des letzten Knotens nicht <code>null</code>, sondern zeigt auf den ersten Knoten: die Liste wird zu einem Ring. Man verwendet sie für Dinge, die reihum drankommen und keinen echten Anfang oder kein Ende haben: Spieler, die abwechselnd ziehen, Programme, die sich den Prozessor teilen (Round Robin), eine Wiedergabeliste in Dauerschleife. Zuerst bauen wir eine Liste aus vier Knoten und schließen in der letzten Zeile den Ring; der Pfeil vom letzten Knoten zurück zum ersten wird um die Zeigernamen herum gezeichnet.</p>
+
+<textarea id="text1" class="deneme">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i &lt;= 4; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // halka kapanır: son düğüm başı gösterir
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 4; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // the ring closes: the last node points to the head
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 4; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // der Ring schließt sich: der letzte Knoten zeigt auf den Kopf
+</script>
+
+<p data-lang="tr">Dairesel listede hiçbir <code>next</code> <code>null</code> olmadığı için alışık olduğumuz <code>while(p != null)</code> döngüsü hiç bitmez (deneyin: motor sonsuz döngüyü fark edip durdurur). Dolaşırken başladığımız düğüme geri dönünce dururuz. Baş düğümü döngüden önce sayıp <code>head.next</code>'ten başlıyoruz, yoksa koşul daha ilk adımda yanlış olurdu.</p>
+<p data-lang="en">Since no <code>next</code> in a circular list is <code>null</code>, the usual <code>while(p != null)</code> loop never ends (try it: the engine notices the endless loop and stops it). We stop when we are back at the node we started from. We count the head before the loop and start from <code>head.next</code>; otherwise the condition would be false right at the first step.</p>
+<p data-lang="de">Weil in einer zirkulären Liste kein <code>next</code> <code>null</code> ist, endet die gewohnte Schleife <code>while(p != null)</code> nie (probieren Sie es aus: die Engine bemerkt die Endlosschleife und hält sie an). Wir hören auf, sobald wir wieder beim Startknoten sind. Den Kopf zählen wir vor der Schleife und beginnen bei <code>head.next</code>, sonst wäre die Bedingung schon im ersten Schritt falsch.</p>
+
+<textarea id="text2" class="deneme">
+var count = 1          // baş düğüm
+var p = head.next
+while(p != head)       // başa dönünce dur
+{
+  count++
+  p = p.next
+}
+print count
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var count = 1          // the head
+var p = head.next
+while(p != head)       // stop when back at the head
+{
+  count++
+  p = p.next
+}
+print count
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var count = 1          // der Kopf
+var p = head.next
+while(p != head)       // anhalten, wenn wir wieder beim Kopf sind
+{
+  count++
+  p = p.next
+}
+print count
+</script>
+
+<p data-lang="tr">Dairesel listede yalnızca <code>tail</code>'i tutmak yeter, çünkü baş her zaman <code>tail.next</code>'tir. Başa ekleme ile sona ekleme aynı iki bağla yapılır: yeni düğüm <code>tail</code> ile baş arasına girer. Fark tek satırdır: başa eklerken <code>head</code>, sona eklerken <code>tail</code> yeni düğüme taşınır. İkisi de O(1) zaman alır; düz listede sona eklemek için ya listeyi dolaşmak ya da ayrıca bir son pointer'ı tutmak gerekir.</p>
+<p data-lang="en">In a circular list it is enough to keep <code>tail</code>, because the head is always <code>tail.next</code>. Inserting at the head and at the end take the same two links: the new node goes between <code>tail</code> and the head. The difference is one line: at the head, <code>head</code> moves to the new node; at the end, <code>tail</code> does. Both take O(1) time; in a plain list, appending means walking the list or keeping an extra tail pointer.</p>
+<p data-lang="de">In einer zirkulären Liste genügt es, <code>tail</code> zu speichern, denn der Kopf ist immer <code>tail.next</code>. Einfügen am Anfang und am Ende brauchen dieselben zwei Verbindungen: der neue Knoten kommt zwischen <code>tail</code> und den Kopf. Der Unterschied ist eine Zeile: am Anfang wandert <code>head</code> zum neuen Knoten, am Ende <code>tail</code>. Beides dauert O(1); bei einer gewöhnlichen Liste muss man zum Anhängen die Liste durchlaufen oder einen zusätzlichen Zeiger aufs Ende halten.</p>
+
+<textarea id="text3" class="deneme">
+var n = new Node(0)   // başa ekleme
+n.next = tail.next
+tail.next = n
+head = n
+
+var m = new Node(5)   // sona ekleme: aynı iki bağ...
+m.next = tail.next
+tail.next = m
+tail = m              // ...ve tail yeni düğüme geçer
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var n = new Node(0)   // insert at the head
+n.next = tail.next
+tail.next = n
+head = n
+
+var m = new Node(5)   // append at the end: the same two links...
+m.next = tail.next
+tail.next = m
+tail = m              // ...and tail moves to the new node
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var n = new Node(0)   // am Anfang einfügen
+n.next = tail.next
+tail.next = n
+head = n
+
+var m = new Node(5)   // am Ende anhängen: dieselben zwei Verbindungen...
+m.next = tail.next
+tail.next = m
+tail = m              // ...und tail wandert zum neuen Knoten
+</script>
+
+<p data-lang="tr">Baştaki düğümü silmek için <code>tail</code>'in <code>next</code>'i baştan sonraki düğüme bağlanır, <code>head</code> bir ilerler ve eski baş silinir. Halka bozulmaz: son düğüm yine yeni başı gösterir.</p>
+<p data-lang="en">To delete the first node, the <code>next</code> of <code>tail</code> is linked to the node after the head, <code>head</code> moves one step on and the old head is deleted. The ring stays intact: the last node points to the new head again.</p>
+<p data-lang="de">Um den ersten Knoten zu löschen, wird <code>next</code> von <code>tail</code> mit dem Knoten nach dem Kopf verbunden, <code>head</code> rückt eins weiter und der alte Kopf wird gelöscht. Der Ring bleibt ganz: der letzte Knoten zeigt wieder auf den neuen Kopf.</p>
+
+<textarea id="text4" class="deneme">
+var t = head
+tail.next = head.next   // halka eski başı atlar
+head = head.next
+delete t
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="en">
+var t = head
+tail.next = head.next   // the ring skips the old head
+head = head.next
+delete t
+</script>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="de">
+var t = head
+tail.next = head.next   // der Ring überspringt den alten Kopf
+head = head.next
+delete t
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

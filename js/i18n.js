@@ -44,6 +44,7 @@
 			en: 'Type one line of code and press Enter, e.g. <code>x.next.data</code>. The up/down arrow keys bring back earlier commands.',
 			de: 'Geben Sie eine Zeile Code ein und drücken Sie Enter, z. B. <code>x.next.data</code>. Die Pfeiltasten hoch/runter holen frühere Befehle zurück.'
 		},
+		cycleBack: {tr: '↺ yine [{data}] düğümüne döner', en: '↺ back to [{data}]', de: '↺ zurück zu [{data}]'},
 		commandOk: {tr: 'Başarıyla çalıştı', en: 'Done', de: 'Ausgeführt'},
 		commandError: {tr: 'Hata!', en: 'Error!', de: 'Fehler!'},
 

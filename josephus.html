@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Josephus problemi | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Josephus problemi</h1>
+<h1 data-lang="en">The Josephus problem</h1>
+<h1 data-lang="de">Das Josephus-Problem</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr"><em>n</em> kişi bir çember oluşturur. Saymaya başlanır, her <em>k</em>'ıncı kişi çemberden çıkar ve sayma bir sonraki kişiden sürer; tek kişi kalana kadar devam edilir. Kim kalır? Çember dairesel bir listeyle doğrudan gösterilir: çıkan kişi listeden silinir, halka kendiliğinden küçülür. Önce 7 kişilik çemberi kuralım.</p>
+<p data-lang="en"><em>n</em> people stand in a circle. Counting starts, every <em>k</em>-th person leaves the circle and counting goes on from the next person, until only one is left. Who is it? A circular list models the circle directly: the person who leaves is deleted from the list and the ring closes up by itself. First we build a circle of 7 people.</p>
+<p data-lang="de"><em>n</em> Personen stehen im Kreis. Es wird gezählt, jede <em>k</em>-te Person verlässt den Kreis, und das Zählen geht bei der nächsten Person weiter, bis nur noch eine übrig ist. Wer bleibt? Eine zirkuläre Liste bildet den Kreis direkt ab: wer ausscheidet, wird aus der Liste gelöscht, und der Ring schließt sich von selbst. Zuerst bauen wir einen Kreis aus 7 Personen.</p>
+
+<textarea id="text1" class="deneme">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i &lt;= 7; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // çember
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 7; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // the circle
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var head = new Node(1)
+var tail = head
+for(var i = 2; i <= 7; i++)
+{
+  tail.next = new Node(i)
+  tail = tail.next
+}
+tail.next = head   // der Kreis
+</script>
+
+<p data-lang="tr">Bir düğümü silmek için ondan <em>önceki</em> düğümü bilmek gerekir, bu yüzden <code>p</code> hep sayılacak kişinin bir gerisinde durur; başlangıçta <code>tail</code>'dedir. <code>p</code> <em>k</em>−1 kişi ilerler, sıradaki kişi <code>out</code> çıkar ve <code>p.next</code> onu atlar. Tek kişi kalınca o düğümün <code>next</code>'i kendisini gösterir; döngü bunu bekler. Çıkış sırası Çıktı alanına yazılır, en son yazılan kalan kişidir. <code>k</code>'yı ya da kişi sayısını değiştirip yeniden çalıştırabilirsiniz.</p>
+<p data-lang="en">To delete a node we need the node <em>before</em> it, so <code>p</code> always stays one behind the person to be counted; it starts at <code>tail</code>. <code>p</code> moves on <em>k</em>−1 people, the next person <code>out</code> leaves and <code>p.next</code> skips it. When one person is left, the <code>next</code> of that node points to itself; that is what the loop waits for. The order in which people leave is written to the Output area; the last value is the one who remains. You can change <code>k</code> or the number of people and run it again.</p>
+<p data-lang="de">Um einen Knoten zu löschen, braucht man den Knoten <em>davor</em>; deshalb steht <code>p</code> immer eins hinter der Person, die gezählt wird, und beginnt bei <code>tail</code>. <code>p</code> rückt <em>k</em>−1 Personen weiter, die nächste Person <code>out</code> scheidet aus, und <code>p.next</code> überspringt sie. Ist nur noch eine Person übrig, zeigt <code>next</code> dieses Knotens auf ihn selbst; darauf wartet die Schleife. Die Reihenfolge des Ausscheidens steht im Bereich Ausgabe, der letzte Wert ist die verbleibende Person. Sie können <code>k</code> oder die Anzahl der Personen ändern und erneut ausführen.</p>
+
+<textarea id="text2" class="deneme">
+var k = 3
+var p = tail            // sayılacak kişinin bir gerisi
+head = null             // çemberi artık p tutuyor
+tail = null
+while(p.next != p)      // tek kişi kalana kadar
+{
+  for(var i = 1; i &lt; k; i++)
+  {
+    p = p.next          // k-1 kişiyi say
+  }
+  var out = p.next      // k'ıncı kişi çıkar
+  p.next = out.next
+  print out.data
+  delete out
+}
+print p.data            // kalan kişi
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var k = 3
+var p = tail            // one behind the person to count
+head = null             // p holds the circle now
+tail = null
+while(p.next != p)      // until one person is left
+{
+  for(var i = 1; i < k; i++)
+  {
+    p = p.next          // count k-1 people
+  }
+  var out = p.next      // the k-th person leaves
+  p.next = out.next
+  print out.data
+  delete out
+}
+print p.data            // the one who remains
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var k = 3
+var p = tail            // eins hinter der Person, die gezählt wird
+head = null             // jetzt hält p den Kreis
+tail = null
+while(p.next != p)      // bis nur noch eine Person übrig ist
+{
+  for(var i = 1; i < k; i++)
+  {
+    p = p.next          // k-1 Personen zählen
+  }
+  var out = p.next      // die k-te Person scheidet aus
+  p.next = out.next
+  print out.data
+  delete out
+}
+print p.data            // die verbleibende Person
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
