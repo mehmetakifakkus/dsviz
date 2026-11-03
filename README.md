@@ -13,11 +13,12 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).
 - Her adım bir cümleyle açıklanır; o adımda değişen bağ ya da pointer vurgulanır. `null` bağlar çapraz çizgiyle gösterilir, artık hiçbir yerden ulaşılamayan düğümler için uyarı çıkar.
+- Ders modu: sayfanın başındaki "Ders modu" düğmesi (ya da ayarlar) sayfayı bölümlere ayırır; her seferinde bir açıklama ve bir kod bloğu görünür, Önceki/Sonraki ile ilerlenir ve bölümün bloğu kendiliğinden çalışır.
 - Değiştirilen kod bağlantıyla paylaşılır: blokların altındaki bağlantı düğmesi, sayfanın kendi kodundan farklı olan blokları adresin `#` kısmına koyar ve bağlantıyı kopyalar (sunucu gerekmez). Bağlantıyı açan kişi aynı sayfayı o kodla görür; kod kendiliğinden çalışmaz, okuyup Çalıştır'a basmak gerekir.
 - Bir kod bloğu çalıştırılınca çizim temiz başlar: üstündeki bloklar kendiliğinden yeniden çalışır, böylece bir bloğu değiştirip tekrar çalıştırmak her zaman aynı noktadan başlar.
 - Düğümler otomatik yerleşir: her liste kendi satırında soldan sağa durur, değişiklikler animasyonla gösterilir. Dairesel bir listede son düğümden başa dönen bağ, pointer adlarının üstünden dolaşan bir okla çizilir; satır `tail`'in gösterdiği düğümden sonra başlar.
 - Kodda `.left` ya da `.right` geçince düğümler ağaç düğümü olarak çizilir ([sol | değer | sağ]); her düğüm derinliğine göre bir satıra, sıralı dolaşımdaki yerine göre bir sütuna yerleşir, böylece ikili arama ağacı soldan sağa sıralı okunur.
-- Değişkenler görselleştirmenin altındaki panelde listelenir; tüm örneklere üst çubuktaki menüden ulaşılır. Açık ve koyu tema vardır, telefonda da kullanılabilir.
+- Değişkenler görselleştirmenin altındaki panelde listelenir; tüm örneklere üst çubuktaki menüden ulaşılır. Açık ve koyu tema vardır. Telefonda görselleştirme kodun üstünde durur; altındaki paneller (çağrı yığını, değişkenler, çıktı) tek satırlık düğmelerle açılıp kapanır.
 - Hatalar anlaşılır biçimde açıklanır (hangi satırda, ne yanlış gitti).
 - Üç dil: Türkçe, İngilizce ve Almanca. Arayüz, adım anlatımı, hata mesajları, ders metinleri ve kod yorumları çevrilmiştir. İlk açılışta tarayıcının dili seçilir.
 - Üst çubuğun sağındaki dişli düğmesi ayarları açar: dil, tema (sistem / açık / koyu), varsayılan animasyon hızı, kod yazı boyutu, adım anlatımı ve kopan düğüm uyarısı. Ayarlar tarayıcıda saklanır.

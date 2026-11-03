@@ -51,7 +51,8 @@
 		]},
 		{ group: {tr: 'Yığın ve kuyruk', en: 'Stack and queue', de: 'Stapel und Warteschlange'}, items: [
 			['stack.html', {tr: 'Yığın (stack): push ve pop', en: 'Stack: push and pop', de: 'Stapel (Stack): push und pop'}],
-			['queue.html', {tr: 'Kuyruk (queue): enqueue ve dequeue', en: 'Queue: enqueue and dequeue', de: 'Warteschlange (Queue): enqueue und dequeue'}]
+			['queue.html', {tr: 'Kuyruk (queue): enqueue ve dequeue', en: 'Queue: enqueue and dequeue', de: 'Warteschlange (Queue): enqueue und dequeue'}],
+			['arrayStackQueue.html', {tr: 'Dizi ile yığın ve kuyruk', en: 'Stack and queue with an array', de: 'Stapel und Warteschlange mit einem Array'}]
 		]},
 		{ group: {tr: 'Fonksiyonlar', en: 'Functions', de: 'Funktionen'}, items: [
 			['functions.html', {tr: 'Fonksiyonlar: push ve pop', en: 'Functions: push and pop', de: 'Funktionen: push und pop'}],
@@ -178,6 +179,7 @@
 			options([0, 1, 2, 3, 4], t('speeds'), s.speed) + '</select></label>' +
 		'<div class="setting"><span>' + esc(t('fontSize')) + '</span>' +
 			segmented('fontSize', ['normal', 'large', 'xlarge'], [sizes.normal, sizes.large, sizes.xlarge], s.fontSize) + '</div>' +
+		'<label class="setting switch"><span>' + esc(t('lessonModeSetting')) + '</span><input type="checkbox" name="lessonMode"' + (s.lessonMode ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('narrationSetting')) + '</span><input type="checkbox" name="narration"' + (s.narration ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('warningsSetting')) + '</span><input type="checkbox" name="warnings"' + (s.warnings ? ' checked' : '') + '></label>' +
 		'<div class="setting-note">' + esc(t('shortcuts')) + '</div>' +
@@ -205,6 +207,7 @@
 		if(name === 'speed') dsv.set('speed', Number(input.value));
 		else if(input.type === 'checkbox') dsv.set(name, input.checked);
 		else dsv.set(name, input.value);
+		if(name === 'lessonMode' && window.dsvApplyLessonMode) window.dsvApplyLessonMode();
 	});
 	panel.querySelector('[name=reset]').addEventListener('click', function(){
 		dsv.reset();
@@ -213,6 +216,8 @@
 		panel.querySelector('[name=speed]').value = dsv.settings.speed;
 		panel.querySelector('[name=narration]').checked = dsv.settings.narration;
 		panel.querySelector('[name=warnings]').checked = dsv.settings.warnings;
+		panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+		if(window.dsvApplyLessonMode) window.dsvApplyLessonMode();
 	});
 
 	// ---------- code blocks ----------
@@ -251,15 +256,90 @@
 	lesson.appendChild(el('footer', {'class': 'footer'},
 		t('footer', {author: '<a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php" target="_blank" rel="noopener">Mehmet Akif AKKUS</a>'})));
 
+	// ---------- lesson mode ----------
+	// The page shows one part at a time: the text before a code block and the block. Next and
+	// Previous move between parts and run the block of the part (the blocks above it run again
+	// at once, so the drawing is the same as when reading the whole page).
+	var cards = Array.prototype.filter.call(lesson.children, function(e){ return e.classList.contains('code-card'); });
+	if(page !== 'index.html' && cards.length >= 2){
+		var parts = [], tail = [], partNow = [];
+		Array.prototype.forEach.call(lesson.children, function(e){
+			if(e.tagName === 'H1') return;
+			if(e.tagName === 'FOOTER' || e.classList.contains('pager')){ tail.push(e); return; }
+			partNow.push(e);
+			if(e.classList.contains('code-card')){ parts.push(partNow); partNow = []; }
+		});
+		partNow.forEach(function(e){ parts[parts.length - 1].push(e); }); // text after the last block
+		var partIndex = 0;
+
+		var toggle = el('button', {'class': 'lesson-toggle', type: 'button'});
+		lesson.querySelector('h1').insertAdjacentElement('afterend', toggle);
+		var lessonNav = el('nav', {'class': 'lesson-nav', hidden: ''},
+			'<button type="button" class="lesson-prev">' + esc(t('previous')) + '</button>' +
+			'<span class="lesson-count"></span>' +
+			'<button type="button" class="lesson-next">' + esc(t('next')) + '</button>');
+		lesson.insertBefore(lessonNav, tail[0] || null);
+
+		var refreshEditors = function(elems){
+			elems.forEach(function(e){
+				Array.prototype.forEach.call(e.querySelectorAll('.CodeMirror'), function(cm){ if(cm.CodeMirror) cm.CodeMirror.refresh(); });
+			});
+		};
+		var showPart = function(k, run){
+			partIndex = Math.max(0, Math.min(parts.length - 1, k));
+			parts.forEach(function(list, i){ list.forEach(function(e){ e.classList.toggle('lesson-hidden', i !== partIndex); }); });
+			tail.forEach(function(e){ e.classList.toggle('lesson-hidden', partIndex !== parts.length - 1); });
+			lessonNav.querySelector('.lesson-count').textContent = t('lessonPart', {i: partIndex + 1, n: parts.length});
+			lessonNav.querySelector('.lesson-prev').disabled = partIndex === 0;
+			lessonNav.querySelector('.lesson-next').disabled = partIndex === parts.length - 1;
+			refreshEditors(parts[partIndex]);
+			if(run && window.dsvRunBlock)
+				window.dsvRunBlock(partIndex); // each part holds exactly one block, in order
+		};
+		window.dsvApplyLessonMode = function(){
+			var on = !!dsv.settings.lessonMode;
+			document.documentElement.classList.toggle('lesson-mode', on);
+			toggle.textContent = on ? t('lessonOff') : t('lessonOn');
+			toggle.title = on ? '' : t('lessonOnTitle');
+			toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+			lessonNav.hidden = !on;
+			if(on)
+				showPart(partIndex, false);
+			else {
+				parts.concat([tail]).forEach(function(list){ list.forEach(function(e){ e.classList.remove('lesson-hidden'); }); });
+				refreshEditors(parts.reduce(function(a, b){ return a.concat(b); }, []));
+			}
+		};
+		toggle.addEventListener('click', function(){
+			dsv.set('lessonMode', !dsv.settings.lessonMode);
+			panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+			window.dsvApplyLessonMode();
+		});
+		var move = function(d){
+			showPart(partIndex + d, true);
+			var top = lesson.getBoundingClientRect().top + window.pageYOffset - 70;
+			if(window.pageYOffset > top) window.scrollTo(0, top); // the part starts at the top
+		};
+		lessonNav.querySelector('.lesson-prev').addEventListener('click', function(){ move(-1); });
+		lessonNav.querySelector('.lesson-next').addEventListener('click', function(){ move(1); });
+		window.dsvApplyLessonMode();
+	}
+
 	// ---------- visualisation card ----------
 	var viz = el('div', {'class': 'card viz'},
 		'<div class="viz-canvas"><canvas id="myCanvas0" width="800" height="260"></canvas></div>' +
+		// on a phone the panels below fold: one row of buttons opens one panel at a time
+		'<div class="viz-folds">' +
+			'<button class="fold-btn" data-fold="stack" aria-expanded="false" hidden>' + esc(t('callStack')) + '<span class="fold-count"></span></button>' +
+			'<button class="fold-btn" data-fold="vars" aria-expanded="false">' + esc(t('variables')) + '<span class="fold-count"></span></button>' +
+			'<button class="fold-btn" data-fold="out" aria-expanded="false">' + esc(t('output')) + '<span class="fold-count"></span></button>' +
+		'</div>' +
 		'<div class="viz-stack" hidden><div class="panel-title">' + esc(t('callStack')) + '</div><ol id="callstack"></ol><div id="callstack-note"></div></div>' +
 		'<div class="viz-vars"><div class="panel-title">' + esc(t('variables')) + '</div><ul id="variables" data-empty="' + esc(t('noVariables')) + '"></ul></div>' +
-		'<div class="tabs"><button class="tab active" data-tab="tab-output">' + esc(t('output')) + '</button><button class="tab" data-tab="tab-command">' + esc(t('commandTab')) + '</button><span id="resultSign"></span></div>' +
+		'<div class="viz-out"><div class="tabs"><button class="tab active" data-tab="tab-output">' + esc(t('output')) + '</button><button class="tab" data-tab="tab-command">' + esc(t('commandTab')) + '</button><span id="resultSign"></span></div>' +
 		'<div class="tab-body" id="tab-output"><pre id="output" data-empty="' + esc(t('outputEmpty')) + '"></pre></div>' +
 		'<div class="tab-body" id="tab-command" hidden><textarea id="command" class="commandPrompt"></textarea>' +
-		'<div class="hint">' + t('commandHint') + '</div></div>');
+		'<div class="hint">' + t('commandHint') + '</div></div></div>');
 
 	var vizCol = el('aside', {'class': 'viz-col'});
 	vizCol.appendChild(viz);
@@ -284,6 +364,52 @@
 			}
 		});
 	});
+
+	// ---------- folding panels (phones) ----------
+	// The buttons show how much each panel holds; the open panel is remembered.
+	var folds = viz.querySelector('.viz-folds');
+	var foldBtn = function(name){ return folds.querySelector('[data-fold="' + name + '"]'); };
+	var stackBox = viz.querySelector('.viz-stack'), varList = viz.querySelector('#variables');
+	var callList = viz.querySelector('#callstack'), outBox = viz.querySelector('#output');
+	var seenOutput = '';
+	function openFold(name){
+		viz.setAttribute('data-open', name || '');
+		Array.prototype.forEach.call(folds.querySelectorAll('.fold-btn'), function(b){
+			b.setAttribute('aria-expanded', b.getAttribute('data-fold') === name ? 'true' : 'false');
+		});
+		if(name === 'out'){
+			seenOutput = outBox.textContent;
+			if(window.editor2 && !viz.querySelector('#tab-command').hidden) window.editor2.refresh();
+		}
+		try { localStorage.setItem('dsv-fold', name || ''); } catch(e) {}
+		updateFolds();
+	}
+	function setText(elem, text){ if(elem.textContent !== text) elem.textContent = text; } // no needless DOM writes
+	function updateFolds(){
+		if(foldBtn('stack').hidden !== stackBox.hidden) foldBtn('stack').hidden = stackBox.hidden;
+		setText(foldBtn('stack').querySelector('.fold-count'), callList.children.length ? ' · ' + callList.children.length : '');
+		setText(foldBtn('vars').querySelector('.fold-count'), varList.children.length ? ' · ' + varList.children.length : '');
+		var fresh = !!outBox.textContent && outBox.textContent !== seenOutput && viz.getAttribute('data-open') !== 'out';
+		if(foldBtn('out').classList.contains('has-news') !== fresh)
+			foldBtn('out').classList.toggle('has-news', fresh); // new output while the panel is closed
+	}
+	folds.addEventListener('click', function(e){
+		var b = e.target.closest('.fold-btn');
+		if(b) openFold(viz.getAttribute('data-open') === b.getAttribute('data-fold') ? '' : b.getAttribute('data-fold'));
+	});
+	if(window.MutationObserver){ // only the panels' contents, not the buttons (they change in updateFolds)
+		var watch = new MutationObserver(function(){
+			if(viz.getAttribute('data-open') === 'out') seenOutput = outBox.textContent;
+			updateFolds();
+		});
+		watch.observe(stackBox, {attributes: true, attributeFilter: ['hidden']});
+		watch.observe(callList, {childList: true});
+		watch.observe(varList, {childList: true});
+		watch.observe(outBox, {childList: true, characterData: true, subtree: true});
+	}
+	var savedFold = '';
+	try { savedFold = localStorage.getItem('dsv-fold') || ''; } catch(e) {}
+	openFold(savedFold);
 
 	// a theme that follows the system changes with it
 	if(window.matchMedia)

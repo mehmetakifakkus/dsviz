@@ -291,14 +291,75 @@ function makeArray(n){
 	return a;
 }
 
-// the array drawn as a table (not in a tree drawing)
+// An array holding nodes is drawn as a column of buckets (a hash table); an array of
+// numbers (or still empty) as a row of cells over the drawing. Which one is decided by the
+// first value the program puts in it (visual.kind).
+
+// the array drawn as buckets (not in a tree drawing)
 function drawnTable(){
 	if(treeMode)
 		return null;
 	for(var i = 0; i < allArrays.length; i++)
-		if(allArrays[i].visual.shown)
+		if(allArrays[i].visual.shown && allArrays[i].visual.kind === 'buckets')
 			return allArrays[i];
 	return null;
+}
+
+// the arrays drawn as rows at the top, in the order they were made
+function rowArrays(){
+	return allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'buckets'; });
+}
+
+var ROW_BAND = 120, ROW_CELL_W = 40, ROW_TOP = 40; // height of one row array with its labels
+function topOffset(){ return rowArrays().length * ROW_BAND; }
+
+// numbers as the variables panel shows them (the step's values), for the index markers
+var shownNumbers = {};
+
+var rowArraysDraw = null;
+function drawRowArrays(){
+	if(rowArraysDraw){
+		rowArraysDraw.remove();
+		rowArraysDraw = null;
+	}
+	var items = [];
+	rowArrays().forEach(function(a, j){
+		var v = a.visual, x0 = COL_X0, y = ROW_TOP + j * ROW_BAND;
+		items.push(new PointText({ point: [x0, y - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
+		for(var i = 0; i < v.cells.length; i = i + 1){
+			var x = x0 + i * ROW_CELL_W, cell = v.cells[i];
+			var focused = isFocusedEdge(v, 'cell' + i);
+			items.push(new Path.Rectangle({ point: [x, y], size: [ROW_CELL_W, NODE_H], strokeColor: focused ? PAL.changed : PAL.stroke, strokeWidth: focused ? 3 : 2, fillColor: PAL.node }));
+			items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + NODE_H + 15], justification: 'center', fontSize: 12+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + i }));
+			if(cell === null || cell === undefined)
+				items.push(new Path.Line({ from: [x + 13, y + NODE_H - 5], to: [x + ROW_CELL_W - 13, y + 5], strokeColor: PAL.stroke, strokeWidth: 1.5, opacity: 0.6 }));
+			else if(isNode(cell)){
+				if(cell.shown && cell.position){
+					var start = new Point(x + ROW_CELL_W / 2, y + NODE_H / 2), end = cell.position + [geometry().width / 2, 0];
+					items.push(new Path.Line({ from: start, to: end, strokeColor: PAL.stroke, strokeWidth: 2 }));
+					items.push(arrowTip(end, (end - start).angle));
+					items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: start }));
+				}
+			}
+			else
+				items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + 18], justification: 'center', fontSize: 15+'px', fillColor: PAL.text, content: '' + cell }));
+		}
+		// index markers: s[size] = v marks "size" under the cell it names
+		var at = {};
+		Object.keys(v.indexVars || {}).forEach(function(name){
+			var k = shownNumbers[name];
+			if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k <= v.cells.length)
+				(at[k] = at[k] || []).push(name);
+		});
+		Object.keys(at).forEach(function(k){
+			var cx = x0 + Number(k) * ROW_CELL_W + ROW_CELL_W / 2, top = y + NODE_H + 22;
+			items.push(new Path.Line({ from: [cx, top + 22], to: [cx, top], strokeColor: PAL.pointer, strokeWidth: 2 }));
+			items.push(arrowTip(new Point(cx, top), -90, PAL.pointer));
+			items.push(new PointText({ point: [cx, top + 40], justification: 'center', fontSize: 16+'px', fillColor: PAL.pointer, content: at[k].join(', ') }));
+		});
+	});
+	if(items.length)
+		rowArraysDraw = new Group(items);
 }
 
 var TABLE_W = 34; // width of an array cell
@@ -313,9 +374,10 @@ function drawTable(){
 		return;
 
 	var v = table.visual, items = [], x = COL_X0;
-	items.push(new PointText({ point: [x + TABLE_W / 2, ROW_Y0 - 16], justification: 'center', fontSize: 20+'px', fillColor: PAL.named, content: v.name }));
+	var y0 = ROW_Y0 + topOffset();
+	items.push(new PointText({ point: [x + TABLE_W / 2, y0 - 16], justification: 'center', fontSize: 20+'px', fillColor: PAL.named, content: v.name }));
 	for(var i = 0; i < v.cells.length; i = i + 1){
-		var y = ROW_Y0 + i * rowH(), cell = v.cells[i];
+		var y = y0 + i * rowH(), cell = v.cells[i];
 		var color = isFocusedEdge(v, 'cell' + i) ? PAL.changed : PAL.stroke;
 		items.push(new Path.Rectangle({ point: [x, y], size: [TABLE_W, NODE_H], strokeColor: PAL.stroke, strokeWidth: 2, fillColor: PAL.node }));
 		items.push(new PointText({ point: [x - 8, y + 17], justification: 'right', fontSize: 13+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + i }));
@@ -491,6 +553,7 @@ function redrawTreeArrows(n){
 
 function redrawArrows(){
 	drawTable();
+	drawRowArrays();
 	for(var i=0; i < allNodes.length; i++){
 		var n = allNodes[i];
 
@@ -768,17 +831,24 @@ function layout(tidy){
 		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 85}
 		: null;
 
+	var rows = rowArrays();
+	if(rows.length){ // the row arrays sit over everything else
+		var arrayWidth = COL_X0 + Math.max.apply(null, rows.map(function(a){ return a.length; })) * ROW_CELL_W + 40;
+		extent = extent ? {width: Math.max(extent.width, arrayWidth), height: extent.height + topOffset()}
+		                : {width: arrayWidth, height: ROW_TOP + rows.length * ROW_BAND};
+	}
+
 	if(table){
 		var lastRow = table.visual.cells.length - 1;
 		for(i=0; i < shown.length; i++)
 			lastRow = Math.max(lastRow, shown[i].cell.row);
-		extent = {width: COL_X0 + maxCol * colWidth + geometry().width + 40, height: ROW_Y0 + lastRow * rowH() + NODE_H + 40};
+		extent = {width: Math.max(extent ? extent.width : 0, COL_X0 + maxCol * colWidth + geometry().width + 40), height: ROW_Y0 + topOffset() + lastRow * rowH() + NODE_H + 40};
 	}
 
 	var moves = [], fades = [];
 	for(i=0; i < shown.length; i++){
 		var node = shown[i];
-		var target = new Point(COL_X0 + (node.cell.col - minCol) * colWidth, ROW_Y0 + (node.cell.row - minRow) * rowH());
+		var target = new Point(COL_X0 + (node.cell.col - minCol) * colWidth, ROW_Y0 + topOffset() + (node.cell.row - minRow) * rowH());
 
 		if(!node.boxDraw){                     // a new node: appears in place
 			node.position = target;
@@ -1078,6 +1148,11 @@ function setFrameVar(id, name, text, isNull, isPointer){
 
 // a plain value (number, boolean...): a global goes to the variables panel, a local to its call
 function showValue(name, value, scope){
+	if(!scope && shownNumbers[name] !== value){
+		shownNumbers[name] = value; // the index markers of row arrays read it
+		if(rowArrays().length)
+			drawRowArrays();
+	}
 	if(isArray(value))
 		value = formatValue(value);
 	if(scope)
@@ -1474,6 +1549,7 @@ function resetVisuals(){
 	doublyMode = false;
 	treeMode = false;
 	allArrays.forEach(function(a){ a.visual.shown = false; a.visual.cells = a.map(function(){ return null; }); });
+	shownNumbers = {};
 
 	pointerMap = {};
 	pointers = [];
@@ -1724,7 +1800,7 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink',
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink', 'dsvRunBlock', 'dsvApplyLessonMode',
                       'taban', 'tavan', 'karekök', 'mutlak'];
 
 // the language's math functions (Turkish names): taban(7 / 2) is 3
@@ -1875,6 +1951,10 @@ function processOneItem(item){
 		else
 			cellValue = evalExpr(rhsCode(item.rhs));
 		arr[index] = cellValue;
+		if(!arr.visual.kind && cellValue !== null && cellValue !== undefined)
+			arr.visual.kind = isNode(cellValue) ? 'buckets' : 'row'; // decides how it is drawn
+		if(/^[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*$/.test(item.index)) // s[size] = v: mark "size" under the row
+			(arr.visual.indexVars = arr.visual.indexVars || {})[item.index] = true;
 
 		drawGraphics(item, {array: arr, index: index, value: cellValue, newNode: cellNode});
 	}
@@ -2164,6 +2244,8 @@ function insertAfter(el, referenceNode) {
 // blocks above it produce (also after they were edited), and block 2 can be run first.
 var blockEditors = [];
 
+window.dsvRunBlock = function(k){ runBlock(k); }; // lesson mode runs the block of a part
+
 function runBlock(k){
 	resetProgram();
 
@@ -2218,6 +2300,12 @@ window.dsvState = function(){
 		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
 		doubly: doublyMode,
 		tree: treeMode,
+		arrays: allArrays.filter(function(a){ return a.visual.shown; }).map(function(a){
+			var markers = {};
+			Object.keys(a.visual.indexVars || {}).forEach(function(n){ markers[n] = shownNumbers[n]; });
+			return {name: a.visual.name, kind: a.visual.kind === 'buckets' ? 'buckets' : 'row', markers: markers,
+			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; })};
+		}),
 		heights: allNodes.filter(function(n){ return n.shown && n.shownHeight !== undefined; }).map(function(n){ return [n.shownData, n.shownHeight]; }),
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),

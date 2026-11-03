@@ -145,6 +145,55 @@ test('a broken shared link is ignored', async ({ page }) => {
 	expect(problems).toEqual([]);
 });
 
+test('lesson mode shows one part at a time and runs its block', async ({ page }) => {
+	const problems = await openPage(page, 'stack.html');
+	const visibleCards = () => page.locator('.code-card:visible');
+	await expect(page.locator('.lesson-nav')).toBeHidden();
+	expect(await visibleCards().count()).toBe(3);
+
+	await page.locator('.lesson-toggle').click();
+	await expect(page.locator('.lesson-toggle')).toHaveText('Tüm sayfayı göster');
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 1 / 3');
+	await expect(visibleCards()).toHaveCount(1);
+	await expect(visibleCards().locator('.code-label')).toHaveText('Blok 1');
+	await expect(page.locator('.lesson-prev')).toBeDisabled();
+	await expect(page.locator('.pager')).toBeHidden(); // only on the last part
+
+	await page.locator('.lesson-next').click(); // part 2: its block runs (block 1 again at once)
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 2 / 3');
+	await expect(visibleCards().locator('.code-label')).toHaveText('Blok 2');
+	await skipToEnd(page);
+	expect(await valueOf(page, '[walk(tepe), value]')).toEqual(['2>1', 3]);
+
+	await page.locator('.lesson-next').click();
+	await expect(page.locator('.lesson-next')).toBeDisabled();
+	await expect(page.locator('.pager')).toBeVisible();
+	await page.locator('.lesson-prev').click();
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 2 / 3');
+
+	// remembered, also in the settings panel; turning it off shows the whole page
+	await page.reload();
+	await page.waitForFunction(() => window.dsvReady === true);
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 1 / 3');
+	await page.locator('.topbar .settings-btn').click();
+	await expect(page.locator('#settings-panel [name=lessonMode]')).toBeChecked();
+	await page.locator('#settings-panel [name=lessonMode]').uncheck();
+	await page.keyboard.press('Escape');
+	await expect(page.locator('.lesson-nav')).toBeHidden();
+	expect(await visibleCards().count()).toBe(3);
+	expect(problems).toEqual([]);
+});
+
+test('lesson mode is offered only on pages with two or more blocks', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await expect(page.locator('.lesson-toggle')).toHaveCount(0);
+	await page.goto('/insertIntoASortedLinkedList.html');
+	await page.waitForFunction(() => window.dsvReady === true);
+	const blocks = await page.locator('.code-card').count();
+	await expect(page.locator('.lesson-toggle')).toHaveCount(blocks >= 2 ? 1 : 0);
+	expect(problems).toEqual([]);
+});
+
 test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const problems = await openPage(page, 'queue.html');
 	await page.locator('.menu-btn').click();
@@ -190,6 +239,49 @@ test.describe('phone', () => {
 		expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
 		expect(problems).toEqual([]);
 	});
+
+	test('the panels under the canvas fold: one button row, one open panel, remembered', async ({ page }) => {
+		const problems = await openPage(page, 'recursion.html');
+		const btn = name => page.locator(`.fold-btn[data-fold="${name}"]`);
+		await expect(page.locator('.viz-folds')).toBeVisible();
+		await expect(page.locator('#variables')).toBeHidden();
+		await expect(page.locator('#output')).toBeHidden();
+		await expect(btn('stack')).toBeHidden(); // no call yet
+
+		await runBlock(page, 2); // printReverse prints the list backwards
+		await expect(page.locator('#output')).toHaveText('4\n3\n2\n1\n');
+		await expect(btn('vars')).toHaveText(/^Değişkenler · \d+$/);
+		await expect(btn('out')).toHaveClass(/has-news/);
+
+		await btn('out').click();
+		await expect(page.locator('#output')).toBeVisible();
+		await expect(btn('out')).toHaveAttribute('aria-expanded', 'true');
+		await expect(btn('out')).not.toHaveClass(/has-news/);
+		await btn('vars').click(); // one panel at a time
+		await expect(page.locator('#variables')).toBeVisible();
+		await expect(page.locator('#output')).toBeHidden();
+
+		await page.reload();
+		await page.waitForFunction(() => window.dsvReady === true);
+		await expect(page.locator('#variables')).toBeVisible(); // the open panel is remembered
+		await btn('vars').click();
+		await expect(page.locator('#variables')).toBeHidden();
+
+		// during a call the call stack button appears with the number of calls
+		await page.locator('button.dsv-run').nth(2).click();
+		await page.evaluate(() => { const t = document.querySelector('.dsv-timeline'); t.value = Math.round(t.max * 0.6); t.dispatchEvent(new Event('input', { bubbles: true })); });
+		await expect(btn('stack')).toBeVisible();
+		await expect(btn('stack')).toHaveText(/^Çağrı yığını · \d+$/);
+		expect(problems).toEqual([]);
+	});
+});
+
+test('on a wide screen the panels do not fold', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await expect(page.locator('.viz-folds')).toBeHidden();
+	await expect(page.locator('#variables')).toBeVisible();
+	await expect(page.locator('#output')).toBeVisible();
+	expect(problems).toEqual([]);
 });
 
 test.describe('running a block again', () => {
@@ -365,6 +457,26 @@ test.describe('learning aids', () => {
 		await expect(page.locator('#output')).toContainText('Dizi boyutu 1 ile 50 arasında bir tam sayı olmalı (0 verildi).');
 		await runCode(page, 'var w = 5\nw[0] = 1\n');
 		await expect(page.locator('#output')).toContainText('"w" bir dizi değil');
+		expect(problems).toEqual([]);
+	});
+
+	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
+		const problems = await openPage(page, 'arrayStackQueue.html');
+		await runBlock(page, 0);
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 } }]);
+		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
+		await runBlock(page, 1);
+		const both = (await state(page)).arrays;
+		expect(both.map(a => a.name)).toEqual(['s', 'q']);
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 } });
+
+		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
+		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
+
+		await page.goto('/hashTable.html');
+		await page.waitForFunction(() => window.dsvReady === true);
+		await runBlock(page, 1);
+		expect((await state(page)).arrays[0]).toMatchObject({ name: 'table', kind: 'buckets' });
 		expect(problems).toEqual([]);
 	});
 

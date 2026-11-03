@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dizi ile yığın ve kuyruk | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Dizi ile yığın ve kuyruk</h1>
+<h1 data-lang="en">Stack and queue with an array</h1>
+<h1 data-lang="de">Stapel und Warteschlange mit einem Array</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Yığın ve kuyruk bağlı liste yerine bir diziyle de yapılabilir. Sayı tutan bir dizi tuvalin üstünde yatay hücreler olarak çizilir; <code>s[size] = v</code> gibi bir yazımda indis olarak kullanılan değişken hücrelerin altında bir okla gösterilir. Yığında tek bir sayı yeter: <code>size</code>, dolu hücre sayısıdır ve aynı zamanda sıradaki boş hücrenin indisidir. Ekleme ve çıkarma O(1)'dir, düğüm oluşturmak gerekmez; ama dizinin boyutu baştan bellidir: altıncı bir <code>push</code> dizinin dışına yazmaya çalışır ve hata verir (deneyin). Bağlı listeyle yapılan yığında böyle bir sınır yoktur.</p>
+<p data-lang="en">Stacks and queues can also be built with an array instead of a linked list. An array of numbers is drawn as a row of cells over the drawing; the variable used as the index in a line like <code>s[size] = v</code> is marked with an arrow under the cells. A stack needs a single number: <code>size</code> is the number of used cells and also the index of the next free cell. Push and pop are O(1) and no node has to be made; but the size of the array is fixed from the start: a sixth <code>push</code> tries to write outside the array and fails (try it). A stack built from a linked list has no such limit.</p>
+<p data-lang="de">Stapel und Warteschlangen lassen sich statt mit einer verketteten Liste auch mit einem Array bauen. Ein Array aus Zahlen wird über der Zeichnung als Reihe von Zellen gezeichnet; die Variable, die in einer Zeile wie <code>s[size] = v</code> als Index dient, wird unter den Zellen mit einem Pfeil markiert. Ein Stapel braucht nur eine Zahl: <code>size</code> ist die Anzahl der belegten Zellen und zugleich der Index der nächsten freien Zelle. Push und pop sind O(1), und es muss kein Knoten erzeugt werden; aber die Größe des Arrays steht von Anfang an fest: ein sechstes <code>push</code> versucht, außerhalb des Arrays zu schreiben, und schlägt fehl (probieren Sie es aus). Ein Stapel aus einer verketteten Liste hat keine solche Grenze.</p>
+
+<textarea id="text1" class="deneme">
+var s = new Array(5)       // 5 hücreli yığın
+var size = 0               // dolu hücre sayısı = ilk boş hücre
+function push(v)
+{
+  s[size] = v              // ilk boş hücreye yaz
+  size++
+}
+function pop()
+{
+  size--                   // tepedeki eleman size-1'de
+  var v = s[size]
+  s[size] = null
+  return v
+}
+push(10)
+push(20)
+push(30)
+var a = pop()
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var s = new Array(5)       // a stack of 5 cells
+var size = 0               // used cells = the first free cell
+function push(v)
+{
+  s[size] = v              // write into the first free cell
+  size++
+}
+function pop()
+{
+  size--                   // the top element is at size-1
+  var v = s[size]
+  s[size] = null
+  return v
+}
+push(10)
+push(20)
+push(30)
+var a = pop()
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var s = new Array(5)       // ein Stapel mit 5 Zellen
+var size = 0               // belegte Zellen = erste freie Zelle
+function push(v)
+{
+  s[size] = v              // in die erste freie Zelle schreiben
+  size++
+}
+function pop()
+{
+  size--                   // oben liegt s[size-1]
+  var v = s[size]
+  s[size] = null
+  return v
+}
+push(10)
+push(20)
+push(30)
+var a = pop()
+</script>
+
+<p data-lang="tr">Kuyrukta iki indis gerekir: <code>front</code> çıkacak ilk elemanı, <code>rear</code> sıradaki boş hücreyi gösterir. Elemanlar çıktıkça baştaki hücreler boşalır; onları yeniden kullanmak için indisler dizinin sonuna gelince başa sarar: <code>(rear + 1) % 5</code>. Buna <em>dairesel tampon</em> (circular buffer) denir. Son iki eklemede <code>rear</code>'ın 4'ten 0'a, sonra 1'e geçtiğini izleyin; 6 dizinin başına yazılır. <code>count</code> kuyruğun boş mu dolu mu olduğunu ayırt eder, çünkü ikisinde de <code>front == rear</code> olur.</p>
+<p data-lang="en">A queue needs two indexes: <code>front</code> points to the first element to leave, <code>rear</code> to the next free cell. As elements leave, the cells at the start become empty; to reuse them, the indexes wrap around to the start when they reach the end of the array: <code>(rear + 1) % 5</code>. This is called a <em>circular buffer</em>. In the last two insertions watch <code>rear</code> go from 4 to 0 and then 1; 6 is written at the start of the array. <code>count</code> tells an empty queue from a full one, because in both cases <code>front == rear</code>.</p>
+<p data-lang="de">Eine Warteschlange braucht zwei Indizes: <code>front</code> zeigt auf das erste Element, das geht, <code>rear</code> auf die nächste freie Zelle. Wenn Elemente gehen, werden die Zellen am Anfang frei; um sie wieder zu nutzen, springen die Indizes am Ende des Arrays an den Anfang: <code>(rear + 1) % 5</code>. Das nennt man einen <em>Ringpuffer</em> (circular buffer). Beobachten Sie bei den letzten beiden Einfügungen, wie <code>rear</code> von 4 auf 0 und dann auf 1 springt; 6 wird an den Anfang des Arrays geschrieben. <code>count</code> unterscheidet eine leere von einer vollen Warteschlange, denn in beiden Fällen gilt <code>front == rear</code>.</p>
+
+<textarea id="text2" class="deneme">
+var q = new Array(5)
+var front = 0, rear = 0, count = 0
+function enqueue(v)
+{
+  q[rear] = v                // sona yaz
+  rear = (rear + 1) % 5      // dizinin sonundan başa sarar
+  count++
+}
+function dequeue()
+{
+  var v = q[front]           // baştan al
+  q[front] = null
+  front = (front + 1) % 5
+  count--
+  return v
+}
+enqueue(1)
+enqueue(2)
+enqueue(3)
+enqueue(4)
+var b = dequeue()
+var c = dequeue()
+enqueue(5)
+enqueue(6)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var q = new Array(5)
+var front = 0, rear = 0, count = 0
+function enqueue(v)
+{
+  q[rear] = v                // write at the rear
+  rear = (rear + 1) % 5      // wraps from the end to the start
+  count++
+}
+function dequeue()
+{
+  var v = q[front]           // take from the front
+  q[front] = null
+  front = (front + 1) % 5
+  count--
+  return v
+}
+enqueue(1)
+enqueue(2)
+enqueue(3)
+enqueue(4)
+var b = dequeue()
+var c = dequeue()
+enqueue(5)
+enqueue(6)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var q = new Array(5)
+var front = 0, rear = 0, count = 0
+function enqueue(v)
+{
+  q[rear] = v                // hinten schreiben
+  rear = (rear + 1) % 5      // vom Ende an den Anfang
+  count++
+}
+function dequeue()
+{
+  var v = q[front]           // vorne nehmen
+  q[front] = null
+  front = (front + 1) % 5
+  count--
+  return v
+}
+enqueue(1)
+enqueue(2)
+enqueue(3)
+enqueue(4)
+var b = dequeue()
+var c = dequeue()
+enqueue(5)
+enqueue(6)
+</script>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

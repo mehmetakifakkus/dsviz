@@ -12,7 +12,7 @@
 (function(){
 
 	var LANGS = ['tr', 'en', 'de'];
-	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, fontSize: 'normal'};
+	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, fontSize: 'normal', lessonMode: false};
 
 	var TEXT = {
 		// ---------------- page chrome (js/layout.js) ----------------
@@ -62,6 +62,11 @@
 			en: ['Very slow', 'Slow', 'Normal', 'Fast', 'Very fast'],
 			de: ['Sehr langsam', 'Langsam', 'Normal', 'Schnell', 'Sehr schnell']
 		},
+		lessonModeSetting: {tr: 'Ders modu: blokları tek tek göster', en: 'Lesson mode: one block at a time', de: 'Lektionsmodus: ein Block nach dem anderen'},
+		lessonOn: {tr: 'Ders modu', en: 'Lesson mode', de: 'Lektionsmodus'},
+		lessonOnTitle: {tr: 'Sayfayı adım adım göster: her seferinde bir açıklama ve bir kod bloğu', en: 'Show the page step by step: one explanation and one code block at a time', de: 'Die Seite Schritt für Schritt zeigen: jeweils eine Erklärung und ein Codeblock'},
+		lessonOff: {tr: 'Tüm sayfayı göster', en: 'Show the whole page', de: 'Ganze Seite zeigen'},
+		lessonPart: {tr: 'Bölüm {i} / {n}', en: 'Part {i} of {n}', de: 'Teil {i} von {n}'},
 		narrationSetting: {tr: 'Adım anlatımı', en: 'Step narration', de: 'Schrittbeschreibung'},
 		warningsSetting: {tr: 'Kopan düğüm uyarısı', en: 'Lost node warnings', de: 'Warnung bei verlorenen Knoten'},
 		fontSize: {tr: 'Kod yazı boyutu', en: 'Code font size', de: 'Schriftgröße im Code'},
