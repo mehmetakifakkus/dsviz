@@ -51,7 +51,8 @@
 		]},
 		{ group: {tr: 'Yığın ve kuyruk', en: 'Stack and queue', de: 'Stapel und Warteschlange'}, items: [
 			['stack.html', {tr: 'Yığın (stack): push ve pop', en: 'Stack: push and pop', de: 'Stapel (Stack): push und pop'}],
-			['queue.html', {tr: 'Kuyruk (queue): enqueue ve dequeue', en: 'Queue: enqueue and dequeue', de: 'Warteschlange (Queue): enqueue und dequeue'}]
+			['queue.html', {tr: 'Kuyruk (queue): enqueue ve dequeue', en: 'Queue: enqueue and dequeue', de: 'Warteschlange (Queue): enqueue und dequeue'}],
+			['arrayStackQueue.html', {tr: 'Dizi ile yığın ve kuyruk', en: 'Stack and queue with an array', de: 'Stapel und Warteschlange mit einem Array'}]
 		]},
 		{ group: {tr: 'Fonksiyonlar', en: 'Functions', de: 'Funktionen'}, items: [
 			['functions.html', {tr: 'Fonksiyonlar: push ve pop', en: 'Functions: push and pop', de: 'Funktionen: push und pop'}],

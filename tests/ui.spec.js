@@ -368,6 +368,26 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
+		const problems = await openPage(page, 'arrayStackQueue.html');
+		await runBlock(page, 0);
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 } }]);
+		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
+		await runBlock(page, 1);
+		const both = (await state(page)).arrays;
+		expect(both.map(a => a.name)).toEqual(['s', 'q']);
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 } });
+
+		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
+		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
+
+		await page.goto('/hashTable.html');
+		await page.waitForFunction(() => window.dsvReady === true);
+		await runBlock(page, 1);
+		expect((await state(page)).arrays[0]).toMatchObject({ name: 'table', kind: 'buckets' });
+		expect(problems).toEqual([]);
+	});
+
 	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
 		const problems = await openPage(page, 'binarySearchTree.html');
 		await runBlock(page, 0);
