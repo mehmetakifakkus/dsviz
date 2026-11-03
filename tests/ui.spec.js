@@ -244,7 +244,7 @@ test.describe('learning aids', () => {
 		const problems = await openPage(page, 'index.html');
 		await runCode(page, 'var x = new Node(1)\nx.next = new Node(2)\nx.data = x.next.data\n');
 		expect((await state(page)).rows).toEqual([[2, 2]]);
-		await expect(page.locator('#narration')).toContainText('2');
+		await expect(page.locator('#narration')).toHaveText('[1] düğümünün değeri 2 oldu.'); // named by its value before the change
 		expect(problems).toEqual([]);
 	});
 
@@ -264,6 +264,23 @@ test.describe('learning aids', () => {
 		await page.keyboard.type('root.left');
 		await page.keyboard.press('Enter');
 		expect(JSON.parse(await outputText(page))).toMatchObject({ data: 3, left: { data: 1, left: null, right: null }, right: { data: 6 } });
+		expect(problems).toEqual([]);
+	});
+
+	test('deleting a leaf, a node with one child and one with two children', async ({ page }) => {
+		const problems = await openPage(page, 'treeDelete.html');
+		await runBlock(page, 2);
+		expect((await state(page)).rows).toEqual([[8], [3, 10], [1, 6, 14], [7]]);
+		await runBlock(page, 3);
+		expect((await state(page)).rows).toEqual([[8], [3, 14], [1, 6], [7]]);
+		await runBlock(page, 4);
+		const drawn = await state(page);
+		expect(drawn.rows).toEqual([[8], [6, 14], [1, 7]]);
+		expect(drawn.lost).toEqual([]);
+
+		await runCode(page, 'root = remove(root, 8)\n'); // the root: its successor 14 takes its value
+		expect((await state(page)).rows).toEqual([[14], [6], [1, 7]]);
+		expect(await valueOf(page, 'root.data')).toBe(14);
 		expect(problems).toEqual([]);
 	});
 

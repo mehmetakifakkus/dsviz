@@ -69,7 +69,8 @@
 	]},
 		{ group: {tr: 'Ağaçlar', en: 'Trees', de: 'Bäume'}, items: [
 			['binarySearchTree.html', {tr: 'İkili arama ağacı: ekleme ve arama', en: 'Binary search tree: insert and search', de: 'Binärer Suchbaum: einfügen und suchen'}],
-			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}]
+			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}],
+			['treeDelete.html', {tr: 'Ağaçta silme', en: 'Deleting from a tree', de: 'Löschen im Baum'}]
 		]}
 	];
 
