@@ -191,3 +191,46 @@ function outer(n)
 	expect(await page.evaluate(() => typeof window.ran)).toBe('undefined'); // nothing ran
 	expect(problems).toEqual([]);
 });
+
+test('C++: a hand-written program runs (struct, cout, arrays, ++x, nullptr, main)', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
+	await runCode(page, `#include <iostream>
+using namespace std;
+
+struct Node {
+  int data;
+  Node* next;
+};
+
+int length(Node* head)
+{
+  int n = 0;
+  for (Node* p = head; p != nullptr; p = p->next)
+    ++n;
+  return n;
+}
+
+int main() {
+  Node *a = new Node(1), *b = new Node(2);
+  a->next = b;
+  b->next = NULL;
+  int counts[3];
+  counts[0] = length(a);
+  Node* empty;
+  cout << "length: " << counts[0] << endl;
+  delete b;
+  a->next = nullptr;
+  return 0;
+}
+`);
+	expect(await outputText(page)).toBe('length: 2\n');
+	expect(await valueOf(page, 'typeof main')).toBe('function');
+	expect(problems).toEqual([]);
+});
+
+test('C++: an error points at the line as it was written', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
+	await runCode(page, 'Node* p = nullptr;\nint v = p->data;\n');
+	await expect(page.locator('#output')).toContainText("Satır 2: null olan bir pointer'ın .data alanı okunmaya çalışıldı");
+	expect(problems).toEqual([]);
+});

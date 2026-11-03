@@ -77,10 +77,17 @@ test('the examples menu lists every page', async ({ page }) => {
 	expect(problems).toEqual([]);
 });
 
-for (const lang of ['tr', 'en', 'de']) {
+// In C++ an empty cell of an array of numbers is 0 (there is no null int)
+const EXPECTED_CPP = Object.assign({}, EXPECTED, {
+	'arrayStackQueue.html': ['[Array.from(s), size, a, Array.from(q), front, rear, count, b, c]', [[10, 20, 0, null, null], 2, 30, [6, 0, 3, 4, 5], 2, 1, 4, 1, 2]]
+});
+
+for (const lang of ['tr', 'en', 'de', 'cpp']) {
 	for (const file of PAGES) {
-		test(`${file} runs to the end` + (lang === 'tr' ? '' : ` (${lang})`), async ({ page }) => {
-			const problems = await openPage(page, file, lang === 'tr' ? null : { lang });
+		test(`${file} runs to the end` + (lang === 'tr' ? '' : ` (${lang === 'cpp' ? 'C++' : lang})`), async ({ page }) => {
+			const problems = await openPage(page, file, lang === 'tr' ? null : lang === 'cpp' ? { codeLang: 'cpp' } : { lang });
+			if (lang === 'cpp' && file !== 'language.html') // the blocks are shown in C++
+				expect(await page.evaluate(() => [...document.querySelectorAll('.CodeMirror')].map(e => e.CodeMirror.getValue()).join('\n'))).not.toMatch(/^\s*var\s/m);
 
 			expect(await runAllBlocks(page)).toBeGreaterThan(0);
 
@@ -90,7 +97,7 @@ for (const lang of ['tr', 'en', 'de']) {
 
 			expect(await page.locator('#output').textContent()).not.toMatch(/Hata|hatası|tanımlı değil|null olan|Error|Fehler|Satır \d|Line \d|Zeile \d/);
 
-			const [expression, expected] = (lang === 'tr' ? EXPECTED : EXPECTED_EN_DE)[file];
+			const [expression, expected] = (lang === 'tr' ? EXPECTED : lang === 'cpp' ? EXPECTED_CPP : EXPECTED_EN_DE)[file];
 			expect(await valueOf(page, expression)).toEqual(expected);
 			expect(problems).toEqual([]);
 		});

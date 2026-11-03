@@ -12,7 +12,7 @@
 (function(){
 
 	var LANGS = ['tr', 'en', 'de'];
-	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, fontSize: 'normal', lessonMode: false};
+	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, fontSize: 'normal', lessonMode: false, codeLang: 'dugum'};
 
 	var TEXT = {
 		// ---------------- page chrome (js/layout.js) ----------------
@@ -62,6 +62,8 @@
 			en: ['Very slow', 'Slow', 'Normal', 'Fast', 'Very fast'],
 			de: ['Sehr langsam', 'Langsam', 'Normal', 'Schnell', 'Sehr schnell']
 		},
+		codeLang: {tr: 'Kod dili', en: 'Code language', de: 'Code-Sprache'},
+		codeLangNote: {tr: 'Örnekler seçilen dilde gösterilir ve çalışır; değişince sayfa yeniden yüklenir.', en: 'The examples are shown and run in the chosen language; changing it reloads the page.', de: 'Die Beispiele werden in der gewählten Sprache gezeigt und ausgeführt; beim Wechsel wird die Seite neu geladen.'},
 		lessonModeSetting: {tr: 'Ders modu: blokları tek tek göster', en: 'Lesson mode: one block at a time', de: 'Lektionsmodus: ein Block nach dem anderen'},
 		lessonOn: {tr: 'Ders modu', en: 'Lesson mode', de: 'Lektionsmodus'},
 		lessonOnTitle: {tr: 'Sayfayı adım adım göster: her seferinde bir açıklama ve bir kod bloğu', en: 'Show the page step by step: one explanation and one code block at a time', de: 'Die Seite Schritt für Schritt zeigen: jeweils eine Erklärung und ein Codeblock'},

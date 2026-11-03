@@ -1,0 +1,502 @@
+/*
+ * Code languages: the pages can show and run their code in C++ instead of Düğüm.
+ *
+ * The engine only knows Düğüm. C++ code is turned into Düğüm line by line before it is
+ * parsed (fromCpp), so the drawing, the narration and the error messages work the same and
+ * every line keeps its number. The examples are written in Düğüm and shown in C++ by toCpp,
+ * which infers the types (Node*, int, bool, arrays, function signatures) from the code of the
+ * whole page.
+ *
+ * The C++ that is understood is the part a data structures course needs: a predefined
+ * struct Node {data, next, prev, left, right}, Node* / int / bool / double variables,
+ * arrays (Node* t[5]), new / delete, ->, nullptr / NULL, if / else / while / for,
+ * functions, cout << ... << endl. Everything else stays Düğüm (one statement per line).
+ */
+(function(){
+	var ID = 'A-Za-z0-9_şğçöüıŞĞÇÖÜİ';
+	var NAME = '[A-Za-z_şğçöüıŞĞÇÖÜİ][' + ID + ']*';
+	var TYPE = '(?:void|int|long|short|double|float|bool|char|auto|string|Node)';
+
+	// ---------- text helpers (they leave string literals alone) ----------
+
+	// [code, comment]: the comment starts at a // that is not inside a string
+	function splitComment(line){
+		var inString = false;
+		for(var i = 0; i < line.length; i++){
+			var ch = line.charAt(i);
+			if(ch === '"' && line.charAt(i - 1) !== '\\') inString = !inString;
+			else if(!inString && ch === '/' && line.charAt(i + 1) === '/') return [line.slice(0, i), line.slice(i)];
+		}
+		return [line, ''];
+	}
+
+	// applies fn to the parts of code outside string literals
+	function outsideStrings(code, fn){
+		return code.split(/("(?:[^"\\]|\\.)*")/).map(function(part, i){ return i % 2 ? part : fn(part); }).join('');
+	}
+
+	// splits at sep where no bracket is open and not inside a string
+	function splitTop(s, sep){
+		var parts = [], depth = 0, inString = false, start = 0;
+		for(var i = 0; i < s.length; i++){
+			var ch = s.charAt(i);
+			if(ch === '"' && s.charAt(i - 1) !== '\\') inString = !inString;
+			if(inString) continue;
+			if('([{'.indexOf(ch) >= 0) depth++;
+			else if(')]}'.indexOf(ch) >= 0) depth--;
+			else if(depth === 0 && s.substr(i, sep.length) === sep){
+				parts.push(s.slice(start, i));
+				start = i + sep.length;
+				i += sep.length - 1;
+			}
+		}
+		parts.push(s.slice(start));
+		return parts;
+	}
+
+	// the index of the bracket that closes the one at `open`
+	function closing(s, open){
+		var depth = 0, inString = false;
+		for(var i = open; i < s.length; i++){
+			var ch = s.charAt(i);
+			if(ch === '"' && s.charAt(i - 1) !== '\\') inString = !inString;
+			if(inString) continue;
+			if(ch === '(' || ch === '[') depth++;
+			else if(ch === ')' || ch === ']'){ depth--; if(depth === 0) return i; }
+		}
+		return -1;
+	}
+
+	function trimRight(s){ return s.replace(/\s+$/, ''); }
+
+	// ---------- Düğüm expression -> C++ expression ----------
+
+	function exprCpp(s){
+		return outsideStrings(s, function(part){
+			return part
+				.replace(/\bdeğil\b\s*/g, '!').replace(/\bnot\b\s*/g, '!')
+				.replace(/\band\b/g, '&&').replace(/\bor\b/g, '||')
+				.replace(/\bdoğru\b/g, 'true').replace(/\byanlış\b/g, 'false')
+				.replace(/\bnull\b/g, 'nullptr')
+				.replace(/\btaban\s*\(/g, 'floor(').replace(/\btavan\s*\(/g, 'ceil(')
+				.replace(/karekök\s*\(/g, 'sqrt(').replace(/\bmutlak\s*\(/g, 'abs(')
+				.replace(new RegExp('(^|[^' + ID + '.])Node\\s*\\(', 'g'), function(m, before){ return before + 'new Node('; })
+				.replace(/new\s+new\s+Node/g, 'new Node')
+				.replace(new RegExp('([' + ID + '\\])])\\.(?=[A-Za-z_])', 'g'), '$1->'); // p.next -> p->next (not 2.5)
+		});
+	}
+
+	// ---------- types of Düğüm expressions ----------
+
+	var POINTER_FIELDS = /\.(next|prev|left|right)\s*$/, NUMBER_FIELDS = /\.(data|height)\s*$/;
+
+	function stripParens(s){
+		s = s.trim();
+		while(s.charAt(0) === '(' && closing(s, 0) === s.length - 1)
+			s = s.slice(1, -1).trim();
+		return s;
+	}
+
+	// 'Node*', 'int', 'bool', 'double', 'array', 'null' (null: a pointer whose kind is open) or undefined
+	function typeOf(expr, lookup, funcs){
+		var s = stripParens(expr);
+		if(s === '') return undefined;
+		if(/^null$/.test(s)) return 'null';
+		if(/^(new\s+)?Node\s*\(/.test(s) && closing(s, s.indexOf('(')) === s.length - 1) return 'Node*';
+		if(/^new\s+(Array|Dizi)\s*\(/.test(s)) return 'array';
+		if(/^(true|false|doğru|yanlış)$/.test(s)) return 'bool';
+		var bare = outsideStrings(s, function(p){ return p; }).replace(/"(?:[^"\\]|\\.)*"/g, '""');
+		if(/(==|!=|<=|>=|&&|\|\||(^|[^<>=!])[<>](?!=)|^!|\bnot\b|\band\b|\bor\b|\bdeğil\b)/.test(bare)) return 'bool';
+		if(/^-?\d+$/.test(s)) return 'int';
+		if(/^-?\d+\.\d*$/.test(s)) return 'double';
+		var parts = splitTop(s, '+').length > 1 || splitTop(s, '-').length > 1 || splitTop(s, '*').length > 1 ||
+		            splitTop(s, '/').length > 1 || splitTop(s, '%').length > 1;
+		if(parts){
+			if(/\d\.\d/.test(bare)) return 'double';
+			return 'int';
+		}
+		if(POINTER_FIELDS.test(s)) return 'Node*';
+		if(NUMBER_FIELDS.test(s)) return 'int';
+		if(new RegExp('^' + NAME + '$').test(s)) return lookup(s);
+		var call = new RegExp('^(' + NAME + ')\\s*\\(').exec(s);
+		if(call && closing(s, s.indexOf('(')) === s.length - 1){
+			if(/^(taban|tavan|mutlak)$/.test(call[1])) return 'int';
+			if(call[1] === 'karekök') return 'double';
+			return funcs[call[1]] ? funcs[call[1]].ret : undefined;
+		}
+		var index = new RegExp('^(' + NAME + ')\\s*\\[').exec(s);
+		if(index && closing(s, s.indexOf('[')) === s.length - 1){
+			var t = lookup(index[1]);
+			return t && t.indexOf('arr:') === 0 ? t.slice(4) : undefined;
+		}
+		return undefined;
+	}
+
+	function isPointer(t){ return t === 'Node*' || t === 'null' || t === 'arr:Node*'; }
+
+	// ---------- the statements of a page (lines of all its blocks) ----------
+
+	var KEYWORDS = {'eğer': 'if', 'değilse': 'else', 'yinele': 'while', 'fonksiyon': 'function', 'döndür': 'return'};
+
+	function normalizeKeywords(code){
+		return code.replace(/^(\s*)(eğer|değilse|yinele|fonksiyon|döndür)(?![A-Za-z0-9_şğçöüıŞĞÇÖÜİ])/, function(m, sp, kw){ return sp + KEYWORDS[kw]; })
+		           .replace(/^(\s*)else\s+eğer\b/, '$1else if');
+	}
+
+	// the declarators of "var a = 1, b = x" as [{name, expr}]
+	function declarators(list){
+		return splitTop(list, ',').map(function(d){
+			var m = new RegExp('^\\s*(' + NAME + ')\\s*(?:=\\s*([\\s\\S]*))?$').exec(d);
+			return m ? {name: m[1], expr: m[2] === undefined ? '' : m[2].trim()} : null;
+		}).filter(Boolean);
+	}
+
+	// one pass over the lines: calls visit(kind, info, fn) for what the type inference needs
+	function scan(lines, visit){
+		var fn = null, depth = 0, bodyDepth = -1;
+		lines.forEach(function(line, index){
+			var code = normalizeKeywords(trimRight(splitComment(line)[0])).trim();
+			var header = new RegExp('^function\\s+(' + NAME + ')\\s*\\(([^)]*)\\)').exec(code);
+			if(header){
+				fn = header[1];
+				bodyDepth = depth;
+				visit('function', {name: fn, params: header[2].split(',').map(function(p){ return p.trim(); }).filter(Boolean), index: index}, fn);
+			}
+			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length;
+			var body = code.replace(/^[{}\s]+|[{}\s]+$/g, '');
+			// a header with a statement on the same line: if(x) return y
+			var head = /^(if|while|for)\s*\(/.exec(body);
+			if(head){
+				var end = closing(body, body.indexOf('('));
+				var inside = body.slice(body.indexOf('(') + 1, end);
+				if(head[1] === 'for'){
+					var forParts = splitTop(inside, ';');
+					if(/^\s*var\s/.test(forParts[0])) visit('var', declarators(forParts[0].replace(/^\s*var\s+/, '')), fn);
+				}
+				else visit('cond', inside, fn);
+				body = body.slice(end + 1).trim();
+			}
+			else if(/^else\b/.test(body))
+				body = body.replace(/^else\s*/, '');
+			if(body && !header){
+				var m;
+				if((m = /^var\s+([\s\S]*)$/.exec(body))) visit('var', declarators(m[1]), fn);
+				else if((m = /^return\s+([\s\S]+)$/.exec(body))) visit('return', m[1], fn);
+				else if((m = new RegExp('^(' + NAME + ')\\s*\\[([\\s\\S]*?)\\]\\s*=(?!=)\\s*([\\s\\S]*)$').exec(body))) visit('cell', {name: m[1], expr: m[3]}, fn);
+				else if((m = new RegExp('^(' + NAME + ')\\s*=(?!=)\\s*([\\s\\S]*)$').exec(body))) visit('assign', {name: m[1], expr: m[2]}, fn);
+				visit('code', body, fn);
+			}
+			depth += opens - closes;
+			if(fn && depth <= bodyDepth && closes){ fn = null; bodyDepth = -1; }
+		});
+	}
+
+	function inferTypes(lines){
+		var globals = {}, funcs = {}, nullCells = {};
+		var scopeOf = function(fn){ return fn && funcs[fn] ? funcs[fn].vars : null; };
+		var lookup = function(fn){
+			return function(name){
+				var scope = scopeOf(fn);
+				if(scope && scope[name] !== undefined) return scope[name];
+				return globals[name];
+			};
+		};
+		var setVar = function(fn, name, t, local){
+			var scope = local ? scopeOf(fn) : (scopeOf(fn) && scopeOf(fn)[name] !== undefined ? scopeOf(fn) : globals);
+			if(!scope) scope = globals;
+			if(t === undefined) return;
+			var old = scope[name];
+			if(old === undefined || old === 'null' || (old === 'int' && t === 'double')) scope[name] = t;
+		};
+
+		for(var pass = 0; pass < 4; pass++){
+			scan(lines, function(kind, info, fn){
+				var look = lookup(fn);
+				if(kind === 'function'){
+					var f = funcs[info.name] = funcs[info.name] || {params: info.params, vars: {}, ret: undefined, returnsValue: false, evidence: {}};
+					info.params.forEach(function(p){ if(f.vars[p] === undefined && f.evidence[p]) f.vars[p] = f.evidence[p]; });
+				}
+				else if(kind === 'var'){
+					info.forEach(function(d){
+						var t = d.expr === '' ? undefined : typeOf(d.expr, look, funcs);
+						if(t === 'array') t = lookup(fn)(d.name) && lookup(fn)(d.name).indexOf('arr:') === 0 ? lookup(fn)(d.name) : 'arr:?';
+						setVar(fn, d.name, t, true);
+					});
+				}
+				else if(kind === 'assign'){
+					var ta = typeOf(info.expr, look, funcs);
+					if(ta !== 'array') setVar(fn, info.name, ta, false);
+				}
+				else if(kind === 'cell'){
+					var te = typeOf(info.expr, look, funcs);
+					var holder = scopeOf(fn) && scopeOf(fn)[info.name] !== undefined ? scopeOf(fn) : globals;
+					// only a value decides the kind: null is written into both kinds (an empty cell)
+					if(te && te !== 'null' && (holder[info.name] === 'arr:?' || holder[info.name] === undefined)) holder[info.name] = 'arr:' + (te === 'Node*' ? 'Node*' : te);
+					else if(te === 'null') nullCells[info.name] = true;
+				}
+				else if(kind === 'return' && fn){
+					var tr = typeOf(info, look, funcs), f2 = funcs[fn];
+					f2.returnsValue = true;
+					if(tr !== undefined && (f2.ret === undefined || f2.ret === 'null')) f2.ret = tr;
+				}
+				if(kind === 'code' || kind === 'cond'){
+					var text = typeof info === 'string' ? info : '';
+					// a parameter used as a node is a pointer
+					if(fn && funcs[fn]) funcs[fn].params.forEach(function(p){
+						var used = new RegExp('(^|[^' + ID + '.])' + p + '\\s*(\\.|[!=]=\\s*null)').test(text) ||
+						           new RegExp('null\\s*[!=]=\\s*' + p + '(?![' + ID + '])').test(text);
+						if(used) funcs[fn].vars[p] = 'Node*';
+					});
+					// arguments of calls tell the types of parameters
+					var callRe = new RegExp('(' + NAME + ')\\s*\\(', 'g'), m;
+					while((m = callRe.exec(text))){
+						var g = funcs[m[1]];
+						if(!g) continue;
+						var end = closing(text, m.index + m[0].length - 1);
+						if(end < 0) continue;
+						var args = splitTop(text.slice(m.index + m[0].length, end), ',');
+						args.forEach(function(a, i){
+							var p = g.params[i];
+							if(!p || !a.trim()) return;
+							var t = typeOf(a, look, funcs);
+							if(t && t !== 'array' && (g.vars[p] === undefined || g.vars[p] === 'null')) g.vars[p] = t;
+						});
+					}
+				}
+			});
+		}
+		// an array that only ever gets null holds nodes (an empty hash table); otherwise numbers
+		[globals].concat(Object.keys(funcs).map(function(n){ return funcs[n].vars; })).forEach(function(scope){
+			Object.keys(scope).forEach(function(name){
+				if(scope[name] === 'arr:?') scope[name] = nullCells[name] ? 'arr:Node*' : 'arr:int';
+			});
+		});
+		Object.keys(funcs).forEach(function(name){
+			var f = funcs[name];
+			if(!f.returnsValue) f.ret = 'void';
+			else if(f.ret === undefined || f.ret === 'null') f.ret = 'Node*';
+			f.params.forEach(function(p){
+				if(f.vars[p] === undefined) f.vars[p] = 'int';
+				else if(f.vars[p] === 'null') f.vars[p] = 'Node*';
+			});
+		});
+		return {globals: globals, funcs: funcs};
+	}
+
+	function cppType(t){
+		if(t === 'Node*' || t === 'null') return 'Node*';
+		if(t === 'bool' || t === 'double') return t;
+		return 'int';
+	}
+
+	// ---------- Düğüm -> C++ (for showing the examples) ----------
+
+	function toCpp(blocks){
+		var lines = [], starts = [];
+		blocks.forEach(function(code){
+			starts.push(lines.length);
+			lines.push.apply(lines, code.split('\n'));
+		});
+		var types = inferTypes(lines);
+		var declared = {}, fnNow = null, depth = 0, bodyDepth = -1;
+
+		var typeIn = function(name){
+			var f = fnNow && types.funcs[fnNow];
+			if(f && f.vars[name] !== undefined) return f.vars[name];
+			return types.globals[name];
+		};
+		var lookup = function(name){ return typeIn(name); };
+
+		function declaration(list, forInit){
+			var decls = declarators(list);
+			var parts = decls.map(function(d){
+				var t = typeIn(d.name);
+				var arr = /^new\s+(Array|Dizi)\s*\(([\s\S]*)\)\s*$/.exec(d.expr);
+				if(arr){
+					var elem = t && t.indexOf('arr:') === 0 && t !== 'arr:?' ? t.slice(4) : 'int';
+					return {type: cppType(elem), text: d.name + '[' + arr[2].trim() + ']'};
+				}
+				if(t === undefined) t = typeOf(d.expr, lookup, types.funcs);
+				return {type: cppType(t), text: d.name + (d.expr !== '' ? ' = ' + exprCpp(d.expr) : '')};
+			});
+			decls.forEach(function(d){ declared[(fnNow || '') + ':' + d.name] = true; });
+			var same = parts.every(function(p){ return p.type === parts[0].type; });
+			if(same) return parts[0].type + ' ' + parts.map(function(p){ return p.text; }).join(', ');
+			return parts.map(function(p){ return p.type + ' ' + p.text; }).join(forInit ? ', ' : '; ');
+		}
+
+		function printStatement(code){
+			var items;
+			try { items = window.dsvParser.parse(code + '\n')[0].list; } catch(e) { items = null; }
+			if(!items) return 'cout << ' + exprCpp(code.replace(/^print\s+/, '')) + ' << endl';
+			return 'cout << ' + items.map(function(it){
+				return it.subtype === 'string' ? JSON.stringify(it.text) : exprCpp(it.text.trim());
+			}).join(' << ') + ' << endl';
+		}
+
+		function statement(code){
+			var m;
+			if(!code) return '';
+			if((m = /^var\s+([\s\S]*)$/.exec(code))) return declaration(m[1]) + ';';
+			if(/^print\b/.test(code)) return printStatement(code) + ';';
+			if((m = /^(delete|free)\s+([\s\S]*)$/.exec(code))) return 'delete ' + exprCpp(m[2]) + ';';
+			if((m = /^return\b\s*([\s\S]*)$/.exec(code))) return 'return' + (m[1] ? ' ' + exprCpp(m[1]) : '') + ';';
+			if(/^(break|continue)$/.test(code)) return code + ';';
+			// t[k] = null in an array of numbers: C++ has no null int, the empty cell is 0
+			if((m = new RegExp('^(' + NAME + ')\\s*\\[([\\s\\S]*?)\\]\\s*=(?!=)\\s*null\\s*$').exec(code)) && typeIn(m[1]) === 'arr:int')
+				return m[1] + '[' + exprCpp(m[2]) + '] = 0;';
+			// x = ... at the top level without var: the first one declares it in C++
+			if((m = new RegExp('^(' + NAME + ')\\s*=(?!=)\\s*([\\s\\S]*)$').exec(code)) && !fnNow && !declared[':' + m[1]]){
+				declared[':' + m[1]] = true;
+				var t = typeIn(m[1]);
+				if(t !== undefined && t.indexOf('arr:') !== 0) return cppType(t) + ' ' + m[1] + ' = ' + exprCpp(m[2]) + ';';
+			}
+			return exprCpp(code) + ';';
+		}
+
+		function line(text){
+			var indent = /^\s*/.exec(text)[0];
+			var split = splitComment(text.slice(indent.length));
+			var code = normalizeKeywords(trimRight(split[0])).trim(), comment = split[1];
+			var out;
+			var header = new RegExp('^function\\s+(' + NAME + ')\\s*\\(([^)]*)\\)\\s*([\\s\\S]*)$').exec(code);
+			if(code === '' ){
+				out = '';
+			}
+			else if(header){
+				fnNow = header[1];
+				bodyDepth = depth;
+				var f = types.funcs[fnNow];
+				var params = header[2].split(',').map(function(p){ return p.trim(); }).filter(Boolean);
+				out = (f.ret === 'void' ? 'void' : cppType(f.ret)) + ' ' + fnNow + '(' +
+				      params.map(function(p){ return cppType(f.vars[p]) + ' ' + p; }).join(', ') + ')' + (header[3] ? ' ' + header[3] : '');
+			}
+			else if(/^[{}]+$/.test(code)){
+				out = code;
+			}
+			else {
+				var m = /^(if|while|for)\s*\(/.exec(code), rest = code, prefix = '';
+				if(/^else\b/.test(rest)){
+					prefix = 'else ';
+					rest = rest.replace(/^else\s*/, '');
+					m = /^(if|while|for)\s*\(/.exec(rest);
+				}
+				if(m){
+					var end = closing(rest, rest.indexOf('('));
+					var inside = rest.slice(rest.indexOf('(') + 1, end), after = rest.slice(end + 1).trim();
+					if(m[1] === 'for'){
+						var parts = splitTop(inside, ';');
+						var init = /^\s*var\s/.test(parts[0]) ? declaration(parts[0].replace(/^\s*var\s+/, ''), true) : exprCpp(parts[0].trim());
+						inside = init + '; ' + exprCpp((parts[1] || '').trim()) + '; ' + exprCpp((parts[2] || '').trim());
+					}
+					else inside = exprCpp(inside.trim());
+					out = prefix + m[1] + '(' + inside + ')' + (after && after !== '{' ? ' ' + statement(after) : after ? ' ' + after : '');
+				}
+				else if(prefix)
+					out = 'else' + (rest && rest !== '{' ? ' ' + statement(rest) : rest ? ' ' + rest : '');
+				else
+					out = statement(rest);
+			}
+			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length;
+			depth += opens - closes;
+			if(fnNow && !header && depth <= bodyDepth && closes){ fnNow = null; bodyDepth = -1; }
+
+			out = indent + out;
+			if(comment){
+				var column = indent.length + split[0].length; // keep comments where they were, if they still fit
+				var gap = Math.max(1, column - out.length);
+				out = (out.trim() ? out + new Array(gap + 1).join(' ') : indent) + comment;
+			}
+			return out;
+		}
+
+		var outLines = lines.map(line);
+		return blocks.map(function(code, i){
+			var end = i + 1 < starts.length ? starts[i + 1] : outLines.length;
+			return outLines.slice(starts[i], end).join('\n');
+		});
+	}
+
+	// ---------- C++ -> Düğüm (before running) ----------
+
+	var DECL = new RegExp('^(\\s*)(?:const\\s+|unsigned\\s+|static\\s+)*(' + TYPE + ')\\s*(\\**)\\s*(' + NAME + '[\\s\\S]*)$');
+	var FUNC = new RegExp('^(\\s*)(?:static\\s+|inline\\s+)*(' + TYPE + ')\\s*\\**\\s*(' + NAME + ')\\s*\\(([^()]*)\\)\\s*([\\s\\S]*)$');
+
+	function fromCpp(text){
+		var inStruct = false, hasMain = false;
+		var out = text.split('\n').map(function(line){
+			var split = splitComment(line), code = split[0], comment = split[1];
+			// lines with nothing to run become empty comments (a blank first line is not a statement)
+			if(inStruct){
+				if(/\}\s*;/.test(code)) inStruct = false;
+				return '//';
+			}
+			if(/^\s*(struct|class)\s+Node\b/.test(code)){
+				inStruct = !/\}\s*;/.test(code);
+				return '//';
+			}
+			if(/^\s*#\s*include\b/.test(code) || /^\s*using\s+namespace\b/.test(code))
+				return '//';
+
+			code = outsideStrings(code, function(part){
+				return part.replace(/->/g, '.').replace(/\bnullptr\b|\bNULL\b/g, 'null').replace(/\bstd::/g, '')
+				           .replace(/\bfloor\s*\(/g, 'taban(').replace(/\bceil\s*\(/g, 'tavan(')
+				           .replace(/\bsqrt\s*\(/g, 'karekök(').replace(/\babs\s*\(/g, 'mutlak(');
+			});
+			code = trimRight(code).replace(/;\s*$/, '');
+
+			// int c = f(); bool e = g(); -> one Düğüm declaration list
+			var pieces = /^\s*(?:\}\s*)?(?:else\s+)?for\s*\(/.test(code) ? [code] : splitTop(code, ';');
+			if(pieces.length > 1){
+				var indent = /^\s*/.exec(code)[0];
+				var converted = pieces.map(function(piece){ return convertStatement(indent + piece.trim()); });
+				if(converted.every(function(c){ return /^\s*var\s/.test(c); }))
+					code = indent + 'var ' + converted.map(function(c){ return c.replace(/^\s*var\s+/, ''); }).join(', ');
+				return code + (comment ? ' ' + comment.replace(/^\s*/, '') : '');
+			}
+			code = convertStatement(code);
+			return code + (comment ? (code.trim() ? ' ' : '') + comment.replace(/^\s*/, '') : '');
+		});
+		var result = out.join('\n');
+		if(hasMain) result += '\nmain()';
+		return result;
+
+		function convertStatement(code){
+			var m;
+			if((m = /^(\s*)cout\s*<<\s*([\s\S]*)$/.exec(code))){
+				var parts = splitTop(m[2], '<<').map(function(p){ return p.trim(); })
+					.filter(function(p){ return p && p !== 'endl' && p !== '"\\n"'; });
+				code = m[1] + 'print ' + (parts.length ? parts.join(' + "" + ') : '""');
+			}
+			else if((m = new RegExp('^(\\s*)(\\+\\+|--)\\s*(' + NAME + ')\\s*$').exec(code)))
+				code = m[1] + m[3] + m[2];
+			else if((m = FUNC.exec(code)) && !/=/.test(code.slice(0, code.indexOf('(')))){
+				var params = m[4].trim() === 'void' ? [] : m[4].split(',').map(function(p){
+					var names = p.match(new RegExp(NAME, 'g'));
+					return names ? names[names.length - 1] : '';
+				}).filter(function(p){ return p && !new RegExp('^' + TYPE + '$').test(p); });
+				if(m[3] === 'main') hasMain = true;
+				code = m[1] + 'function ' + m[3] + '(' + params.join(', ') + ')' + (m[5] ? ' ' + m[5] : '');
+			}
+			else if((m = /^(\s*(?:\}\s*)?(?:else\s+)?for\s*\(\s*)(?:const\s+)?(?:int|long|double|float|bool|auto|Node\s*\*)\s*\**\s*/.exec(code)))
+				code = m[1] + 'var ' + code.slice(m[0].length);
+			else if((m = DECL.exec(code)) && /^[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*\s*([=,\[]|$)/.test(m[4])){
+				var pointer = m[2] === 'Node' || m[3].length > 0;
+				var decls = splitTop(m[4], ',').map(function(d){
+					d = d.trim().replace(/^\*+\s*/, '');
+					var arr = new RegExp('^(' + NAME + ')\\s*\\[([^\\]]*)\\]\\s*$').exec(d);
+					if(arr) return arr[1] + ' = new Array(' + arr[2].trim() + ')';
+					if(/=/.test(d)) return d;
+					return d + (pointer ? ' = null' : ' = 0');
+				});
+				code = m[1] + 'var ' + decls.join(', ');
+			}
+			return code;
+		}
+	}
+
+	// a piece of Düğüm in the narration, shown the C++ way (p->next, nullptr)
+	function displayCpp(text){ return exprCpp(text).replace(/^var\s+/, ''); }
+
+	window.dsvCode = {toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, inferTypes: inferTypes};
+})();

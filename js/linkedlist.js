@@ -1477,7 +1477,8 @@ function nodeLabel(n){ return isNode(n) ? '[' + n.data + ']' : 'null'; }
 function showNarration(text, warning){
 	var box = document.getElementById('narration');
 	if(!box) return;
-	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, '<code>$1</code>'); };
+	var cpp = window.dsvCodeLang === 'cpp' && window.dsvCode;
+	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, function(m, c){ return '<code>' + (cpp ? window.dsvCode.displayCpp(c) : c) + '</code>'; }); };
 	box.innerHTML = (text ? '<span>' + code(text) + '</span>' : '') +
 	                (warning ? '<span class="narration-warning">⚠ ' + code(warning) + '</span>' : '');
 }
@@ -1800,7 +1801,7 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink', 'dsvRunBlock', 'dsvApplyLessonMode',
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink', 'dsvRunBlock', 'dsvApplyLessonMode', 'dsvCode', 'dsvCodeLang', 'dsvParser',
                       'taban', 'tavan', 'karekök', 'mutlak'];
 
 // the language's math functions (Turkish names): taban(7 / 2) is 3
@@ -2179,8 +2180,12 @@ window.parse = function(text) {
 	currentDoc = window.activeEditor;
 	clearErrorLines();
 
+	var original = text;
 	try {
 		var text = text || editor.getValue();
+		original = text;
+		if(window.dsvCodeLang === 'cpp' && window.dsvCode) // C++ runs as the Düğüm it stands for, line by line
+			text = window.dsvCode.fromCpp(text);
 		var result = parser.parse(text);
 
 		if(!result)
@@ -2220,7 +2225,7 @@ window.parse = function(text) {
 
 		return result;
 	} catch (err) {
-		document.getElementById("output").textContent = explainError(err, text);
+		document.getElementById("output").textContent = explainError(err, original); // the message quotes the line as it was written
 		if(err && err.name === 'SyntaxError' && err.location)
 			markErrorLine(window.activeEditor, err.location.start.line);
 		else
@@ -2341,13 +2346,13 @@ function decodeCode(data){
 }
 
 function sharedHash(){
-	var parts = [];
+	var parts = window.dsvCodeLang === 'cpp' ? ['c=cpp'] : [];
 	blockEditors.forEach(function(editor, i){
 		var code = editor.getValue();
 		if(code !== blockOriginals[i])
 			parts.push('b' + (i + 1) + '=' + encodeCode(code));
 	});
-	return parts.join('&');
+	return parts.length === 1 && parts[0] === 'c=cpp' ? 'c=cpp' : parts.join('&');
 }
 
 var toastTimer = null;
@@ -2371,7 +2376,7 @@ function shareLink(){
 	var url = location.href.split('#')[0] + (hash ? '#' + hash : '');
 	if(history.replaceState)
 		history.replaceState(null, '', url); // the address bar shows the link too
-	var copied = function(){ toast(t(hash ? 'shareCopied' : 'shareCopiedPage')); };
+	var copied = function(){ toast(t(/(^|&)b\d+=/.test(hash) ? 'shareCopied' : 'shareCopiedPage')); };
 	var manual = function(){ window.prompt(t('shareManual'), url); };
 	if(navigator.clipboard && navigator.clipboard.writeText)
 		navigator.clipboard.writeText(url).then(copied, manual);
@@ -2426,7 +2431,7 @@ function setEditors(items){
 	items.forEach(function (editorEl) {
 
 		var editor = CodeMirror.fromTextArea(editorEl, {
-			mode: "javascript",
+			mode: window.dsvCodeLang === 'cpp' ? 'text/x-c++src' : "javascript",
 			extraKeys: {"Ctrl-Space": "autocomplete"},
 			styleActiveLine: true,
 			lineNumbers: true,

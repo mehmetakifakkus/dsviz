@@ -18,6 +18,86 @@ function buildParser() {
 
 const parser = buildParser();
 
+// js/codelang.js on its own: Düğüm -> C++ -> Düğüm for every example block must parse
+function loadCodeLang() {
+	const context = { window: {} };
+	context.self = context;
+	vm.createContext(context);
+	vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/grammar.js'), 'utf8'), context);
+	vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/codelang.js'), 'utf8'), context);
+	return context.window;
+}
+
+test('every example translates to C++ and back to code that parses', () => {
+	const w = loadCodeLang();
+	const pages = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && f !== 'language.html');
+	let blocks = 0;
+	for (const file of pages) {
+		const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
+		const code = [...html.matchAll(/<textarea id="(\w+)" class="deneme">\n?([\s\S]*?)<\/textarea>/g)]
+			.map(m => m[2].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+		w.dsvCode.toCpp(code).forEach((cpp, i) => {
+			const codeOnly = cpp.split('\n').map(l => l.replace(/\/\/.*$/, '')).join('\n'); // comments may say "null"
+			expect(codeOnly, `${file} #${i + 1}`).not.toMatch(/^\s*var\s|\bnull\b|\bfunction\b/m);
+			const back = w.dsvCode.fromCpp(cpp);
+			expect(back.split('\n').length, `${file} #${i + 1} keeps its lines`).toBe(cpp.split('\n').length);
+			expect(() => w.dsvParser.parse(back), `${file} #${i + 1}`).not.toThrow();
+			blocks++;
+		});
+	}
+	expect(blocks).toBeGreaterThan(80);
+});
+
+test('C++ types are inferred from the code', () => {
+	const w = loadCodeLang();
+	const [cpp] = w.dsvCode.toCpp([`var head = null
+var n = 0
+function add(v)
+{
+  head = new Node(v, head)
+  n++
+}
+function count(p)
+{
+  if(p == null)
+    return 0
+  return 1 + count(p.next)
+}
+function isEmpty()
+{
+  return head == null
+}
+var t = new Array(3)
+t[0] = head
+add(5)
+var c = count(head), e = isEmpty()
+print "count: " + c
+`]);
+	expect(cpp).toBe(`Node* head = nullptr;
+int n = 0;
+void add(int v)
+{
+  head = new Node(v, head);
+  n++;
+}
+int count(Node* p)
+{
+  if(p == nullptr)
+    return 0;
+  return 1 + count(p->next);
+}
+bool isEmpty()
+{
+  return head == nullptr;
+}
+Node* t[3];
+t[0] = head;
+add(5);
+int c = count(head); bool e = isEmpty();
+cout << "count: " << c << endl;
+`);
+});
+
 test('js/grammar.js is compiled from the current grammer.pegjs', () => {
 	const { compileGrammar } = require('../tools/build-grammar.js');
 	const built = fs.readFileSync(path.join(ROOT, 'js/grammar.js'), 'utf8');

@@ -194,6 +194,37 @@ test('lesson mode is offered only on pages with two or more blocks', async ({ pa
 	expect(problems).toEqual([]);
 });
 
+test('the code language is chosen in the settings; a shared C++ link stays C++', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const problems = await openPage(page, 'stack.html');
+	const code = i => page.evaluate(i => document.querySelectorAll('.CodeMirror')[i].CodeMirror.getValue(), i);
+	expect(await code(0)).toMatch(/^var tepe = null$/m);
+
+	await page.locator('.topbar .settings-btn').click();
+	await Promise.all([page.waitForEvent('load'), page.locator('#settings-panel select[name=codeLang]').selectOption('cpp')]);
+	await page.waitForFunction(() => window.dsvReady === true);
+	await expect(page.locator('.code-label').first()).toHaveText('Blok 1 · C++');
+	expect(await code(0)).toMatch(/^Node\* tepe = nullptr;$/m);
+	expect(await code(1)).toContain('tepe = tepe->next;');
+	await runBlock(page, 1);
+	expect(await valueOf(page, '[walk(tepe), value]')).toEqual(['2>1', 3]);
+	await expect(page.locator('#narration')).toHaveText('[3] düğümü silindi.');
+
+	// a link to changed C++ code says so, and opens as C++ even where Düğüm is chosen
+	await page.evaluate(() => { const cm = document.querySelectorAll('.CodeMirror')[2].CodeMirror; cm.setValue(cm.getValue() + 'cout << 99 << endl;\n'); });
+	await page.locator('.dsv-share').first().click();
+	const url = await page.evaluate(() => navigator.clipboard.readText());
+	expect(url).toMatch(/#c=cpp&b3=/);
+	await page.evaluate(() => localStorage.setItem('dsv-settings', JSON.stringify({ codeLang: 'dugum' })));
+	await page.goto('/index.html');
+	await page.goto(url);
+	await page.waitForFunction(() => window.dsvReady === true);
+	expect(await code(0)).toMatch(/^Node\* tepe = nullptr;$/m);
+	await runBlock(page, 2);
+	expect(await outputText(page)).toBe('2\n1\n99\n');
+	expect(problems).toEqual([]);
+});
+
 test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const problems = await openPage(page, 'queue.html');
 	await page.locator('.menu-btn').click();
