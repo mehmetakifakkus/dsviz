@@ -255,12 +255,18 @@
 	// ---------- visualisation card ----------
 	var viz = el('div', {'class': 'card viz'},
 		'<div class="viz-canvas"><canvas id="myCanvas0" width="800" height="260"></canvas></div>' +
+		// on a phone the panels below fold: one row of buttons opens one panel at a time
+		'<div class="viz-folds">' +
+			'<button class="fold-btn" data-fold="stack" aria-expanded="false" hidden>' + esc(t('callStack')) + '<span class="fold-count"></span></button>' +
+			'<button class="fold-btn" data-fold="vars" aria-expanded="false">' + esc(t('variables')) + '<span class="fold-count"></span></button>' +
+			'<button class="fold-btn" data-fold="out" aria-expanded="false">' + esc(t('output')) + '<span class="fold-count"></span></button>' +
+		'</div>' +
 		'<div class="viz-stack" hidden><div class="panel-title">' + esc(t('callStack')) + '</div><ol id="callstack"></ol><div id="callstack-note"></div></div>' +
 		'<div class="viz-vars"><div class="panel-title">' + esc(t('variables')) + '</div><ul id="variables" data-empty="' + esc(t('noVariables')) + '"></ul></div>' +
-		'<div class="tabs"><button class="tab active" data-tab="tab-output">' + esc(t('output')) + '</button><button class="tab" data-tab="tab-command">' + esc(t('commandTab')) + '</button><span id="resultSign"></span></div>' +
+		'<div class="viz-out"><div class="tabs"><button class="tab active" data-tab="tab-output">' + esc(t('output')) + '</button><button class="tab" data-tab="tab-command">' + esc(t('commandTab')) + '</button><span id="resultSign"></span></div>' +
 		'<div class="tab-body" id="tab-output"><pre id="output" data-empty="' + esc(t('outputEmpty')) + '"></pre></div>' +
 		'<div class="tab-body" id="tab-command" hidden><textarea id="command" class="commandPrompt"></textarea>' +
-		'<div class="hint">' + t('commandHint') + '</div></div>');
+		'<div class="hint">' + t('commandHint') + '</div></div></div>');
 
 	var vizCol = el('aside', {'class': 'viz-col'});
 	vizCol.appendChild(viz);
@@ -285,6 +291,52 @@
 			}
 		});
 	});
+
+	// ---------- folding panels (phones) ----------
+	// The buttons show how much each panel holds; the open panel is remembered.
+	var folds = viz.querySelector('.viz-folds');
+	var foldBtn = function(name){ return folds.querySelector('[data-fold="' + name + '"]'); };
+	var stackBox = viz.querySelector('.viz-stack'), varList = viz.querySelector('#variables');
+	var callList = viz.querySelector('#callstack'), outBox = viz.querySelector('#output');
+	var seenOutput = '';
+	function openFold(name){
+		viz.setAttribute('data-open', name || '');
+		Array.prototype.forEach.call(folds.querySelectorAll('.fold-btn'), function(b){
+			b.setAttribute('aria-expanded', b.getAttribute('data-fold') === name ? 'true' : 'false');
+		});
+		if(name === 'out'){
+			seenOutput = outBox.textContent;
+			if(window.editor2 && !viz.querySelector('#tab-command').hidden) window.editor2.refresh();
+		}
+		try { localStorage.setItem('dsv-fold', name || ''); } catch(e) {}
+		updateFolds();
+	}
+	function setText(elem, text){ if(elem.textContent !== text) elem.textContent = text; } // no needless DOM writes
+	function updateFolds(){
+		if(foldBtn('stack').hidden !== stackBox.hidden) foldBtn('stack').hidden = stackBox.hidden;
+		setText(foldBtn('stack').querySelector('.fold-count'), callList.children.length ? ' · ' + callList.children.length : '');
+		setText(foldBtn('vars').querySelector('.fold-count'), varList.children.length ? ' · ' + varList.children.length : '');
+		var fresh = !!outBox.textContent && outBox.textContent !== seenOutput && viz.getAttribute('data-open') !== 'out';
+		if(foldBtn('out').classList.contains('has-news') !== fresh)
+			foldBtn('out').classList.toggle('has-news', fresh); // new output while the panel is closed
+	}
+	folds.addEventListener('click', function(e){
+		var b = e.target.closest('.fold-btn');
+		if(b) openFold(viz.getAttribute('data-open') === b.getAttribute('data-fold') ? '' : b.getAttribute('data-fold'));
+	});
+	if(window.MutationObserver){ // only the panels' contents, not the buttons (they change in updateFolds)
+		var watch = new MutationObserver(function(){
+			if(viz.getAttribute('data-open') === 'out') seenOutput = outBox.textContent;
+			updateFolds();
+		});
+		watch.observe(stackBox, {attributes: true, attributeFilter: ['hidden']});
+		watch.observe(callList, {childList: true});
+		watch.observe(varList, {childList: true});
+		watch.observe(outBox, {childList: true, characterData: true, subtree: true});
+	}
+	var savedFold = '';
+	try { savedFold = localStorage.getItem('dsv-fold') || ''; } catch(e) {}
+	openFold(savedFold);
 
 	// a theme that follows the system changes with it
 	if(window.matchMedia)

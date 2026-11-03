@@ -190,6 +190,49 @@ test.describe('phone', () => {
 		expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
 		expect(problems).toEqual([]);
 	});
+
+	test('the panels under the canvas fold: one button row, one open panel, remembered', async ({ page }) => {
+		const problems = await openPage(page, 'recursion.html');
+		const btn = name => page.locator(`.fold-btn[data-fold="${name}"]`);
+		await expect(page.locator('.viz-folds')).toBeVisible();
+		await expect(page.locator('#variables')).toBeHidden();
+		await expect(page.locator('#output')).toBeHidden();
+		await expect(btn('stack')).toBeHidden(); // no call yet
+
+		await runBlock(page, 2); // printReverse prints the list backwards
+		await expect(page.locator('#output')).toHaveText('4\n3\n2\n1\n');
+		await expect(btn('vars')).toHaveText(/^Değişkenler · \d+$/);
+		await expect(btn('out')).toHaveClass(/has-news/);
+
+		await btn('out').click();
+		await expect(page.locator('#output')).toBeVisible();
+		await expect(btn('out')).toHaveAttribute('aria-expanded', 'true');
+		await expect(btn('out')).not.toHaveClass(/has-news/);
+		await btn('vars').click(); // one panel at a time
+		await expect(page.locator('#variables')).toBeVisible();
+		await expect(page.locator('#output')).toBeHidden();
+
+		await page.reload();
+		await page.waitForFunction(() => window.dsvReady === true);
+		await expect(page.locator('#variables')).toBeVisible(); // the open panel is remembered
+		await btn('vars').click();
+		await expect(page.locator('#variables')).toBeHidden();
+
+		// during a call the call stack button appears with the number of calls
+		await page.locator('button.dsv-run').nth(2).click();
+		await page.evaluate(() => { const t = document.querySelector('.dsv-timeline'); t.value = Math.round(t.max * 0.6); t.dispatchEvent(new Event('input', { bubbles: true })); });
+		await expect(btn('stack')).toBeVisible();
+		await expect(btn('stack')).toHaveText(/^Çağrı yığını · \d+$/);
+		expect(problems).toEqual([]);
+	});
+});
+
+test('on a wide screen the panels do not fold', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await expect(page.locator('.viz-folds')).toBeHidden();
+	await expect(page.locator('#variables')).toBeVisible();
+	await expect(page.locator('#output')).toBeVisible();
+	expect(problems).toEqual([]);
 });
 
 test.describe('running a block again', () => {

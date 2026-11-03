@@ -11,7 +11,6 @@
 ## Görselleştirme ve arayüz
 
 - [ ] İsteğe bağlı "ders modu": blokları tek tek gösteren, Önceki/Sonraki ile ilerleyen görünüm (değerlendirilen alternatiflerden B).
-- [ ] Telefonda görselleştirme kartı ekranın yarısını kaplıyor; değişkenler ve çıktı bölümü katlanabilir olabilir.
 
 ## Yeni konular
 
@@ -45,7 +44,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 204 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 206 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -64,3 +63,4 @@
 - [x] `new Node(değer, next)`: ikinci değer yeni düğümün `next`'i (herhangi bir ifade; düğüm ya da null olmalı), çizimde de bağlı görünür; başa ekleme tek satır: `x = new Node(8, x)`.
 - [x] Çağrı sonucunun alanını okuma (`pop().data`, `find(3).next.data + 1`, koşullarda, `print`'te, `return`'de) ve iç içe düğüm oluşturma (`new Node(1, new Node(2, new Node(3)))`).
 - [x] Yatay dizi çizimi: sayı tutan diziler üstte yatay hücreler, `s[size] = v` gibi yazımlarda indis değişkeni hücrenin altında okla; düğüm tutan diziler kova olarak kalır. Dizi ile yığın ve dairesel kuyruk sayfası.
+- [x] Telefonda katlanabilir paneller: kanvasın altında tek satır düğme (Çağrı yığını · n, Değişkenler · n, Çıktı), aynı anda tek panel açık, yeni çıktı noktayla belirtilir, seçim hatırlanır; geniş ekranda paneller hep açık.

@@ -341,8 +341,24 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 
 .footer { margin-top: 32px; font-size: 13px; color: var(--muted); }
 
+/* folding the panels under the canvas: only on narrow screens */
+.viz-folds { display: none; }
+.fold-btn {
+  flex: 1 1 0; min-width: 0; height: 34px; padding: 0 8px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative;
+}
+.fold-btn[aria-expanded="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }
+.fold-btn[hidden] { display: none; }
+.fold-count { color: var(--muted); font-weight: 500; }
+.fold-btn.has-news::after { content: ""; position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--viz-changed); }
+
 /* ---------- narrow screens ---------- */
 @media (max-width: 960px) {
+  .viz-folds { display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--border); }
+  .viz:not([data-open="stack"]) .viz-stack,
+  .viz:not([data-open="vars"]) .viz-vars,
+  .viz:not([data-open="out"]) .viz-out { display: none; }
   .layout { grid-template-columns: 1fr; padding: 14px 14px 32px; gap: 14px; }
   /* the visualisation comes first and stays in view while the code scrolls under it */
   .viz-col { order: -1; position: sticky; top: 56px; z-index: 10; }
