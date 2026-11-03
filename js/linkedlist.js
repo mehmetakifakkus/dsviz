@@ -1928,6 +1928,26 @@ var unfinishedCalls = []; // calls an error interrupted (their returnStep never 
 
 // a user function becomes a JavaScript function, so a call can sit anywhere inside an
 // expression (var v = pop(), return 1 + count(p.next)) and recursion works by itself
+// the first function defined inside another function's body (or null)
+function nestedFunction(items, inFunction){
+	var list = [].concat(items || []);
+	for(var i = 0; i < list.length; i++){
+		var item = list[i];
+		if(!item || typeof item !== 'object')
+			continue;
+		if(item.type === 'function' && inFunction)
+			return item;
+		var inside = inFunction || item.type === 'function';
+		var parts = [item.body, item.truePart, item.falsePart, item.statements];
+		for(var k = 0; k < parts.length; k++){
+			var found = parts[k] && nestedFunction(parts[k], inside);
+			if(found)
+				return found;
+		}
+	}
+	return null;
+}
+
 function defineFunction(item){
 	currentLine = item.lineNumber;
 	var def = {name: item.name, params: item.params, body: item.body,
@@ -2097,6 +2117,11 @@ window.parse = function(text) {
 			unfinishedCalls = [];
 			player.add(function(){ stale.forEach(dropFrame); returnNote = ''; renderCallStack(); });
 		}
+
+		// the language keeps functions at the top level: a function inside a function is an error
+		var nested = nestedFunction(result, false);
+		if(nested)
+			throw ownError(nested.lineNumber, 'eNestedFunction', {name: nested.name});
 
 		// functions can be called before the line that defines them (as in JavaScript)
 		result.forEach(function(item){ if(item.type === 'function') defineFunction(item); });

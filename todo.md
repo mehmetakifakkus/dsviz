@@ -4,7 +4,6 @@
 
 ## Dil
 
-- [ ] Fonksiyon içinde fonksiyon tanımı (closure) yok: fonksiyonlar yalnızca kendi yerel değişkenlerini ve globalleri görür.
 - [ ] Çağrı sonucunun alanına yazma (`find(3).next = x`); okuma artık var.
 - [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
 - [ ] Dizi desteğini genişletmek: dizi hücrelerini yan yana (yatay) çizme seçeneği; yığın ve kuyruğun dizi ile yapılmış hâlleri; aynı anda birden çok dizinin çizimi (şu an yalnızca ilki çizilir).
@@ -27,6 +26,10 @@
 - [ ] Dairesel çift yönlü listede ilk düğümün `prev`'i (sona dönen bağ) hâlâ satırın altından bir yay olarak çiziliyor.
 - [ ] Çift yönlü listede ters çevirmeden sonra tüm oklar yay olarak çiziliyor (düğümler yerinde kaldığı için); okunuyor ama kalabalık.
 
+## Bilerek yapılmayanlar
+
+- Fonksiyon içinde fonksiyon ve closure: Düğüm sade ve veri yapılarına yönelik kalsın diye fonksiyonlar yalnızca en dışta tanımlanır; iç içe tanım, kod çalışmadan açıklamalı bir hata verir.
+
 ## Tamamlananlar
 
 - [x] Gramer düzeltmeleri (ifade satırları, tanımlayıcı ve yorum karakterleri, anahtar kelime önekleri, `else` gövdesi, `print`).
@@ -42,7 +45,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 199 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 200 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
