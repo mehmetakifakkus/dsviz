@@ -172,23 +172,25 @@ null_statement
 
 declaration
  =  _ 'var' !idChar _ dec:init_declarator_list {
-	return {'type': 'declaration', '#evaluation': 0, 'text':'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
+	return {'type': 'declaration', '#evaluation': 0, 'text': dec.text ? 'var ' + dec.text : 'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
  }
  /
   _ ass:init_declarator_list {
-	return {'type': 'assignment', '#evaluation': 0, 'text': ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': location().start.line};
+	return {'type': 'assignment', '#evaluation': 0, 'text': ass.text || ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': location().start.line};
  }
 
 init_declarator_list
  = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
 
 init_declarator
-	= _ left:name _"="_ exp: (dogru / yanlis / math_functions / object_poperty / expression_statement) _ nl{
+	= _ left:name _"="_ exp: (node / dogru / yanlis / math_functions / object_poperty / expression_statement) _ nl{
 
 	if( typeof(exp) == 'boolean')
-    	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it       
-    else 
-        return {'lhs': left, 'rhs': exp.text};        
+    	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
+    else if(exp.type == 'node') // x = new Node(9): without this it was read as "x = new" and "Node(9)"
+        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Node(' + exp.data + ')'};
+    else
+        return {'lhs': left, 'rhs': exp.text};
 }   
 
 // print "toplam: " + sum     (the parts after the first one must be joined with +)

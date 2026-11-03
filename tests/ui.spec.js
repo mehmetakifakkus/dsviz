@@ -209,3 +209,113 @@ test.describe('running a block again', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+test.describe('learning aids', () => {
+	const state = page => page.evaluate(() => window.dsvState());
+	const narration = page => page.locator('#narration');
+
+	test('every step is narrated', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runAllBlocks(page);
+		await expect(narration(page)).toHaveText('Koşul curr != null yanlış: döngü bitti.');
+
+		await player(page, 'Geri adım').click();
+		await expect(narration(page)).toHaveText('curr artık null: hiçbir düğümü göstermiyor.');
+		await player(page, 'Geri adım').click();
+		await expect(narration(page)).toHaveText('prev artık [4] düğümünü gösteriyor.');
+		await player(page, 'Geri adım').click();
+		await expect(narration(page)).toHaveText("[4] düğümünün next'i artık [3] düğümünü gösteriyor.");
+		expect(problems).toEqual([]);
+	});
+
+	test('calls and returns are narrated', async ({ page }) => {
+		const problems = await openPage(page, 'recursion.html');
+		await runBlock(page, 0);
+		await runBlock(page, 1);
+		await player(page, 'Geri adım').click(); // the last step is var n = count(x)
+		await expect(narration(page)).toHaveText('count(düğüm(1)) döndürdü: 4.');
+		expect(problems).toEqual([]);
+	});
+
+	test('the timeline and the keyboard move between steps', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runAllBlocks(page);
+		const { total } = await stepCounter(page);
+
+		await page.locator('.dsv-timeline').evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input')); }, 5);
+		expect(await stepCounter(page)).toEqual({ current: 5, total });
+
+		await page.locator('.lesson h1').click(); // keys work when no editor has the focus
+		await page.keyboard.press('ArrowRight');
+		await page.keyboard.press('ArrowRight');
+		await page.keyboard.press('ArrowLeft');
+		expect((await stepCounter(page)).current).toBe(6);
+
+		await page.keyboard.press(' '); // space plays...
+		await expect(player(page, 'Duraklat')).toBeVisible();
+		await expect.poll(async () => (await stepCounter(page)).current).toBeGreaterThan(6);
+		await page.keyboard.press(' '); // ... and pauses
+		await expect(player(page, 'Oynat')).toBeVisible();
+		expect(problems).toEqual([]);
+	});
+
+	test('a null link is drawn as null', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runBlock(page, 0);
+		expect((await state(page)).nullNext).toEqual([4]);
+		await runBlock(page, 1);
+		expect((await state(page)).nullNext).toEqual([1]);
+		expect(problems).toEqual([]);
+	});
+
+	test('a node nothing reaches any more is marked lost', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		// node 2 is reached only through node 1: moving x loses both
+		await runCode(page, 'var x = new Node(1)\nx.next = new Node(2)\nx = new Node(9)  // the old list is lost\n');
+		expect((await state(page)).lost.sort()).toEqual([1, 2]);
+		await expect(page.locator('#narration .narration-warning')).toHaveText('⚠ [1], [2] düğümlerine artık hiçbir değişkenden ya da bağdan ulaşılamıyor.');
+
+		await runCode(page, 'var y = new Node(5)\nvar z = y\ny = null\n'); // z still reaches [5]: not lost
+		expect((await state(page)).lost).not.toContain(5);
+
+		await openPage(page, 'reverseALinkedList.html'); // a correct algorithm loses nothing
+		await runAllBlocks(page);
+		expect((await state(page)).lost).toEqual([]);
+		expect(problems).toEqual([]);
+	});
+
+	test('the line of an error is marked in its editor', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		const setBlock = (i, code) => page.evaluate(([i, code]) => document.querySelectorAll('.CodeMirror')[i].CodeMirror.setValue(code), [i, code]);
+		const marked = i => page.locator('.CodeMirror').nth(i).locator('.dsv-error-line');
+
+		await setBlock(1, 'var p = x\nwhile(p != null)\n  p = p.next.next.next\n');
+		await runBlock(page, 1);
+		await expect(marked(1)).toHaveCount(1);
+		await expect(page.locator('.CodeMirror').nth(1).locator('.CodeMirror-line').nth(2)).toContainText('p = p.next.next.next');
+
+		await setBlock(1, 'var p = x\nwhile(p != null)\n  p = p.next\n');
+		await runBlock(page, 1);
+		await expect(marked(1)).toHaveCount(0); // gone after a good run
+
+		await setBlock(0, 'var x = new Node(1\n');
+		await runBlock(page, 0);
+		await expect(marked(0)).toHaveCount(1);
+		expect(problems).toEqual([]);
+	});
+
+	test('changed code can be restored', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		const editor = i => page.evaluate(i => document.querySelectorAll('.CodeMirror')[i].CodeMirror.getValue(), 0);
+		const original = await editor(0);
+		const restore = page.locator('.dsv-restore').first();
+
+		await expect(restore).toBeHidden();
+		await page.evaluate(() => document.querySelectorAll('.CodeMirror')[0].CodeMirror.setValue('var x = 5\n'));
+		await expect(restore).toBeVisible();
+		await restore.click();
+		expect(await editor(0)).toBe(original);
+		await expect(restore).toBeHidden();
+		expect(problems).toEqual([]);
+	});
+});

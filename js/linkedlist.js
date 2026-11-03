@@ -104,7 +104,8 @@ function palette(){
 		text: token('--viz-text', '#111827'),
 		named: token('--viz-named', '#2563eb'),
 		pointer: token('--viz-pointer', '#dc2626'),
-		local: token('--viz-local', '#7c3aed')
+		local: token('--viz-local', '#7c3aed'),
+		changed: token('--viz-changed', '#f59e0b')
 	};
 }
 
@@ -157,17 +158,22 @@ function Node(content, next){
 		var p = self.position, g = geometry();
 		var items = [new Path.Rectangle({ point: [p.x, p.y],  size: [g.width, NODE_H],  strokeColor: PAL.stroke, strokeWidth: 2, fillColor: PAL.node})];
 
+		// the dot (or the null slash) of a link cell is drawn with the link, see redrawArrows
 		items.push(new Path.Line({from: [p.x + g.nextX, p.y], to: [p.x + g.nextX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
-		items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: [p.x + g.nextX + 10, p.y + g.nextY]}));
 
-		if(doublyMode){
+		if(doublyMode)
 			items.push(new Path.Line({from: [p.x + g.dataX, p.y], to: [p.x + g.dataX, p.y + NODE_H], strokeColor: PAL.stroke, strokeWidth: 2}));
-			items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: [p.x + 10, p.y + g.prevY]}));
-		}
 
 		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: PAL.text, content:''+ self.shownData}));
 
+		if(self.lost){ // no variable and no link reaches this node any more
+			items[0].dashArray = [5, 4];
+			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: 'ulaşılamıyor'}));
+		}
+
 		self.boxDraw = new Group(items);
+		if(self.lost)
+			self.boxDraw.opacity = LOST_OPACITY;
 	}
 
 	this.moveTo = function(p){
@@ -181,6 +187,7 @@ function Node(content, next){
 		self.cell = null;
 		self.position = null;
 		self.everLinked = false;
+		self.lost = false;
 		[self.boxDraw, self.arrowDraw, self.prevArrowDraw].forEach(function(item){ if(item) item.remove(); });
 		self.boxDraw = self.arrowDraw = self.prevArrowDraw = null;
 	}
@@ -213,7 +220,8 @@ function arrowTip(end, angle, color){
 // the "next" (kind = 'next') or "prev" (kind = 'prev') arrow of a node.
 // next leaves the right cell and goes over the row, prev leaves the left cell and goes under it,
 // so the two arrows between neighbours never lie on top of each other.
-function nodeArrow(from, to, kind){
+function nodeArrow(from, to, kind, color){
+	color = color || PAL.stroke;
 	var a = from.position, b = to.position, g = geometry();
 	var isNext = kind !== 'prev';
 	var start = a + (isNext ? [g.nextX + 10, g.nextY] : [10, g.prevY]);
@@ -225,24 +233,46 @@ function nodeArrow(from, to, kind){
 
 	if(neighbour) {                                       // straight to the neighbour
 		end = isNext ? b + [0, g.nextY] : b + [g.width, g.prevY];
-		line = new Path.Line({from: start, to: end, strokeColor: PAL.stroke, strokeWidth: 2});
+		line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
 	else if(sameRow) {                                    // backwards or skipping nodes: an arc
 		end = b + [g.width / 2, isNext ? 0 : NODE_H];
 		var bulge = 18 + Math.abs(dx) * 0.1;
 		var through = new Point((start.x + end.x) / 2, isNext ? a.y - bulge : a.y + NODE_H + bulge);
-		line = new Path({segments: [start], strokeColor: PAL.stroke, strokeWidth: 2});
+		line = new Path({segments: [start], strokeColor: color, strokeWidth: 2});
 		line.arcTo(through, end);
 		angle = line.getTangentAt(line.length).angle;
 	}
 	else {                                                // another row: straight to the top or bottom edge
 		end = b + [g.width / 2, b.y > a.y ? 0 : NODE_H];
-		line = new Path.Line({from: start, to: end, strokeColor: PAL.stroke, strokeWidth: 2});
+		line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
 		angle = (end - start).angle;
 	}
 
-	return new Group([line, arrowTip(end, angle)]);
+	if(color !== PAL.stroke)
+		line.strokeWidth = 3;
+	var dot = new Path.Circle({radius: 4, fillColor: color, center: start});
+	return new Group([line, arrowTip(end, angle, color), dot]);
+}
+
+// n.next = n: a small loop from the next cell back into the node's top
+function selfLoop(n, color){
+	color = color || PAL.stroke;
+	var g = geometry(), p = n.position;
+	var start = p + [g.nextX + 10, g.nextY], end = p + [g.dataX + 15, 0];
+	var line = new Path({segments: [start], strokeColor: color, strokeWidth: color !== PAL.stroke ? 3 : 2});
+	line.arcTo(new Point((start.x + end.x) / 2 + 14, p.y - 26), end);
+	var tip = arrowTip(end, line.getTangentAt(line.length).angle, color);
+	return new Group([line, tip, new Path.Circle({radius: 4, fillColor: color, center: start})]);
+}
+
+// a link cell whose link is null: a slash across the cell instead of a dot
+function nullMark(n, kind, color){
+	var g = geometry(), p = n.position;
+	var x = p.x + (kind === 'next' ? g.nextX : 0);
+	return new Path.Line({from: [x + 4, p.y + NODE_H - 4], to: [x + 16, p.y + 4], strokeColor: color || PAL.stroke,
+	                      strokeWidth: color && color !== PAL.stroke ? 3 : 1.5});
 }
 
 function redrawArrows(){
@@ -255,12 +285,26 @@ function redrawArrows(){
 			n.prevArrowDraw.remove();
 		n.arrowDraw = n.prevArrowDraw = null;
 
-		if(!n.shown)
+		if(!n.shown || !n.position)
 			continue;
-		if(n.visualNext && n.visualNext.shown && n.visualNext !== n)
-			n.arrowDraw = nodeArrow(n, n.visualNext, 'next');
-		if(n.visualPrev && n.visualPrev.shown && n.visualPrev !== n)
-			n.prevArrowDraw = nodeArrow(n, n.visualPrev, 'prev');
+
+		var nextColor = isFocusedEdge(n, 'next') ? PAL.changed : PAL.stroke;
+		n.arrowDraw = n.visualNext === n ? selfLoop(n, nextColor)
+			: n.visualNext && n.visualNext.shown ? nodeArrow(n, n.visualNext, 'next', nextColor)
+			: nullMark(n, 'next', nextColor);
+
+		if(doublyMode){
+			var prevColor = isFocusedEdge(n, 'prev') ? PAL.changed : PAL.stroke;
+			n.prevArrowDraw = n.visualPrev && n.visualPrev.shown && n.visualPrev !== n
+				? nodeArrow(n, n.visualPrev, 'prev', prevColor)
+				: nullMark(n, 'prev', prevColor);
+		}
+
+		if(n.lost){
+			n.arrowDraw.opacity = LOST_OPACITY;
+			if(n.prevArrowDraw)
+				n.prevArrowDraw.opacity = LOST_OPACITY;
+		}
 	}
 }
 
@@ -404,7 +448,8 @@ function layout(){
 			var n = chain[k];
 			if(!n.cell){
 				lastPlaced = n;
-				n.placedOrder = ++placementCounter;
+				placementCounter = placementCounter + 1; // (no ++ inside expressions: PaperScript rewrites them)
+				n.placedOrder = placementCounter;
 			}
 			n.cell = {row: row, col: firstCol + k * dir};
 			occupied[row + ',' + n.cell.col] = true;
@@ -499,7 +544,7 @@ function applyTween(t){
 	}
 	for(var j=0; j < tween.fades.length; j++)
 		if(tween.fades[j].boxDraw)
-			tween.fades[j].boxDraw.opacity = e;
+			tween.fades[j].boxDraw.opacity = e * (tween.fades[j].lost ? LOST_OPACITY : 1);
 
 	redrawArrows();
 	redrawPointers();
@@ -607,13 +652,15 @@ function redrawPointers(){
 		var dx = geometry().dataX; // aim at the data cell
 		var start = pos + (up ? [dx - 10, -40] : [dx - 10, 55]);
 		var end = pos + (up ? [dx + 10, -3] : [dx + 10, 28]);
-		var color = PAL[group[0].kind];
-		var line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
+		var focused = group.some(function(p){ return focus.pointers.indexOf(p) >= 0; });
+		var color = focused ? PAL.changed : PAL[group[0].kind];
+		var line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: focused ? 3 : 2});
 		var items = [line, arrowTip(end, (end - start).angle, color)];
 
 		var labels = [], x = 0;
 		group.forEach(function(p, index){
-			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.label + (index < group.length - 1 ? ',' : '')});
+			var label = new PointText({ point: [x, 0], fontSize: 20+'px', fillColor: PAL[p.kind], content: p.label + (index < group.length - 1 ? ',' : ''),
+			                            fontWeight: focus.pointers.indexOf(p) >= 0 ? 'bold' : 'normal'});
 			x += label.bounds.width + 5;
 			labels.push(label);
 		});
@@ -642,6 +689,8 @@ function pointTo(name, node, color, direction, scope){
 		pointer.markNull();
 	else
 		pointer.draw(node);
+	focus.pointers.push(pointer);
+	return pointer;
 }
 
 //////////////////////////////////////  Variables area  ////////////////////////////////////
@@ -751,6 +800,7 @@ function callStep(info, def){
 
 	var args = info.args.map(function(a){ return formatValue(a.value); }).join(', ');
 	visualFrames.push({id: info.id, title: info.fn + '(' + args + ')', vars: {}, order: []});
+	narrate('`' + info.fn + '(' + args + ')` çağrıldı.');
 
 	var scope = {id: info.id, fn: info.fn, depth: info.depth};
 	info.args.forEach(function(a){
@@ -779,6 +829,7 @@ function returnStep(info, value, exitLine, def){
 	highlight(def.doc, {lineNumber: exitLine});
 	var frame = dropFrame(info);
 	returnNote = (frame ? frame.title : info.fn + '()') + (value === undefined ? ' bitti.' : ' döndürdü: ' + formatValue(value));
+	narrate('`' + (frame ? frame.title : info.fn + '()') + '`' + (value === undefined ? ' bitti.' : ' döndürdü: ' + formatValue(value) + '.'));
 	renderCallStack();
 }
 
@@ -797,7 +848,8 @@ function highlight(doc, line, type, result){
 
 	if(type == 'logical'){
 		if(!doc.dsvId)
-			doc.dsvId = ++docCounter;
+			docCounter = docCounter + 1;
+			doc.dsvId = docCounter;
 
 		var key = doc.dsvId + ':' + ln + ':' + line.start;
 		if(logicMarks[key])
@@ -873,7 +925,8 @@ var player = {
 			return false;
 
 		finishTween();
-		player.steps[player.cursor++]();
+		runNextStep();
+		finishStep();
 		player.lastStep = Date.now();
 
 		if(player.cursor === player.steps.length)
@@ -890,20 +943,32 @@ var player = {
 	},
 
 	toEnd: function(){
-		finishTween();
-		player.animating = false;
-		while(player.forward());
-		player.animating = true;
+		player.seek(player.steps.length);
 	},
 
 	replayTo: function(k){
+		player.seek(k);
+	},
+
+	// go to step k: backwards by replaying from the start, forwards by running the steps
+	// at once. Only the last step's narration and lost-node warning are shown.
+	seek: function(k){
 		finishTween();
-		resetVisuals();
+		k = Math.max(0, Math.min(k, player.steps.length));
+		if(k === player.cursor)
+			return;
+		if(k < player.cursor){
+			resetVisuals();
+			player.cursor = 0;
+		}
 
 		player.animating = false;
-		player.cursor = 0;
-		while(player.cursor < k)
-			player.steps[player.cursor++]();
+		while(player.cursor < k - 1)
+			runNextStep();
+		updateReachability(); // the warning is about what the last step lost
+		if(player.cursor < k)
+			runNextStep();
+		finishStep();
 		player.animating = true;
 
 		if(player.cursor === player.steps.length)
@@ -934,8 +999,125 @@ var player = {
 		ui.counter.textContent = 'Adım ' + player.cursor + ' / ' + player.steps.length;
 		ui.back.disabled = player.cursor === 0;
 		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
+		ui.timeline.max = player.steps.length;
+		ui.timeline.value = player.cursor;
+		ui.timeline.disabled = !player.steps.length;
 	}
 };
+
+///////////////////////////////  Focus, narration, lost nodes  ///////////////////////////////
+//
+// A step records what it changed (focus): those links and pointers are drawn in the
+// "changed" color until the next step. It also leaves a sentence (narration) that says
+// what happened. After a step the nodes no variable and no link reaches are marked lost.
+
+var LOST_OPACITY = 0.45;
+var focus = {edges: [], pointers: []};
+var narration = '';
+
+function isFocusedEdge(node, kind){ return focus.edges.indexOf(node.id + kind) >= 0; }
+function focusEdge(node, kind){ focus.edges.push(node.id + kind); }
+function narrate(text){ narration = text || ''; }
+
+// runs the step at the cursor and moves the cursor on. (Not runStep(player.cursor++):
+// PaperScript rewrites a postfix ++ inside an argument and passes the new value.)
+function runNextStep(){
+	var i = player.cursor;
+	player.cursor = i + 1;
+	runStep(i);
+}
+
+function runStep(i){
+	focus = {edges: [], pointers: []};
+	narration = '';
+	player.steps[i]();
+}
+
+function finishStep(){
+	var lost = updateReachability();
+	redrawArrows();
+	redrawPointers();
+
+	var warning = '';
+	if(lost.length)
+		warning = lost.map(nodeLabel).join(', ') + (lost.length > 1 ? ' düğümlerine' : ' düğümüne') +
+		          ' artık hiçbir değişkenden ya da bağdan ulaşılamıyor.';
+	showNarration(narration, warning);
+}
+
+// marks the shown nodes no pointer reaches (through next / prev); returns the newly lost ones
+function updateReachability(){
+	var reached = {}, todo = [];
+	pointers.forEach(function(p){ if(p.active && p.points && p.points.shown) todo.push(p.points); });
+	while(todo.length){
+		var n = todo.pop();
+		if(reached[n.id]) continue;
+		reached[n.id] = true;
+		[n.visualNext, n.visualPrev].forEach(function(m){ if(m && m.shown && !reached[m.id]) todo.push(m); });
+	}
+
+	var newlyLost = [];
+	allNodes.forEach(function(n){
+		if(!n.shown) return;
+		var lost = !reached[n.id];
+		if(lost === !!n.lost) return;
+		n.lost = lost;
+		if(lost) newlyLost.push(n);
+		if(n.position) n.render();
+	});
+	return newlyLost;
+}
+
+function nodeLabel(n){ return isNode(n) ? '[' + n.data + ']' : 'null'; }
+
+function showNarration(text, warning){
+	var box = document.getElementById('narration');
+	if(!box) return;
+	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, '<code>$1</code>'); };
+	box.innerHTML = (text ? '<span>' + code(text) + '</span>' : '') +
+	                (warning ? '<span class="narration-warning">⚠ ' + code(warning) + '</span>' : '');
+}
+
+// the sentence for a statement, made when it runs (the values are the ones of that moment)
+function describe(line, res, removed){
+	var name = '`' + line.lhs + '`';
+	var pointsTo = function(v){ return v === null ? name + ' artık null: hiçbir düğümü göstermiyor.' : name + ' artık ' + nodeLabel(v) + ' düğümünü gösteriyor.'; };
+
+	switch(line.type){
+	case 'declaration':
+	case 'assignment':
+		if(line.rhs.type == 'node') return name + ' adında yeni bir düğüm oluşturuldu: ' + nodeLabel(res) + '.';
+		if(res === null || isNode(res)) return pointsTo(res);
+		return name + ' = ' + formatValue(res) + '.';
+	case 'object property right':
+		if(res === null || isNode(res)) return pointsTo(res);
+		return name + ' = ' + formatValue(res) + '.';
+	case 'object property left':
+	case 'object property left-right':
+		if(res.prop == '.data') return nodeLabel(res.target) + ' düğümünün değeri ' + formatValue(res.value) + ' oldu.';
+		var link = nodeLabel(res.target) + ' düğümünün ' + res.prop.slice(1) + "'i";
+		if(res.newNode) return 'Yeni bir düğüm ' + nodeLabel(res.newNode) + ' oluşturuldu ve ' + link + ' ona bağlandı.';
+		return link + ' artık ' + (res.value === null ? 'null.' : nodeLabel(res.value) + ' düğümünü gösteriyor.');
+	case 'logical':
+		var cond = 'Koşul `' + String(line.text).trim() + '`';
+		if(line.mainType == 'if')
+			return cond + (res ? ' doğru: if bloğu çalışacak.' : line.falsePart ? ' yanlış: else bloğu çalışacak.' : ' yanlış: if bloğu atlanıyor.');
+		if(line.mainType == 'while' || line.mainType == 'for')
+			return cond + (res ? ' doğru: döngü bir tur daha dönüyor.' : ' yanlış: döngü bitti.');
+		return cond + (res ? ' doğru.' : ' yanlış.');
+	case 'print':
+		return 'Çıktıya yazıldı: ' + res;
+	case 'free object':
+		return nodeLabel(removed) + ' düğümü silindi.';
+	case 'expression':
+		return '`' + String(line.text).trim() + '` çalıştı' + (res === undefined ? '.' : ', sonuç: ' + formatValue(res) + '.');
+	case 'break':
+		return 'break: döngüden çıkılıyor.';
+	case 'continue':
+		return 'continue: döngünün bir sonraki turuna geçiliyor.';
+	}
+	return '';
+}
 
 // forget everything that was drawn (the program state is not touched)
 function resetVisuals(){
@@ -963,6 +1145,8 @@ function resetVisuals(){
 	fitCanvas();
 
 	clearHighlights(true);
+	focus = {edges: [], pointers: []};
+	showNarration('', '');
 
 	var output = document.getElementById("output");
 	if(output)
@@ -996,16 +1180,46 @@ function createPlayerUI(){
 	var speedLabel = document.createElement('label');
 	speedLabel.className = 'dsv-speed';
 	speedLabel.innerHTML = 'Hız <input type="range" min="0" max="' + (SPEEDS.length - 1) + '" step="1" value="' + player.speed + '">';
-	speedLabel.querySelector('input').addEventListener('input', function(e){ player.speed = +e.target.value; });
+	speedLabel.querySelector('input').addEventListener('input', function(e){ player.speed = Number(e.target.value); });
 	bar.appendChild(speedLabel);
 
 	ui.counter = document.createElement('span');
 	ui.counter.className = 'dsv-counter';
 	bar.appendChild(ui.counter);
 
+	// drag to any step
+	ui.timeline = document.createElement('input');
+	ui.timeline.type = 'range';
+	ui.timeline.className = 'dsv-timeline';
+	ui.timeline.min = 0;
+	ui.timeline.setAttribute('aria-label', 'Adım');
+	ui.timeline.title = 'Adımlar arasında gezinin. Kısayollar: ← → adım, boşluk oynat/duraklat';
+	ui.timeline.addEventListener('input', function(){
+		var k = Number(ui.timeline.value); // read it first: pause() puts the slider back on the current step
+		player.pause();
+		player.seek(k);
+	});
+	bar.appendChild(ui.timeline);
+
+	var narrationBox = document.createElement('div');
+	narrationBox.id = 'narration';
+	narrationBox.className = 'dsv-narration';
+	narrationBox.setAttribute('aria-live', 'polite');
+
 	canvas.parentNode.insertBefore(bar, canvas);
+	canvas.parentNode.insertBefore(narrationBox, canvas);
 	player.ui = ui;
 	player.updateUI();
+
+	// ← / → step, space play/pause (not while typing in an editor or a field)
+	document.addEventListener('keydown', function(e){
+		var t = e.target;
+		if(e.altKey || e.ctrlKey || e.metaKey || (t.closest && t.closest('.CodeMirror, input, textarea, select, button, [contenteditable]')))
+			return;
+		if(e.key === 'ArrowLeft'){ player.back(); e.preventDefault(); }
+		else if(e.key === 'ArrowRight'){ player.pause(); player.forward(); e.preventDefault(); }
+		else if(e.key === ' '){ ui.play.click(); e.preventDefault(); }
+	});
 }
 
 createPlayerUI();
@@ -1021,11 +1235,13 @@ function drawGraphics(line, result){
 	var lhs_temp = line.type == 'free object' ? safeEval(line.text) : null;
 	var doubly = doublyRequested;
 	var scope = scopeOf(line.lhs);                  // null for a global variable
+	var sentence = describe(line, res, lhs_temp);   // what happened, with the values of now
 
 	player.add(function(){
 
 		if(doubly && !doublyMode)
 			enableDoublyMode();
+		narrate(sentence);
 
 		if(line.type == 'declaration' || line.type == 'assignment')
 		{
@@ -1042,6 +1258,7 @@ function drawGraphics(line, result){
 
 				pointerMap[key] = new Pointer(res, line.lhs, 'blue', 'up', scope);
 				pointerMap[key].draw(res);
+				focus.pointers.push(pointerMap[key]);
 			}
 			else if(res === null || isNode(res))  // p1 = null  /  p1 = x  /  p1 = x.next
 				pointTo(line.lhs, res, undefined, undefined, scope);
@@ -1069,6 +1286,7 @@ function drawGraphics(line, result){
 					res.newNode.shown = true;
 
 				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
+				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
 			else if(res.prop == '.data' && res.target.boxDraw)
@@ -1092,6 +1310,7 @@ function drawGraphics(line, result){
 
 			if(res.prop == '.next' || res.prop == '.prev'){
 				res.target[res.prop == '.next' ? 'visualNext' : 'visualPrev'] = res.value;
+				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
 		}
@@ -1138,10 +1357,24 @@ function assignGlobal(name, value){
 }
 
 var currentLine = null; // the line that is being executed, for error messages
+var currentDoc = null;  // the editor that line belongs to (a function body may be in another block)
+
+// the line an error happened on gets a red background in its editor until the next run
+var errorLines = [];
+function markErrorLine(doc, line){
+	if(!doc || !line || !doc.addLineClass)
+		return;
+	errorLines.push({doc: doc, handle: doc.addLineClass(line - 1, 'background', 'dsv-error-line')});
+}
+function clearErrorLines(){
+	errorLines.forEach(function(e){ e.doc.removeLineClass(e.handle, 'background', 'dsv-error-line'); });
+	errorLines = [];
+}
 
 function processOneItem(item){
 
 	currentLine = item.lineNumber;
+	currentDoc = window.activeEditor;
 
 	if(item.type == 'logical')
 	{
@@ -1172,7 +1405,8 @@ function processOneItem(item){
 				if(item.update)
 					processOneItem(item.update);
 
-				if(++guard > 1000)
+				guard = guard + 1;
+				if(guard > 1000)
 					throw new Error('Satır ' + item.lineNumber + ': döngü 1000 kereden fazla döndü. Sonsuz bir döngü olabilir mi? Döngü koşulunun bir gün yanlış olacağından emin olun.');
 			}
 			if(!stopped) // after a break the condition is not checked again
@@ -1294,7 +1528,8 @@ function callUser(def, args){
 	var sameDepth = 1;
 	frames.forEach(function(f){ if(f.fn === def.name) sameDepth++; });
 
-	var frame = {id: ++frameCounter, fn: def.name, sameDepth: sameDepth, vars: Object.create(null)};
+	frameCounter = frameCounter + 1;
+	var frame = {id: frameCounter, fn: def.name, sameDepth: sameDepth, vars: Object.create(null)};
 	def.params.forEach(function(param, i){ frame.vars[param] = args[i] === undefined ? null : args[i]; });
 
 	var callerLine = currentLine, callerDoc = window.activeEditor;
@@ -1435,6 +1670,8 @@ window.parse = function(text) {
 		output.textContent = '';
 
 	currentLine = null;
+	currentDoc = window.activeEditor;
+	clearErrorLines();
 
 	try {
 		var text = text || editor.getValue();
@@ -1462,6 +1699,10 @@ window.parse = function(text) {
 		return result;
 	} catch (err) {
 		document.getElementById("output").textContent = explainError(err, text);
+		if(err && err.name === 'SyntaxError' && err.location)
+			markErrorLine(window.activeEditor, err.location.start.line);
+		else
+			markErrorLine(currentDoc, (err && err.lineNumber) || currentLine);
 		return null;
 	}
 }
@@ -1531,7 +1772,10 @@ window.dsvState = function(){
 	return {
 		nodes: allNodes.filter(function(n){ return n.shown; }).map(function(n){ return n.shownData; }),
 		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
-		doubly: doublyMode
+		doubly: doublyMode,
+		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
+		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
+		narration: (document.getElementById('narration') || {}).textContent || ''
 	};
 };
 
@@ -1564,6 +1808,17 @@ function setEditors(items){
 		button.className = "btn-round btn-lg dsv-run";
 		insertAfter(button, editor.getWrapperElement());
 		button.addEventListener("click", run);
+
+		// appears once the code was changed: puts the example's own code back
+		var original = editor.getValue();
+		var restore = document.createElement("button");
+		restore.className = "dsv-restore";
+		restore.textContent = '↺ Geri yükle';
+		restore.title = 'Örneğin kendi kodunu geri yükle';
+		restore.hidden = true;
+		insertAfter(restore, button);
+		restore.addEventListener("click", function(){ editor.setValue(original); editor.focus(); });
+		editor.on("change", function(){ restore.hidden = editor.getValue() === original; });
 
 		editor.on("focus", function() { window.activeEditor = editor.doc });
 	});

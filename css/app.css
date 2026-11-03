@@ -23,6 +23,7 @@
   --viz-named: #2563eb;    /* the variable a node was created with: x, y... */
   --viz-pointer: #dc2626;  /* pointers: p, curr, slow... */
   --viz-local: #7c3aed;    /* local variables of a function call */
+  --viz-changed: #f59e0b;  /* what the last step changed */
 
   /* code editor */
   --code-bg: #fbfcfe;
@@ -68,6 +69,7 @@
   --viz-named: #7aa2ff;
   --viz-pointer: #ff7b72;
   --viz-local: #c4a5ff;
+  --viz-changed: #fbbf24;
 
   --code-bg: #121924;
   --cm-keyword: #c792ea;
@@ -192,6 +194,18 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .dsv-run:hover { background: var(--accent-hover); }
 :root[data-theme="dark"] .dsv-run { color: #0f141c; }
 
+/* the line an error happened on */
+.dsv-error-line { background: color-mix(in srgb, var(--viz-pointer) 18%, transparent); box-shadow: inset 3px 0 0 var(--viz-pointer); }
+
+/* puts the example's own code back (shown once the code was changed) */
+.dsv-restore {
+  position: absolute; right: 118px; bottom: 10px; z-index: 3;
+  height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.dsv-restore:hover { background: var(--accent-soft); border-color: transparent; }
+.dsv-restore[hidden] { display: none; }
+
 /* highlighting of the running line */
 .styled-background-normal { background: var(--hl-line); }
 .styled-background-logical-true { background: var(--hl-true); }
@@ -207,6 +221,13 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .dsv-speed { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; }
 .dsv-speed input { width: 90px; accent-color: var(--accent); }
 .dsv-counter { margin-left: auto; font-variant-numeric: tabular-nums; }
+.dsv-timeline { flex-basis: 100%; width: 100%; margin: 4px 0 0; accent-color: var(--accent); }
+
+/* one sentence about the last step, and a warning about nodes that got lost */
+.dsv-narration { padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.5; min-height: 38px; display: flex; flex-direction: column; gap: 2px; }
+.dsv-narration:empty::before { content: "Kodu çalıştırın; her adım burada açıklanır. Kısayollar: ← → adım, boşluk oynat/duraklat."; color: var(--muted); font-size: 13px; }
+.dsv-narration code { font-size: .9em; }
+.narration-warning { color: var(--viz-pointer); font-weight: 600; }
 
 .viz-canvas { background: var(--viz-bg); }
 .viz-canvas canvas { display: block; }
