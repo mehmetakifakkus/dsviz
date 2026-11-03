@@ -61,22 +61,39 @@ function evalExpr(code){
 	return compiled(frame ? frame.vars : NO_FRAME);
 }
 
-// var x = ... (declare) creates a local inside a function; x = ... changes the local if
-// there is one, the global otherwise
+// Closures: a call's frame.vars inherits (prototype chain) from the vars of the call the
+// function was defined in, so an inner function sees the variables around its definition,
+// also after that call has returned (makeCounter). "with" follows the chain by itself.
+
+function ownsVar(vars, name){ return Object.prototype.hasOwnProperty.call(vars, name); }
+
+// the vars object of the current call chain that holds `name` (null: a global or unknown)
+function varsHolding(name){
+	var frame = currentFrame();
+	for(var vars = frame && frame.vars; vars; vars = Object.getPrototypeOf(vars))
+		if(ownsVar(vars, name))
+			return vars;
+	return null;
+}
+
+// var x = ... (declare) creates a local inside a function; x = ... changes the nearest
+// variable called x: the call's own, one of the calls it was defined in, or the global
 function setVar(name, value, declare){
 	var frame = currentFrame();
-	if(frame && (declare || Object.prototype.hasOwnProperty.call(frame.vars, name)))
-		frame.vars[name] = value;
+	var holder = frame && (declare ? frame.vars : varsHolding(name));
+	if(holder)
+		holder[name] = value;
 	else
 		assignGlobal(name, value);
 }
 
 // for drawing: which call does the variable `name` belong to (null: a global)
 function scopeOf(name){
-	var frame = currentFrame();
-	if(!frame || !name || typeof name !== 'string' || !Object.prototype.hasOwnProperty.call(frame.vars, name))
+	if(!name || typeof name !== 'string')
 		return null;
-	return {id: frame.id, fn: frame.fn, depth: frame.sameDepth};
+	var holder = varsHolding(name);
+	var frame = holder && holder.__dsvFrame;
+	return frame ? {id: frame.id, fn: frame.fn, depth: frame.sameDepth} : null;
 }
 
 function propertyPath(property){ // [[".","next"],[".","next"]] -> ".next.next"
@@ -1066,19 +1083,29 @@ function findVisualFrame(id){
 	return null;
 }
 
-function setFrameVar(id, name, text, isNull, isPointer){
+function setFrameVar(id, name, text, isNull, isPointer, captured){
 	var frame = findVisualFrame(id);
-	if(!frame)
-		return;
+	if(!frame){ // the call that owns it has returned: a closure changed it, show it there (↑)
+		for(var i = visualFrames.length - 1; i >= 0 && !frame; i--)
+			if(visualFrames[i].vars[name] && visualFrames[i].vars[name].captured)
+				frame = visualFrames[i];
+		if(!frame)
+			return;
+		captured = true;
+	}
 	if(!frame.vars[name])
 		frame.order.push(name);
-	frame.vars[name] = {text: String(text), isNull: !!isNull, isPointer: !!isPointer};
+	frame.vars[name] = {text: String(text), isNull: !!isNull, isPointer: !!isPointer, captured: !!captured};
+	if(!captured) // the inner calls that show it as an outer variable (↑) follow the change
+		for(var k = visualFrames.indexOf(frame) + 1; k < visualFrames.length; k++)
+			if(visualFrames[k].vars[name] && visualFrames[k].vars[name].captured)
+				visualFrames[k].vars[name] = {text: String(text), isNull: !!isNull, isPointer: !!isPointer, captured: true};
 	renderCallStack();
 }
 
 // a plain value (number, boolean...): a global goes to the variables panel, a local to its call
 function showValue(name, value, scope){
-	if(isArray(value))
+	if(isArray(value) || typeof value === 'function') // array(5), function inc
 		value = formatValue(value);
 	if(scope)
 		setFrameVar(scope.id, name, formatValue(value), value === null, false);
@@ -1096,7 +1123,7 @@ function renderCallStack(){
 		var f = visualFrames[i];
 		var vars = f.order.map(function(name){
 			var v = f.vars[name];
-			return '<span class="frame-var' + (v.isNull ? ' is-null' : '') + (v.isPointer ? ' is-pointer' : '') + '">' +
+			return '<span class="frame-var' + (v.isNull ? ' is-null' : '') + (v.isPointer ? ' is-pointer' : '') + (v.captured ? ' is-captured" title="' + escapeHTML(t('capturedTitle')) : '') + '">' + (v.captured ? '↑ ' : '') +
 			       escapeHTML(name) + (v.text.charAt(0) === '→' ? ' ' : ' = ') + escapeHTML(v.text) + '</span>';
 		}).join('');
 		html += '<li' + (i === visualFrames.length - 1 ? ' class="current"' : '') + '><div class="frame-head">' + escapeHTML(f.title) + '</div>' +
@@ -1125,6 +1152,9 @@ function callStep(info, def){
 	narrate(t('nCalled', {call: info.fn + '(' + args + ')'}));
 
 	var scope = {id: info.id, fn: info.fn, depth: info.depth};
+	(info.captured || []).forEach(function(c){ // a closure: the outer variables it uses, marked ↑
+		setFrameVar(info.id, c.name, isNode(c.value) ? '→ ' + c.value.shownData : formatValue(c.value), c.value === null, isNode(c.value), true);
+	});
 	info.args.forEach(function(a){
 		if(a.value === null || isNode(a.value))
 			pointTo(a.name, a.value, undefined, undefined, scope);
@@ -1928,11 +1958,44 @@ var unfinishedCalls = []; // calls an error interrupted (their returnStep never 
 
 // a user function becomes a JavaScript function, so a call can sit anywhere inside an
 // expression (var v = pop(), return 1 + count(p.next)) and recursion works by itself
+// a function defined at the top is a global; one defined inside a call is a local of that
+// call and keeps its variables (def.scope) for later calls: a closure
 function defineFunction(item){
 	currentLine = item.lineNumber;
-	var def = {name: item.name, params: item.params, body: item.body,
+	var frame = currentFrame();
+	var def = {name: item.name, params: item.params, body: item.body, scope: frame ? frame.vars : null,
+	           bodyText: JSON.stringify(item.body), // which outer names it uses (see usesName)
 	           lineNumber: item.lineNumber, endLine: item.endLine, doc: window.activeEditor};
-	assignGlobal(item.name, function(){ return callUser(def, arguments); });
+	var fn = function(){ return callUser(def, arguments); };
+	fn.dsvName = item.name;
+	if(frame)
+		frame.vars[item.name] = fn;
+	else
+		assignGlobal(item.name, fn);
+}
+
+// does this code mention the name? (letters of the language count as part of a name)
+function usesName(text, name){
+	var at = -1;
+	while((at = text.indexOf(name, at + 1)) >= 0){
+		var before = text.charAt(at - 1), after = text.charAt(at + name.length);
+		if(!/[A-Za-z0-9_şğçöüıŞĞÇÖÜİ]/.test(before) && !/[A-Za-z0-9_şğçöüıŞĞÇÖÜİ]/.test(after))
+			return true;
+	}
+	return false;
+}
+
+// the variables a closure sees from the calls around its definition (not its own, not globals)
+function capturedVars(scope){
+	var seen = {}, list = [];
+	for(var vars = scope; vars; vars = Object.getPrototypeOf(vars))
+		Object.keys(vars).forEach(function(name){
+			if(seen[name]) return;
+			seen[name] = true;
+			if(typeof vars[name] !== 'function')
+				list.push({name: name, value: vars[name]});
+		});
+	return list;
 }
 
 function callUser(def, args){
@@ -1943,17 +2006,20 @@ function callUser(def, args){
 	frames.forEach(function(f){ if(f.fn === def.name) sameDepth++; });
 
 	frameCounter = frameCounter + 1;
-	var frame = {id: frameCounter, fn: def.name, sameDepth: sameDepth, vars: Object.create(null)};
+	var frame = {id: frameCounter, fn: def.name, sameDepth: sameDepth, vars: Object.create(def.scope)};
+	Object.defineProperty(frame.vars, '__dsvFrame', {value: frame}); // not enumerable: not a variable
 	def.params.forEach(function(param, i){ frame.vars[param] = args[i] === undefined ? null : args[i]; });
 
 	var callerLine = currentLine, callerDoc = window.activeEditor;
 	var info = {id: frame.id, fn: def.name, depth: sameDepth,
-	            args: def.params.map(function(param){ return {name: param, value: frame.vars[param]}; })};
+	            args: def.params.map(function(param){ return {name: param, value: frame.vars[param]}; }),
+	            captured: capturedVars(def.scope).filter(function(c){ return def.params.indexOf(c.name) < 0 && usesName(def.bodyText, c.name); })};
 
 	player.add(function(){ callStep(info, def); });
 
 	frames.push(frame);
 	window.activeEditor = def.doc; // the body is highlighted in the editor that defined it
+	def.body.forEach(function(item){ if(item.type === 'function') defineFunction(item); }); // inner functions can be called before their line
 
 	var result, exitLine = def.endLine, finished = false;
 	try {
@@ -1988,6 +2054,7 @@ function callUser(def, args){
 
 function formatValue(value){
 	if(isNode(value)) return t('nodeValue', {data: value.data});
+	if(typeof value === 'function') return t('functionValue', {name: value.dsvName || '?'});
 	if(isArray(value)) return t('arrayValue', {n: value.length});
 	if(value === null) return 'null';
 	if(value === undefined) return t('undefinedValue');

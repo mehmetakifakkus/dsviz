@@ -43,6 +43,7 @@ const EXPECTED = {
 	'treeDelete.html': ['[root.data, root.left.data, root.left.left.data, root.left.right.data, root.right.data, root.right.left]', [8, 6, 1, 7, 14, null]],
 	'avlTree.html': ['[root.data, root.height, root.right.right.data, root.right.right.left.data, root.right.right.right.data]', [4, 4, 15, 7, 16]],
 	'hashTable.html': ['[table.map(b => walk(b)), output()]', [['15', '', '17>22>12', '8>3', ''], '']],
+	'closure.html': ['[s, a, b, d, typeof count, typeof visit]', [20, 1, 2, 1, 'undefined', 'undefined']],
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };
 

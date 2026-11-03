@@ -137,6 +137,8 @@
 		nCellNull: {tr: '{cell} artık null.', en: '{cell} is now null.', de: '{cell} ist jetzt null.'},
 		nCellNew: {tr: '{cell} yeni bir düğümü gösteriyor: {node}.', en: '{cell} points to a new node: {node}.', de: '{cell} zeigt auf einen neuen Knoten: {node}.'},
 		nCellValue: {tr: '{cell} = {value}.', en: '{cell} = {value}.', de: '{cell} = {value}.'},
+		functionValue: {tr: 'fonksiyon {name}', en: 'function {name}', de: 'Funktion {name}'},
+		capturedTitle: {tr: 'Dıştaki bir çağrının değişkeni (closure)', en: 'A variable of an outer call (closure)', de: 'Eine Variable eines äußeren Aufrufs (Closure)'},
 		arrayValue: {tr: 'dizi({n})', en: 'array({n})', de: 'Array({n})'},
 		nField: {tr: '{node} düğümünün {field} alanı {value} oldu.', en: 'The {field} of {node} is now {value}.', de: 'Das Feld {field} von {node} ist jetzt {value}.'},
 		nData: {tr: '{node} düğümünün değeri {value} oldu.', en: 'The value of {node} is now {value}.', de: 'Der Wert von {node} ist jetzt {value}.'},

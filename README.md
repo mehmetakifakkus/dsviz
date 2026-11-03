@@ -21,7 +21,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 - Hatalar anlaşılır biçimde açıklanır (hangi satırda, ne yanlış gitti).
 - Üç dil: Türkçe, İngilizce ve Almanca. Arayüz, adım anlatımı, hata mesajları, ders metinleri ve kod yorumları çevrilmiştir. İlk açılışta tarayıcının dili seçilir.
 - Üst çubuğun sağındaki dişli düğmesi ayarları açar: dil, tema (sistem / açık / koyu), varsayılan animasyon hızı, kod yazı boyutu, adım anlatımı ve kopan düğüm uyarısı. Ayarlar tarayıcıda saklanır.
-- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, ikili arama ağacı (ekleme, arama, dolaşma, yükseklik, silme), AVL ağacı, zincirlemeli hash tablosu, yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
+- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, ikili arama ağacı (ekleme, arama, dolaşma, yükseklik, silme), AVL ağacı, zincirlemeli hash tablosu, yığın, kuyruk, fonksiyonlar, özyineleme, closure, iki listeyi karşılaştırma ve birleştirme.
 
 ## Yerelde çalıştırma
 
@@ -45,7 +45,7 @@ npm test
 
 - `tests/grammar.spec.js`: tarayıcısız gramer testleri; örnek sayfalardaki her kod bloğunun ayrıştırılabildiğini ve zor girdilerin doğru okunduğunu kontrol eder.
 - `tests/pages.spec.js`: her sayfanın bütün bloklarını çalıştırır; hata olmamasını, sitenin dışına istek gitmemesini ve sayfanın beklenen son durumda bitmesini kontrol eder. **Yeni bir sayfa eklerken** beklenen son durumunu bu dosyadaki `EXPECTED` listesine yazın, yoksa test başarısız olur.
-- `tests/language.spec.js`: dil özellikleri (döngüler, fonksiyonlar, özyineleme, koşullar) ve Türkçe hata mesajları.
+- `tests/language.spec.js`: dil özellikleri (döngüler, fonksiyonlar, özyineleme, closure, koşullar) ve Türkçe hata mesajları.
 - `tests/ui.spec.js`: oynatıcı, çağrı yığını, değişkenler paneli, komut satırı, tema, örnek menüsü, telefon düzeni.
 - `tests/i18n.spec.js`: her metnin üç dilde de olması, sayfaların İngilizce ve Almanca içeriği, dil seçimi ve ayarlar paneli. Sayfa testleri (`pages.spec.js`) her sayfayı üç dilde çalıştırır.
 

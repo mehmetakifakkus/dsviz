@@ -368,6 +368,22 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('the call stack shows the outer variables a closure uses, kept up to date', async ({ page }) => {
+		const problems = await openPage(page, 'closure.html');
+		await runBlock(page, 1);
+		const boxes = page.locator('#callstack li');
+		// step to a moment inside visit, after sum changed
+		const total = (await stepCounter(page)).total;
+		for (let k = 1; k <= total; k++) {
+			await page.evaluate(k => { const t = document.querySelector('.dsv-timeline'); t.value = k; t.dispatchEvent(new Event('input', { bubbles: true })); }, k);
+			if ((await page.locator('#narration').textContent()) === 'sum = 13.') break;
+		}
+		await expect(boxes.first()).toContainText('visit(9)');
+		await expect(boxes.first().locator('.frame-var.is-captured')).toHaveText(['↑ limit = 3', '↑ sum = 13']); // only what visit uses
+		await expect(boxes.nth(1)).toContainText('sum = 13');
+		expect(problems).toEqual([]);
+	});
+
 	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
 		const problems = await openPage(page, 'binarySearchTree.html');
 		await runBlock(page, 0);

@@ -171,3 +171,39 @@ if(find(3).data == 3)
 	await expect(page.locator('#output')).toContainText("null olan bir pointer'ın .data alanı okunmaya çalışıldı");
 	expect(problems).toEqual([]);
 });
+
+test('closures: an inner function sees and changes the variables around its definition', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, `function makeCounter()
+{
+  var count = 0
+  function inc()
+  {
+    count++
+    return count
+  }
+  return inc
+}
+var c1 = makeCounter()
+var c2 = makeCounter()
+var a = c1()
+var b = c1()
+var d = c2()
+function outer(n)
+{
+  function twice(v)
+  {
+    return v * 2 + n
+  }
+  return twice(n) + helper(1)
+  function helper(k)
+  {
+    return k
+  }
+}
+var e = outer(5)
+`);
+	expect(await valueOf(page, '[a, b, d, e, typeof count, typeof inc, typeof twice, typeof helper]')).toEqual([1, 2, 1, 16, 'undefined', 'undefined', 'undefined', 'undefined']);
+	await expect(page.locator('#variables li').filter({ hasText: 'c1 =' })).toHaveText('c1 =fonksiyon inc');
+	expect(problems).toEqual([]);
+});

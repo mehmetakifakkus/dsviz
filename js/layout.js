@@ -55,7 +55,8 @@
 		]},
 		{ group: {tr: 'Fonksiyonlar', en: 'Functions', de: 'Funktionen'}, items: [
 			['functions.html', {tr: 'Fonksiyonlar: push ve pop', en: 'Functions: push and pop', de: 'Funktionen: push und pop'}],
-			['recursion.html', {tr: 'Özyineleme (recursion)', en: 'Recursion', de: 'Rekursion'}]
+			['recursion.html', {tr: 'Özyineleme (recursion)', en: 'Recursion', de: 'Rekursion'}],
+			['closure.html', {tr: 'İç içe fonksiyonlar ve closure', en: 'Nested functions and closures', de: 'Verschachtelte Funktionen und Closures'}]
 		]},
 		{ group: {tr: 'İki liste', en: 'Two lists', de: 'Zwei Listen'}, items: [
 			['checkIfTwoLinkedListAreEqual.html', {tr: 'İki liste eşit mi?', en: 'Are two lists equal?', de: 'Sind zwei Listen gleich?'}],
