@@ -1,5 +1,5 @@
 /*
- * Code languages: the pages can show and run their code in C++ instead of Düğüm.
+ * Code languages: the pages can show and run their code in C++ or Java instead of Düğüm.
  *
  * The engine only knows Düğüm. C++ code is turned into Düğüm line by line before it is
  * parsed (fromCpp), so the drawing, the narration and the error messages work the same and
@@ -10,7 +10,9 @@
  * The C++ that is understood is the part a data structures course needs: a predefined
  * struct Node {data, next, prev, left, right}, Node* / int / bool / double variables,
  * arrays (Node* t[5]), new / delete, ->, nullptr / NULL, if / else / while / for,
- * functions, cout << ... << endl. Everything else stays Düğüm (one statement per line).
+ * functions, cout << ... << endl. Java the same way: Node p, Node[] t = new Node[5],
+ * System.out.println, static methods, a class around them; it has no delete (the garbage
+ * collector removes nodes nothing reaches). Everything else stays Düğüm (one statement per line).
  */
 (function(){
 	var ID = 'A-Za-z0-9_şğçöüıŞĞÇÖÜİ';
@@ -71,17 +73,22 @@
 
 	// ---------- Düğüm expression -> C++ expression ----------
 
-	function exprCpp(s){
+	function exprCpp(s){ return exprIn(s, 'cpp'); }
+
+	function exprIn(s, lang){
+		var java = lang === 'java', math = java ? 'Math.' : '';
 		return outsideStrings(s, function(part){
-			return part
+			part = part
 				.replace(/\bdeğil\b\s*/g, '!').replace(/\bnot\b\s*/g, '!')
 				.replace(/\band\b/g, '&&').replace(/\bor\b/g, '||')
 				.replace(/\bdoğru\b/g, 'true').replace(/\byanlış\b/g, 'false')
-				.replace(/\bnull\b/g, 'nullptr')
-				.replace(/\btaban\s*\(/g, 'floor(').replace(/\btavan\s*\(/g, 'ceil(')
-				.replace(/karekök\s*\(/g, 'sqrt(').replace(/\bmutlak\s*\(/g, 'abs(')
+				.replace(/\btaban\s*\(/g, math + 'floor(').replace(/\btavan\s*\(/g, math + 'ceil(')
+				.replace(/karekök\s*\(/g, math + 'sqrt(').replace(/\bmutlak\s*\(/g, math + 'abs(')
 				.replace(new RegExp('(^|[^' + ID + '.])Node\\s*\\(', 'g'), function(m, before){ return before + 'new Node('; })
-				.replace(/new\s+new\s+Node/g, 'new Node')
+				.replace(/new\s+new\s+Node/g, 'new Node');
+			if(java)
+				return part;
+			return part.replace(/\bnull\b/g, 'nullptr')
 				.replace(new RegExp('([' + ID + '\\])])\\.(?=[A-Za-z_])', 'g'), '$1->'); // p.next -> p->next (not 2.5)
 		});
 	}
@@ -283,15 +290,24 @@
 		return {globals: globals, funcs: funcs};
 	}
 
-	function cppType(t){
-		if(t === 'Node*' || t === 'null') return 'Node*';
-		if(t === 'bool' || t === 'double') return t;
+	function cppType(t){ return langType(t, 'cpp'); }
+
+	function langType(t, lang){
+		if(t === 'Node*' || t === 'null') return lang === 'java' ? 'Node' : 'Node*';
+		if(t === 'bool') return lang === 'java' ? 'boolean' : 'bool';
+		if(t === 'double') return t;
 		return 'int';
 	}
 
-	// ---------- Düğüm -> C++ (for showing the examples) ----------
+	// ---------- Düğüm -> C++ or Java (for showing the examples) ----------
 
-	function toCpp(blocks){
+	function toCpp(blocks){ return toLang(blocks, 'cpp'); }
+	function toJava(blocks){ return toLang(blocks, 'java'); }
+
+	function toLang(blocks, lang){
+		var java = lang === 'java';
+		var exprCpp = function(s){ return exprIn(s, lang); };
+		var cppType = function(t){ return langType(t, lang); };
 		var lines = [], starts = [];
 		blocks.forEach(function(code){
 			starts.push(lines.length);
@@ -314,6 +330,7 @@
 				var arr = /^new\s+(Array|Dizi)\s*\(([\s\S]*)\)\s*$/.exec(d.expr);
 				if(arr){
 					var elem = t && t.indexOf('arr:') === 0 && t !== 'arr:?' ? t.slice(4) : 'int';
+					if(java) return {type: cppType(elem) + '[]', text: d.name + ' = new ' + cppType(elem) + '[' + arr[2].trim() + ']'};
 					return {type: cppType(elem), text: d.name + '[' + arr[2].trim() + ']'};
 				}
 				if(t === undefined) t = typeOf(d.expr, lookup, types.funcs);
@@ -328,6 +345,14 @@
 		function printStatement(code){
 			var items;
 			try { items = window.dsvParser.parse(code + '\n')[0].list; } catch(e) { items = null; }
+			if(java){ // "+" joins text in Java: a sum inside goes in parentheses
+				if(!items) return 'System.out.println(' + exprCpp(code.replace(/^print\s+/, '')) + ')';
+				return 'System.out.println(' + items.map(function(it){
+					if(it.subtype === 'string') return JSON.stringify(it.text);
+					var e = exprCpp(it.text.trim());
+					return items.length > 1 && (splitTop(e, '+').length > 1 || splitTop(e, '-').length > 1) ? '(' + e + ')' : e;
+				}).join(' + ') + ')';
+			}
 			if(!items) return 'cout << ' + exprCpp(code.replace(/^print\s+/, '')) + ' << endl';
 			return 'cout << ' + items.map(function(it){
 				return it.subtype === 'string' ? JSON.stringify(it.text) : exprCpp(it.text.trim());
@@ -339,7 +364,8 @@
 			if(!code) return '';
 			if((m = /^var\s+([\s\S]*)$/.exec(code))) return declaration(m[1]) + ';';
 			if(/^print\b/.test(code)) return printStatement(code) + ';';
-			if((m = /^(delete|free)\s+([\s\S]*)$/.exec(code))) return 'delete ' + exprCpp(m[2]) + ';';
+			if((m = /^(delete|free)\s+([\s\S]*)$/.exec(code))) // Java has no delete: say so in a comment
+				return java ? '// delete ' + m[2] + ': ' + (window.dsv ? window.dsv.t('javaNoDelete') : 'not needed in Java') : 'delete ' + exprCpp(m[2]) + ';';
 			if((m = /^return\b\s*([\s\S]*)$/.exec(code))) return 'return' + (m[1] ? ' ' + exprCpp(m[1]) : '') + ';';
 			if(/^(break|continue)$/.test(code)) return code + ';';
 			// t[k] = null in an array of numbers: C++ has no null int, the empty cell is 0
@@ -368,7 +394,7 @@
 				bodyDepth = depth;
 				var f = types.funcs[fnNow];
 				var params = header[2].split(',').map(function(p){ return p.trim(); }).filter(Boolean);
-				out = (f.ret === 'void' ? 'void' : cppType(f.ret)) + ' ' + fnNow + '(' +
+				out = (java ? 'static ' : '') + (f.ret === 'void' ? 'void' : cppType(f.ret)) + ' ' + fnNow + '(' +
 				      params.map(function(p){ return cppType(f.vars[p]) + ' ' + p; }).join(', ') + ')' + (header[3] ? ' ' + header[3] : '');
 			}
 			else if(/^[{}]+$/.test(code)){
@@ -495,8 +521,100 @@
 		}
 	}
 
-	// a piece of Düğüm in the narration, shown the C++ way (p->next, nullptr)
-	function displayCpp(text){ return exprCpp(text).replace(/^var\s+/, ''); }
+	// ---------- Java -> Düğüm (before running) ----------
 
-	window.dsvCode = {toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, inferTypes: inferTypes};
+	var JTYPE = '(?:void|int|long|short|double|float|boolean|char|Node)';
+	var JMOD = '(?:(?:public|private|protected|static|final)\\s+)*';
+	var JDECL = new RegExp('^(\\s*)' + JMOD + '(' + JTYPE + ')\\s*((?:\\[\\s*\\])?)\\s*(' + NAME + '[\\s\\S]*)$');
+	var JFUNC = new RegExp('^(\\s*)' + JMOD + '(' + JTYPE + ')\\s*(?:\\[\\s*\\])?\\s*(' + NAME + ')\\s*\\(([^()]*)\\)\\s*([\\s\\S]*)$');
+
+	function fromJava(text){
+		var inNodeClass = false, hasMain = false, depth = 0, wrappers = [];
+		var out = text.split('\n').map(function(line){
+			var split = splitComment(line), code = split[0], comment = split[1];
+			var opens = (code.match(/\{/g) || []).length, closes = (code.match(/\}/g) || []).length;
+			var before = depth;
+			depth += opens - closes;
+			// class Node { ... } is built in; a class around the methods (public class Main { ... }) is left out
+			if(inNodeClass){
+				if(depth <= inNodeClass - 1){ inNodeClass = false; }
+				return '//';
+			}
+			if(new RegExp('^\\s*' + JMOD + 'class\\s+Node\\b').test(code)){
+				if(depth > before) inNodeClass = depth;
+				return '//';
+			}
+			if(new RegExp('^\\s*' + JMOD + 'class\\s+' + NAME).test(code)){
+				if(depth > before) wrappers.push(depth);
+				return '//';
+			}
+			if(/^\s*\}\s*$/.test(code) && wrappers.length && before === wrappers[wrappers.length - 1]){
+				wrappers.pop();
+				return '//';
+			}
+			if(/^\s*(import|package)\b/.test(code))
+				return '//';
+
+			code = outsideStrings(code, function(part){
+				return part.replace(/\bMath\.floor\s*\(/g, 'taban(').replace(/\bMath\.ceil\s*\(/g, 'tavan(')
+				           .replace(/\bMath\.sqrt\s*\(/g, 'karekök(').replace(/\bMath\.abs\s*\(/g, 'mutlak(')
+				           .replace(/\bnew\s+(?:Node|int|long|double|boolean)\s*\[([^\]]*)\]/g, 'new Array($1)');
+			});
+			code = trimRight(code).replace(/;\s*$/, '');
+
+			var pieces = /^\s*(?:\}\s*)?(?:else\s+)?for\s*\(/.test(code) ? [code] : splitTop(code, ';');
+			if(pieces.length > 1){
+				var indent = /^\s*/.exec(code)[0];
+				var converted = pieces.map(function(piece){ return convertStatement(indent + piece.trim()); });
+				if(converted.every(function(c){ return /^\s*var\s/.test(c); }))
+					code = indent + 'var ' + converted.map(function(c){ return c.replace(/^\s*var\s+/, ''); }).join(', ');
+				return code + (comment ? ' ' + comment.replace(/^\s*/, '') : '');
+			}
+			code = convertStatement(code);
+			return code + (comment ? (code.trim() ? ' ' : '') + comment.replace(/^\s*/, '') : '');
+		});
+		var result = out.join('\n');
+		if(hasMain) result += '\nmain()';
+		return result;
+
+		function convertStatement(code){
+			var m;
+			if((m = /^(\s*)System\.out\.print(?:ln)?\s*\(([\s\S]*)\)\s*$/.exec(code)))
+				code = m[1] + 'print ' + (m[2].trim() ? m[2].trim() : '""');
+			else if((m = new RegExp('^(\\s*)(\\+\\+|--)\\s*(' + NAME + ')\\s*$').exec(code)))
+				code = m[1] + m[3] + m[2];
+			else if((m = JFUNC.exec(code)) && !/=/.test(code.slice(0, code.indexOf('(')))){
+				var params = m[4].split(',').map(function(p){
+					var names = p.match(new RegExp(NAME, 'g'));
+					return names ? names[names.length - 1] : '';
+				}).filter(function(p){ return p && !new RegExp('^' + JTYPE + '$').test(p) && p !== 'String'; });
+				if(m[3] === 'main'){ hasMain = true; params = []; }
+				code = m[1] + 'function ' + m[3] + '(' + params.join(', ') + ')' + (m[5] ? ' ' + m[5] : '');
+			}
+			else if((m = /^(\s*(?:\}\s*)?(?:else\s+)?for\s*\(\s*)(?:final\s+)?(?:int|long|double|float|boolean|Node)\s*/.exec(code)))
+				code = m[1] + 'var ' + code.slice(m[0].length);
+			else if((m = JDECL.exec(code)) && /^[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*\s*(\[\s*\]\s*)?([=,]|$)/.test(m[4])){
+				var reference = m[2] === 'Node' || m[3].length > 0;
+				var decls = splitTop(m[4], ',').map(function(d){
+					d = d.trim().replace(new RegExp('^(' + NAME + ')\\s*\\[\\s*\\]'), '$1'); // int s[] = ...
+					if(/=/.test(d)) return d;
+					return d + (reference ? ' = null' : ' = 0');
+				});
+				code = m[1] + 'var ' + decls.join(', ');
+			}
+			return code;
+		}
+	}
+
+	// a piece of Düğüm in the narration, shown the way of the chosen language (p->next, nullptr)
+	function displayCpp(text){ return exprCpp(text).replace(/^var\s+/, ''); }
+	function displayJava(text){ return exprIn(text, 'java').replace(/^var\s+/, ''); }
+
+	var LANGS = {
+		cpp: {name: 'C++', to: toCpp, from: fromCpp, display: displayCpp, mode: 'text/x-c++src'},
+		java: {name: 'Java', to: toJava, from: fromJava, display: displayJava, mode: 'text/x-java'}
+	};
+
+	window.dsvCode = {toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, toJava: toJava, fromJava: fromJava,
+	                  displayJava: displayJava, inferTypes: inferTypes, langs: LANGS};
 })();

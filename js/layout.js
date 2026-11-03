@@ -123,19 +123,20 @@
 		e.textContent = t(e.getAttribute('data-i18n'));
 	});
 	// ---------- the code language: Düğüm, or C++ translated from it ----------
-	var codeLang = dsv.settings.codeLang === 'cpp' ? 'cpp' : 'dugum';
-	var linkLang = /(?:^#|&)c=(cpp|dugum)(?:&|$)/.exec(location.hash);  // a shared link keeps its language
+	var codeLangs = window.dsvCode ? window.dsvCode.langs : {};
+	var codeLang = codeLangs[dsv.settings.codeLang] ? dsv.settings.codeLang : 'dugum';
+	var linkLang = /(?:^#|&)c=(cpp|java|dugum)(?:&|$)/.exec(location.hash);  // a shared link keeps its language
 	if(linkLang) codeLang = linkLang[1];
 	else if(/(?:^#|&)b\d+=/.test(location.hash)) codeLang = 'dugum';
 	if(page === 'language.html') codeLang = 'dugum'; // the guide is about Düğüm itself
 	window.dsvCodeLang = codeLang;
-	if(codeLang === 'cpp' && window.dsvCode){
+	if(codeLangs[codeLang]){
 		var areas = lesson.querySelectorAll('textarea.deneme');
-		var translated = window.dsvCode.toCpp(Array.prototype.map.call(areas, function(a){ return a.value; }));
+		var translated = codeLangs[codeLang].to(Array.prototype.map.call(areas, function(a){ return a.value; }));
 		Array.prototype.forEach.call(areas, function(a, i){ a.value = translated[i]; });
 		// short pieces of code in the text too: p.next -> p->next, null -> nullptr
 		Array.prototype.forEach.call(lesson.querySelectorAll('p code, li code, td code'), function(c){
-			c.textContent = window.dsvCode.displayCpp(c.textContent);
+			c.textContent = codeLangs[codeLang].display(c.textContent);
 		});
 	}
 
@@ -191,7 +192,7 @@
 			options(dsv.LANGS, dsv.LANGS.map(function(l){ return dsv.LANG_NAMES[l]; }), s.lang) + '</select></label>' +
 		'<div class="setting-note">' + esc(t('languageNote')) + '</div>' +
 		'<label class="setting"><span>' + esc(t('codeLang')) + '</span><select name="codeLang">' +
-			options(['dugum', 'cpp'], ['Düğüm', 'C++'], s.codeLang) + '</select></label>' +
+			options(['dugum', 'cpp', 'java'], ['Düğüm', 'C++', 'Java'], s.codeLang) + '</select></label>' +
 		'<div class="setting-note">' + esc(t('codeLangNote')) + '</div>' +
 		'<div class="setting"><span>' + esc(t('theme')) + '</span>' +
 			segmented('theme', ['system', 'light', 'dark'], [t('themeSystem'), t('themeLight'), t('themeDark')], s.theme) + '</div>' +
@@ -246,7 +247,7 @@
 	Array.prototype.forEach.call(blocks, function(ta, i){
 		var card = el('div', {'class': 'code-card'});
 		if(page !== 'index.html')
-			card.appendChild(el('div', {'class': 'code-label'}, esc(t('block', {n: i + 1})) + (codeLang === 'cpp' ? ' · C++' : '')));
+			card.appendChild(el('div', {'class': 'code-label'}, esc(t('block', {n: i + 1})) + (codeLangs[codeLang] ? ' · ' + codeLangs[codeLang].name : '')));
 		ta.parentNode.insertBefore(card, ta);
 		card.appendChild(ta);
 	});

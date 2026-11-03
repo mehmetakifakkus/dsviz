@@ -134,6 +134,10 @@
 			en: 'No variable and no link reaches {nodes} any more.',
 			de: '{nodes} sind von keiner Variable und keinem Link mehr erreichbar.'
 		},
+		nLostOneJava: {tr: '{nodes} düğümüne artık ulaşılamıyor; Java\'nın çöp toplayıcısı onu silecek.', en: 'Nothing reaches {nodes} any more; Java\'s garbage collector will remove it.', de: '{nodes} ist nicht mehr erreichbar; der Garbage Collector von Java wird ihn entfernen.'},
+		nLostManyJava: {tr: '{nodes} düğümlerine artık ulaşılamıyor; Java\'nın çöp toplayıcısı onları silecek.', en: 'Nothing reaches {nodes} any more; Java\'s garbage collector will remove them.', de: '{nodes} sind nicht mehr erreichbar; der Garbage Collector von Java wird sie entfernen.'},
+		unreachableJava: {tr: 'çöp', en: 'garbage', de: 'Müll'},
+		javaNoDelete: {tr: 'Java\'da gerekmez, çöp toplayıcı ulaşılamayan düğümü siler', en: 'not needed in Java, the garbage collector removes nodes nothing reaches', de: 'in Java nicht nötig, der Garbage Collector entfernt unerreichbare Knoten'},
 		nPointsNull: {tr: '{name} artık null: hiçbir düğümü göstermiyor.', en: '{name} is now null: it points to no node.', de: '{name} ist jetzt null: zeigt auf keinen Knoten.'},
 		nPointsTo: {tr: '{name} artık {node} düğümünü gösteriyor.', en: '{name} now points to {node}.', de: '{name} zeigt jetzt auf {node}.'},
 		nNewNode: {tr: '{name} adında yeni bir düğüm oluşturuldu: {node}.', en: 'A new node {node} was created as {name}.', de: 'Ein neuer Knoten {node} wurde als {name} erstellt.'},

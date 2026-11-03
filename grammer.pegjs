@@ -207,7 +207,7 @@ init_declarator_list
  = 	first:init_declarator rest:(',' _ init_declarator)* _ nl { return [first].concat(rest.map(function(r){ return r[2]; })); }
 
 init_declarator
-	= _ left:name _"="_ exp: (array_constructor / node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(]) { return o; }) / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
+	= _ left:name _"="_ exp: (array_constructor / node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(=<>!&|]) { return o; }) / bool_expression / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
 
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
@@ -218,6 +218,10 @@ init_declarator
     else
         return {'lhs': left, 'rhs': exp.text};
 }   
+
+// ok = a == b, found = p != null && p.data > 3: a condition as a value (true / false)
+bool_expression
+ = c:condition &{ return /(==|!=|<|>|&&|\|\||!|\bnot\b|\band\b|\bor\b|değil)/.test(c.text); } { return {type: 'expression', text: c.text}; }
 
 // print "toplam: " + sum     (the parts after the first one must be joined with +)
 print_statement = _ "print" !idChar _ first:print_item rest:( _ '+' _ print_item)* _ comment? _ nl {

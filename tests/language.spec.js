@@ -234,3 +234,41 @@ test('C++: an error points at the line as it was written', async ({ page }) => {
 	await expect(page.locator('#output')).toContainText("Satır 2: null olan bir pointer'ın .data alanı okunmaya çalışıldı");
 	expect(problems).toEqual([]);
 });
+
+test('Java: a hand-written program runs (class, println, arrays, ++x, main); garbage is marked', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { codeLang: 'java' });
+	await runCode(page, `import java.util.*;
+
+public class Main {
+  static class Node {
+    int data;
+    Node next;
+    Node(int d) { data = d; }
+  }
+
+  static int length(Node head) {
+    int n = 0;
+    for (Node p = head; p != null; p = p.next)
+      ++n;
+    return n;
+  }
+
+  public static void main(String[] args) {
+    Node a = new Node(1), b = new Node(2);
+    a.next = b;
+    int[] counts = new int[3];
+    counts[0] = length(a);
+    boolean ok = counts[0] == 2;
+    System.out.println("length: " + counts[0] + " " + ok);
+    a.next = null;
+  }
+}
+`);
+	expect(await outputText(page)).toBe('length: 2 true\n');
+
+	// no delete in Java: a node nothing reaches is marked for the garbage collector
+	await runCode(page, 'Node x = new Node(7);\nx = new Node(8);\n');
+	await expect(page.locator('#narration .narration-warning')).toHaveText("⚠ [7] düğümüne artık ulaşılamıyor; Java'nın çöp toplayıcısı onu silecek.");
+	expect((await page.evaluate(() => window.dsvState())).lost.sort((a, b) => a - b)).toEqual([1, 2, 7]); // main has returned: its nodes are garbage too
+	expect(problems).toEqual([]);
+});
