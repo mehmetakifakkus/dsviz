@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AVL ağacı | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">AVL ağacı</h1>
+<h1 data-lang="en">AVL tree</h1>
+<h1 data-lang="de">AVL-Baum</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">İkili arama ağacında arama ve ekleme ağacın yüksekliği kadar adım sürer. Değerler sıralı gelirse (1, 2, 3, …) her yeni düğüm bir öncekinin sağına eklenir ve ağaç tek kollu bir listeye dönüşür: <em>n</em> düğüm, <em>n</em> adım. AVL ağacı (Adelson-Velsky ve Landis, 1962) her eklemeden sonra ağacı dengeler: her düğümde sol ve sağ alt ağaçların yükseklik farkı en fazla 1 olur, böylece yükseklik hep log₂ <em>n</em> civarında kalır.</p>
+<p data-lang="en">In a binary search tree, searching and inserting take as many steps as the tree is high. If the values arrive sorted (1, 2, 3, …), every new node goes to the right of the previous one and the tree becomes a one-armed list: <em>n</em> nodes, <em>n</em> steps. An AVL tree (Adelson-Velsky and Landis, 1962) rebalances after every insertion: in every node the heights of the left and right subtrees differ by at most 1, so the height always stays around log₂ <em>n</em>.</p>
+<p data-lang="de">In einem binären Suchbaum dauern Suchen und Einfügen so viele Schritte, wie der Baum hoch ist. Kommen die Werte sortiert (1, 2, 3, …), landet jeder neue Knoten rechts vom vorigen, und der Baum wird zu einer einarmigen Liste: <em>n</em> Knoten, <em>n</em> Schritte. Ein AVL-Baum (Adelson-Velsky und Landis, 1962) gleicht sich nach jedem Einfügen aus: in jedem Knoten unterscheiden sich die Höhen des linken und rechten Teilbaums um höchstens 1, sodass die Höhe immer bei etwa log₂ <em>n</em> bleibt.</p>
+
+<p data-lang="tr">Her düğüm kendi yüksekliğini <code>height</code> alanında tutar; çizimde düğümün sağ üstünde <code>h=</code> olarak görünür. Dengeyi düzeltmenin aracı <em>döndürme</em>dir: sağa döndürmede sol çocuk <code>x</code> yukarı çıkar, eski kök <code>y</code> onun sağ çocuğu olur ve <code>x</code>'in sağ alt ağacı <code>y</code>'nin soluna geçer. Sıralama bozulmaz, yalnızca üç bağ değişir. Sola döndürme bunun aynadaki görüntüsüdür. Bu blok yalnızca yardımcı fonksiyonları tanımlar.</p>
+<p data-lang="en">Every node keeps its own height in the field <code>height</code>; the drawing shows it at the node's top right as <code>h=</code>. The tool for fixing the balance is a <em>rotation</em>: in a right rotation the left child <code>x</code> moves up, the old root <code>y</code> becomes its right child, and <code>x</code>'s right subtree moves to the left of <code>y</code>. The order is kept; only three links change. A left rotation is its mirror image. This block only defines the helper functions.</p>
+<p data-lang="de">Jeder Knoten speichert seine Höhe im Feld <code>height</code>; die Zeichnung zeigt sie rechts oben am Knoten als <code>h=</code>. Das Werkzeug zum Ausgleichen ist die <em>Rotation</em>: bei einer Rechtsrotation steigt das linke Kind <code>x</code> auf, die alte Wurzel <code>y</code> wird sein rechtes Kind, und der rechte Teilbaum von <code>x</code> wandert links an <code>y</code>. Die Ordnung bleibt erhalten; nur drei Verbindungen ändern sich. Eine Linksrotation ist ihr Spiegelbild. Dieser Block definiert nur die Hilfsfunktionen.</p>
+
+<textarea id="text1" class="deneme">
+function h(t)              // yükseklik; boş ağaç 0
+{
+  if(t == null)
+    return 0
+  return t.height
+}
+function update(t)         // yüksek çocuk + 1
+{
+  var a = h(t.left)
+  var b = h(t.right)
+  if(a &gt; b)
+    t.height = a + 1
+  else
+    t.height = b + 1
+}
+function rotateRight(y)    // sola eğikse sağa döndür
+{
+  var x = y.left
+  y.left = x.right
+  x.right = y
+  update(y)
+  update(x)
+  return x
+}
+function rotateLeft(x)     // sağa eğikse sola döndür
+{
+  var y = x.right
+  x.right = y.left
+  y.left = x
+  update(x)
+  update(y)
+  return y
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+function h(t)              // height; an empty tree has 0
+{
+  if(t == null)
+    return 0
+  return t.height
+}
+function update(t)         // the higher child + 1
+{
+  var a = h(t.left)
+  var b = h(t.right)
+  if(a > b)
+    t.height = a + 1
+  else
+    t.height = b + 1
+}
+function rotateRight(y)    // leaning left: turn right
+{
+  var x = y.left
+  y.left = x.right
+  x.right = y
+  update(y)
+  update(x)
+  return x
+}
+function rotateLeft(x)     // leaning right: turn left
+{
+  var y = x.right
+  x.right = y.left
+  y.left = x
+  update(x)
+  update(y)
+  return y
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+function h(t)              // Höhe; ein leerer Baum hat 0
+{
+  if(t == null)
+    return 0
+  return t.height
+}
+function update(t)         // das höhere Kind + 1
+{
+  var a = h(t.left)
+  var b = h(t.right)
+  if(a > b)
+    t.height = a + 1
+  else
+    t.height = b + 1
+}
+function rotateRight(y)    // linkslastig: nach rechts drehen
+{
+  var x = y.left
+  y.left = x.right
+  x.right = y
+  update(y)
+  update(x)
+  return x
+}
+function rotateLeft(x)     // rechtslastig: nach links drehen
+{
+  var y = x.right
+  x.right = y.left
+  y.left = x
+  update(x)
+  update(y)
+  return y
+}
+</script>
+
+<p data-lang="tr">Tek bir döndürmeyi görelim: 3, 2, 1 sırayla eklenmiş gibi sola eğik bir zincir kuralım. Kökte sol yükseklik 2, sağ yükseklik 0: fark 2, denge bozuk. Sağa döndürünce 2 köke çıkar, 1 ve 3 onun çocukları olur.</p>
+<p data-lang="en">Let's watch a single rotation: we build a left-leaning chain, as if 3, 2, 1 had been inserted in that order. At the root the left height is 2 and the right height 0: a difference of 2, out of balance. After a right rotation 2 is the root and 1 and 3 are its children.</p>
+<p data-lang="de">Sehen wir uns eine einzelne Rotation an: wir bauen eine linkslastige Kette, als wären 3, 2, 1 in dieser Reihenfolge eingefügt worden. An der Wurzel ist die linke Höhe 2 und die rechte 0: ein Unterschied von 2, aus dem Gleichgewicht. Nach einer Rechtsrotation ist 2 die Wurzel, 1 und 3 sind ihre Kinder.</p>
+
+<textarea id="text2" class="deneme">
+var root = new Node(3)     // sola eğik bir zincir: 3 &gt; 2 &gt; 1
+root.left = new Node(2)
+root.left.left = new Node(1)
+update(root.left.left)
+update(root.left)
+update(root)
+root = rotateRight(root)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var root = new Node(3)     // a left-leaning chain: 3 > 2 > 1
+root.left = new Node(2)
+root.left.left = new Node(1)
+update(root.left.left)
+update(root.left)
+update(root)
+root = rotateRight(root)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var root = new Node(3)     // eine linkslastige Kette: 3 > 2 > 1
+root.left = new Node(2)
+root.left.left = new Node(1)
+update(root.left.left)
+update(root.left)
+update(root)
+root = rotateRight(root)
+</script>
+
+<p data-lang="tr">Ekleme, arama ağacındaki gibi özyinelemelidir; tek fark, dönüşte her düğümün <code>balance</code> ile dengelenmesidir. Denge bozulduğunda dört durum vardır. Sol taraf ağır ve yeni değer sol çocuğun soluna eklendiyse (sol-sol) tek sağa döndürme yeter; sol çocuğun sağına eklendiyse (sol-sağ) önce sol çocuk sola, sonra düğüm sağa döndürülür. Sağ taraf için aynısı aynalanır (sağ-sağ, sağ-sol).</p>
+<p data-lang="en">Insertion is recursive, as in the search tree; the only difference is that on the way back every node is balanced with <code>balance</code>. When the balance is broken there are four cases. If the left side is heavy and the new value went to the left of the left child (left-left), one right rotation is enough; if it went to the right of the left child (left-right), first the left child is turned left, then the node right. The right side is the mirror image (right-right, right-left).</p>
+<p data-lang="de">Das Einfügen ist rekursiv wie im Suchbaum; der einzige Unterschied ist, dass auf dem Rückweg jeder Knoten mit <code>balance</code> ausgeglichen wird. Ist das Gleichgewicht gestört, gibt es vier Fälle. Ist die linke Seite schwer und kam der neue Wert links vom linken Kind an (Links-Links), genügt eine Rechtsrotation; kam er rechts vom linken Kind an (Links-Rechts), wird zuerst das linke Kind nach links und dann der Knoten nach rechts gedreht. Die rechte Seite ist das Spiegelbild (Rechts-Rechts, Rechts-Links).</p>
+
+<textarea id="text3" class="deneme">
+function balance(t)
+{
+  update(t)
+  var b = h(t.left) - h(t.right)   // sol yükseklik - sağ
+  if(b &gt; 1)                        // sol taraf ağır
+  {
+    if(h(t.left.left) &lt; h(t.left.right))
+      t.left = rotateLeft(t.left)  // sol-sağ: önce sol çocuk sola
+    return rotateRight(t)
+  }
+  if(b &lt; -1)                       // sağ taraf ağır
+  {
+    if(h(t.right.right) &lt; h(t.right.left))
+      t.right = rotateRight(t.right) // sağ-sol: önce sağ çocuk sağa
+    return rotateLeft(t)
+  }
+  return t
+}
+function insert(t, v)
+{
+  if(t == null)
+  {
+    var n = new Node(v)
+    n.height = 1                   // yeni yaprak: yükseklik 1
+    return n
+  }
+  if(v &lt; t.data)
+    t.left = insert(t.left, v)
+  else
+    t.right = insert(t.right, v)
+  return balance(t)                // dönüşte dengele
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function balance(t)
+{
+  update(t)
+  var b = h(t.left) - h(t.right)   // left height - right
+  if(b > 1)                        // the left side is heavy
+  {
+    if(h(t.left.left) < h(t.left.right))
+      t.left = rotateLeft(t.left)  // left-right: left child left first
+    return rotateRight(t)
+  }
+  if(b < -1)                       // the right side is heavy
+  {
+    if(h(t.right.right) < h(t.right.left))
+      t.right = rotateRight(t.right) // right-left: right child right first
+    return rotateLeft(t)
+  }
+  return t
+}
+function insert(t, v)
+{
+  if(t == null)
+  {
+    var n = new Node(v)
+    n.height = 1                   // a new leaf: height 1
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)
+  else
+    t.right = insert(t.right, v)
+  return balance(t)                // balance on the way back
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function balance(t)
+{
+  update(t)
+  var b = h(t.left) - h(t.right)   // linke Höhe - rechte
+  if(b > 1)                        // die linke Seite ist schwer
+  {
+    if(h(t.left.left) < h(t.left.right))
+      t.left = rotateLeft(t.left)  // Links-Rechts: erst linkes Kind links
+    return rotateRight(t)
+  }
+  if(b < -1)                       // die rechte Seite ist schwer
+  {
+    if(h(t.right.right) < h(t.right.left))
+      t.right = rotateRight(t.right) // Rechts-Links: erst rechtes Kind rechts
+    return rotateLeft(t)
+  }
+  return t
+}
+function insert(t, v)
+{
+  if(t == null)
+  {
+    var n = new Node(v)
+    n.height = 1                   // neues Blatt: Höhe 1
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)
+  else
+    t.right = insert(t.right, v)
+  return balance(t)                // auf dem Rückweg ausgleichen
+}
+</script>
+
+<p data-lang="tr">Şimdi 4, 5, 6, 7'yi sırayla ekleyelim; düz bir arama ağacında bu bir zincir olurdu. Her eklemede ağacın sağı ağırlaşır ve sola döndürmeyle düzelir; sonunda 7 düğümlü, yüksekliği 3 olan tam dengeli bir ağaç kalır.</p>
+<p data-lang="en">Now we insert 4, 5, 6, 7 in order; in a plain search tree this would become a chain. With every insertion the right side gets heavy and a left rotation fixes it; in the end a perfectly balanced tree of 7 nodes with height 3 is left.</p>
+<p data-lang="de">Jetzt fügen wir 4, 5, 6, 7 der Reihe nach ein; in einem gewöhnlichen Suchbaum würde daraus eine Kette. Bei jedem Einfügen wird die rechte Seite schwer, und eine Linksrotation behebt das; am Ende bleibt ein vollkommen ausgeglichener Baum mit 7 Knoten und der Höhe 3.</p>
+
+<textarea id="text4" class="deneme">
+root = insert(root, 4)
+root = insert(root, 5)
+root = insert(root, 6)
+root = insert(root, 7)
+</textarea>
+
+<p data-lang="tr">Çift döndürme: 16 eklenince 7'nin sağına girer. 15 ise 7'nin sağındaki 16'nın soluna girer; 7'de sağ taraf ağır ama yeni değer sağ çocuğun solunda (sağ-sol durumu). Önce 16 sağa, sonra 7 sola döndürülür ve 15, 7 ile 16'nın ebeveyni olur.</p>
+<p data-lang="en">A double rotation: 16 goes to the right of 7. 15 then goes to the left of 16, which is on the right of 7; at 7 the right side is heavy, but the new value is on the left of the right child (the right-left case). First 16 is turned right, then 7 left, and 15 becomes the parent of 7 and 16.</p>
+<p data-lang="de">Eine Doppelrotation: 16 kommt rechts an 7. 15 kommt dann links an 16, das rechts von 7 hängt; bei 7 ist die rechte Seite schwer, aber der neue Wert liegt links vom rechten Kind (der Rechts-Links-Fall). Zuerst wird 16 nach rechts gedreht, dann 7 nach links, und 15 wird der Elternknoten von 7 und 16.</p>
+
+<textarea id="text5" class="deneme">
+root = insert(root, 16)
+root = insert(root, 15)
+</textarea>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

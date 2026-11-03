@@ -125,6 +125,7 @@
 		nPointsTo: {tr: '{name} artık {node} düğümünü gösteriyor.', en: '{name} now points to {node}.', de: '{name} zeigt jetzt auf {node}.'},
 		nNewNode: {tr: '{name} adında yeni bir düğüm oluşturuldu: {node}.', en: 'A new node {node} was created as {name}.', de: 'Ein neuer Knoten {node} wurde als {name} erstellt.'},
 		nValue: {tr: '{name} = {value}.', en: '{name} = {value}.', de: '{name} = {value}.'},
+		nField: {tr: '{node} düğümünün {field} alanı {value} oldu.', en: 'The {field} of {node} is now {value}.', de: 'Das Feld {field} von {node} ist jetzt {value}.'},
 		nData: {tr: '{node} düğümünün değeri {value} oldu.', en: 'The value of {node} is now {value}.', de: 'Der Wert von {node} ist jetzt {value}.'},
 		nLinkNew: {
 			tr: 'Yeni bir düğüm {new} oluşturuldu ve {node} düğümünün {field}\'i ona bağlandı.',

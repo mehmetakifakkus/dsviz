@@ -284,6 +284,20 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('an AVL rotation relinks three nodes and the heights are drawn', async ({ page }) => {
+		const problems = await openPage(page, 'avlTree.html');
+		await runBlock(page, 1);
+		const drawn = await state(page);
+		expect(drawn.rows).toEqual([[2], [1, 3]]);
+		expect(drawn.heights.sort((a, b) => a[0] - b[0])).toEqual([[1, 1], [2, 2], [3, 1]]);
+		await runCode(page, 'root.height = 5\n');
+		await expect(page.locator('#narration')).toHaveText('[2] düğümünün height alanı 5 oldu.');
+
+		await runBlock(page, 3); // 4, 5, 6, 7 in order: still balanced
+		expect((await state(page)).rows).toEqual([[4], [2, 6], [1, 3, 5, 7]]);
+		expect(problems).toEqual([]);
+	});
+
 	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
 		const problems = await openPage(page, 'binarySearchTree.html');
 		await runBlock(page, 0);

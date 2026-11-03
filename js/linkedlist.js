@@ -191,6 +191,9 @@ function Node(content, next){
 
 		items.push(new PointText({ point: [p.x + g.dataX + 15, p.y + 19], justification: 'center', fontSize: 18+'px', fillColor: PAL.text, content:''+ self.shownData}));
 
+		if(treeMode && self.shownHeight !== undefined && self.shownHeight !== null) // t.height in an AVL tree
+			items.push(new PointText({ point: [p.x + g.width + 4, p.y - 2], fontSize: 12+'px', fillColor: PAL.stroke, opacity: 0.65, content: 'h=' + self.shownHeight}));
+
 		if(self.lost){ // no variable and no link reaches this node any more
 			items[0].dashArray = [5, 4];
 			items.push(new PointText({ point: [p.x + g.width / 2, p.y + NODE_H + 18], justification: 'center', fontSize: 12+'px', fillColor: PAL.pointer, content: t('unreachable')}));
@@ -1285,6 +1288,7 @@ function describe(line, res, removed){
 	case 'object property left':
 	case 'object property left-right':
 		if(res.prop == '.data') return t('nData', {node: '[' + res.oldData + ']', value: formatValue(res.value)});
+		if(!VISUAL_FIELD[res.prop]) return t('nField', {node: nodeLabel(res.target), field: res.prop.slice(1), value: formatValue(res.value)}); // t.height = 2
 		var link = {node: nodeLabel(res.target), field: res.prop.slice(1)};
 		if(res.newNode) { link['new'] = nodeLabel(res.newNode); return t('nLinkNew', link); }
 		if(res.value === null) return t('nLinkNull', link);
@@ -1319,6 +1323,7 @@ function resetVisuals(){
 		n.visualLeft = null;
 		n.visualRight = null;
 		n.shownData = n.data;
+		n.shownHeight = undefined;
 	});
 	lastPlaced = null;
 	doublyMode = false;
@@ -1493,6 +1498,11 @@ function drawGraphics(line, result){
 				res.target.shownData = res.value;
 				res.target.render();
 			}
+			else if(res.prop == '.height' && res.target.boxDraw) // drawn next to a tree node
+			{
+				res.target.shownHeight = res.value;
+				res.target.render();
+			}
 		}
 		else if(line.type == 'object property right') // p1 = p1.next  /  max = p.data
 		{
@@ -1515,6 +1525,11 @@ function drawGraphics(line, result){
 			else if(res.prop == '.data' && res.target.boxDraw) // p.data = p.next.data
 			{
 				res.target.shownData = res.value;
+				res.target.render();
+			}
+			else if(res.prop == '.height' && res.target.boxDraw)
+			{
+				res.target.shownHeight = res.value;
 				res.target.render();
 			}
 		}
@@ -2005,6 +2020,7 @@ window.dsvState = function(){
 		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
 		doubly: doublyMode,
 		tree: treeMode,
+		heights: allNodes.filter(function(n){ return n.shown && n.shownHeight !== undefined; }).map(function(n){ return [n.shownData, n.shownHeight]; }),
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
 		narration: (document.getElementById('narration') || {}).textContent || '',
