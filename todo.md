@@ -8,7 +8,6 @@
 - [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
 - [ ] Aynı anda birden çok kova (düğüm tutan) dizinin çizimi; şu an yalnızca ilki kova olarak çizilir.
 
-- [ ] C++ ve Java'da tam sayı bölmesi (`7 / 2` şu an 3,5 veriyor); türleri bilinen değişkenler için `/` tam sayı bölmesine çevrilebilir.
 
 ## Görselleştirme ve arayüz
 
@@ -45,7 +44,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 285 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 287 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -68,3 +67,4 @@
 - [x] Ders modu: sayfa bölümlere ayrılır (açıklama + kod bloğu), Önceki/Sonraki ile ilerlenir ve bölümün bloğu kendiliğinden çalışır; sayfanın başındaki düğmeyle ya da ayarlardan açılır, hatırlanır.
 - [x] Kod dili olarak C++: ayarlardan seçilir; örnekler türleri çıkarılarak C++'a çevrilir, C++ kodu satır satır Düğüm'e çevrilerek çalışır; C++ sözdizimi renklendirmesi, anlatımda `nullptr`/`->`, paylaşılan bağlantı dilini taşır; her sayfa C++'ta da test edilir.
 - [x] Kod dili olarak Java: örnekler Java'ya çevrilir (`Node`, `Node[]`, `boolean`, `static`, `System.out.println`, `delete` yerine açıklayıcı yorum), elle yazılan Java (`public class Main`, `class Node`, `main(String[] args)`) çalışır; ulaşılamayan düğümler "çöp" olarak işaretlenir. Düğüm'de bir değişkene karşılaştırma sonucu atanabilir (`var ok = a == b`).
+- [x] C++ ve Java'da tam sayı bölmesi: kaynak koddaki türler toplanır, iki tarafı da tam sayı olan `/` sıfıra doğru kesilir (`7 / 2` = 3, `-7 / 2` = -3), sıfıra bölme açıklamalı hata verir; anlatımda yine `a / b` görünür.
