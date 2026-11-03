@@ -8,6 +8,9 @@
 - [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
 - [ ] Aynı anda birden çok kova (düğüm tutan) dizinin çizimi; şu an yalnızca ilki kova olarak çizilir.
 
+- [ ] Kod dili olarak Java (C++ gibi: satır satır Düğüm'e çevirme, `System.out.println`, `delete` yok; ulaşılamayan düğümleri çöp toplayıcının topladığı gösterilir).
+- [ ] C++'ta tam sayı bölmesi (`7 / 2` şu an 3,5 veriyor); türleri bilinen değişkenler için `/` tam sayı bölmesine çevrilebilir.
+
 ## Görselleştirme ve arayüz
 
 
@@ -43,7 +46,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 208 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 247 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -64,3 +67,4 @@
 - [x] Yatay dizi çizimi: sayı tutan diziler üstte yatay hücreler, `s[size] = v` gibi yazımlarda indis değişkeni hücrenin altında okla; düğüm tutan diziler kova olarak kalır. Dizi ile yığın ve dairesel kuyruk sayfası.
 - [x] Telefonda katlanabilir paneller: kanvasın altında tek satır düğme (Çağrı yığını · n, Değişkenler · n, Çıktı), aynı anda tek panel açık, yeni çıktı noktayla belirtilir, seçim hatırlanır; geniş ekranda paneller hep açık.
 - [x] Ders modu: sayfa bölümlere ayrılır (açıklama + kod bloğu), Önceki/Sonraki ile ilerlenir ve bölümün bloğu kendiliğinden çalışır; sayfanın başındaki düğmeyle ya da ayarlardan açılır, hatırlanır.
+- [x] Kod dili olarak C++: ayarlardan seçilir; örnekler türleri çıkarılarak C++'a çevrilir, C++ kodu satır satır Düğüm'e çevrilerek çalışır; C++ sözdizimi renklendirmesi, anlatımda `nullptr`/`->`, paylaşılan bağlantı dilini taşır; her sayfa C++'ta da test edilir.

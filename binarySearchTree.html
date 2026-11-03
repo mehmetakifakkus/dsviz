@@ -163,10 +163,12 @@ print m.data
 <p data-lang="de">Ändern Sie <code>key</code> in einen Wert, der nicht im Baum ist (z. B. 5): <code>p</code> läuft zu einem leeren Kind eines Blatts, wird <code>null</code>, und <code>p.data</code> schlägt fehl. Ein echtes Programm prüft nach der Schleife zuerst <code>p != null</code>.</p>
 </main>
 
-<script src="js/layout.js"></script>
 <script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
 <script src="vendor/codemirror-5.25.2/codemirror.js"></script>
 <script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
 <script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
 <script src="js/addon/active-line.js"></script>
 <script src="js/addon/closebrackets.js"></script>

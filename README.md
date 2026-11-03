@@ -9,6 +9,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 ## Neler var?
 
 - Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
+- Kod dili seçilebilir: ayarlarda **C++** seçilince örnekler otomatik olarak C++'a çevrilip gösterilir ve çalışır (`Node*`, `->`, `new`/`delete`, `nullptr`, `cout`, türleri yazılmış fonksiyonlar, diziler). C++ kodu çalıştırılmadan önce satır satır Düğüm'e çevrilir (`js/codelang.js`), böylece çizim ve anlatım aynen çalışır.
 - Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `for`, `if`, `function`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).
@@ -60,7 +61,7 @@ Testler kendi küçük sunucularını (`tests/server.js`) başlatır; elle açma
 - `js/i18n.js`: ayarlar ve arayüz metinleri (tr / en / de). Sayfadan önce yüklenir; yeni bir metin eklerken üç dili de yazın.
 - Sayfaların içeriği her dil için ayrı öğelerde durur: `<p data-lang="tr">…</p><p data-lang="en">…</p><p data-lang="de">…</p>`. Kod bloğunun İngilizce/Almanca hâli, bloğun hemen altındaki `<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">` içindedir (yalnızca kodda Türkçe yorum ya da isim varsa gerekir). `js/layout.js` seçilen dili bırakır, diğerlerini kaldırır.
 - `css/app.css`: tek stil dosyası; açık ve koyu tema renkleri burada.
-- `vendor/`: CodeMirror 5.25.2 (MIT lisanslı), editör için.
+- `vendor/`: CodeMirror 5.25.2 (MIT lisanslı), editör için; JavaScript ve C/C++ (clike) kipleri.
 
 ## Sıkça sorulan sorular
 

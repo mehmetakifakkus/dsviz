@@ -122,6 +122,23 @@
 	Array.prototype.forEach.call(lesson.querySelectorAll('[data-i18n]'), function(e){
 		e.textContent = t(e.getAttribute('data-i18n'));
 	});
+	// ---------- the code language: Düğüm, or C++ translated from it ----------
+	var codeLang = dsv.settings.codeLang === 'cpp' ? 'cpp' : 'dugum';
+	var linkLang = /(?:^#|&)c=(cpp|dugum)(?:&|$)/.exec(location.hash);  // a shared link keeps its language
+	if(linkLang) codeLang = linkLang[1];
+	else if(/(?:^#|&)b\d+=/.test(location.hash)) codeLang = 'dugum';
+	if(page === 'language.html') codeLang = 'dugum'; // the guide is about Düğüm itself
+	window.dsvCodeLang = codeLang;
+	if(codeLang === 'cpp' && window.dsvCode){
+		var areas = lesson.querySelectorAll('textarea.deneme');
+		var translated = window.dsvCode.toCpp(Array.prototype.map.call(areas, function(a){ return a.value; }));
+		Array.prototype.forEach.call(areas, function(a, i){ a.value = translated[i]; });
+		// short pieces of code in the text too: p.next -> p->next, null -> nullptr
+		Array.prototype.forEach.call(lesson.querySelectorAll('p code, li code, td code'), function(c){
+			c.textContent = window.dsvCode.displayCpp(c.textContent);
+		});
+	}
+
 	var h1 = lesson.querySelector('h1');
 	document.title = (h1 && page !== 'index.html' ? h1.textContent + ' | ' : '') + t('brand');
 
@@ -173,6 +190,9 @@
 		'<label class="setting"><span>' + esc(t('language')) + '</span><select name="lang">' +
 			options(dsv.LANGS, dsv.LANGS.map(function(l){ return dsv.LANG_NAMES[l]; }), s.lang) + '</select></label>' +
 		'<div class="setting-note">' + esc(t('languageNote')) + '</div>' +
+		'<label class="setting"><span>' + esc(t('codeLang')) + '</span><select name="codeLang">' +
+			options(['dugum', 'cpp'], ['Düğüm', 'C++'], s.codeLang) + '</select></label>' +
+		'<div class="setting-note">' + esc(t('codeLangNote')) + '</div>' +
 		'<div class="setting"><span>' + esc(t('theme')) + '</span>' +
 			segmented('theme', ['system', 'light', 'dark'], [t('themeSystem'), t('themeLight'), t('themeDark')], s.theme) + '</div>' +
 		'<label class="setting"><span>' + esc(t('defaultSpeed')) + '</span><select name="speed">' +
@@ -204,6 +224,7 @@
 	panel.addEventListener('change', function(e){
 		var input = e.target, name = input.name;
 		if(name === 'lang'){ dsv.set('lang', input.value); location.reload(); return; } // the page's content is per language
+		if(name === 'codeLang'){ dsv.set('codeLang', input.value); location.href = location.href.split('#')[0]; return; } // the code is translated on load
 		if(name === 'speed') dsv.set('speed', Number(input.value));
 		else if(input.type === 'checkbox') dsv.set(name, input.checked);
 		else dsv.set(name, input.value);
@@ -225,7 +246,7 @@
 	Array.prototype.forEach.call(blocks, function(ta, i){
 		var card = el('div', {'class': 'code-card'});
 		if(page !== 'index.html')
-			card.appendChild(el('div', {'class': 'code-label'}, esc(t('block', {n: i + 1}))));
+			card.appendChild(el('div', {'class': 'code-label'}, esc(t('block', {n: i + 1})) + (codeLang === 'cpp' ? ' · C++' : '')));
 		ta.parentNode.insertBefore(card, ta);
 		card.appendChild(ta);
 	});

@@ -218,6 +218,9 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .cm-s-dsv .cm-string { color: var(--cm-string); }
 .cm-s-dsv .cm-comment { color: var(--cm-comment); font-style: italic; }
 .cm-s-dsv .cm-atom { color: var(--cm-atom); }
+.cm-s-dsv .cm-variable-3, .cm-s-dsv .cm-type { color: var(--cm-def); font-weight: 600; } /* C++ types: int, Node */
+.cm-s-dsv .cm-meta { color: var(--cm-comment); }                                            /* #include */
+.cm-s-dsv .cm-builtin { color: var(--cm-keyword); }
 .cm-s-dsv .CodeMirror-matchingbracket { color: var(--accent) !important; }
 
 /* run button the engine adds after every editor */
