@@ -293,3 +293,10 @@ cout << c << " " << e << " " << d << " " << avg << endl;
 	expect(await outputText(page)).toBe('4 4.5\n');
 	expect(problems).toEqual([]);
 });
+
+test('writing to a field of a call\'s result is an explained error (left out on purpose)', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, 'var x = new Node(1)\nfunction first()\n{\n  return x\n}\nfirst().next = new Node(2)\n');
+	await expect(page.locator('#output')).toHaveText("Satır 6: Bir çağrının sonucunun alanına doğrudan yazılamaz (first().next = …). Önce sonucu bir değişkene alın, sonra alanına yazın: var p = first(), ardından p.next = …");
+	expect(problems).toEqual([]);
+});

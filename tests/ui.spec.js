@@ -22,6 +22,61 @@ test('player: step back, step forward, play', async ({ page }) => {
 	expect(problems).toEqual([]);
 });
 
+test('player: play is off with no steps and starts again from the beginning at the end', async ({ page }) => {
+	const problems = await openPage(page, 'reverseALinkedList.html');
+	await expect(page.locator('.dsv-counter').first()).toHaveText('Adım 0 / 0');
+	await expect(page.locator('.dsv-play')).toBeDisabled();
+	await expect(player(page, 'Geri adım')).toBeDisabled();
+	await expect(player(page, 'Sona atla')).toBeDisabled();
+	await page.locator('.lesson h1').click();
+	await page.keyboard.press(' '); // space does nothing either
+	await expect(page.locator('.dsv-counter').first()).toHaveText('Adım 0 / 0');
+
+	await runBlock(page, 0);
+	await skipToEnd(page);
+	const { total } = await stepCounter(page);
+	await expect(page.locator('.dsv-play')).toBeEnabled();
+	await expect(page.locator('.dsv-play')).toHaveAttribute('title', 'Baştan oynat');
+	await page.locator('.dsv-play').click(); // from the start again
+	await expect(page.locator('.dsv-play')).toHaveAttribute('title', 'Duraklat');
+	await page.locator('.dsv-play').click();
+	expect((await stepCounter(page)).current).toBeLessThan(total);
+	expect(problems).toEqual([]);
+});
+
+test('the play button keeps its look in every language', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { lang: 'en' });
+	await expect(page.locator('.dsv-play')).toHaveAttribute('title', 'Play');
+	await runBlock(page, 0);
+	await skipToEnd(page);
+	const bg = await page.locator('.dsv-play').evaluate(el => getComputedStyle(el).backgroundColor);
+	const back = await page.locator('.dsv-player button').first().evaluate(el => getComputedStyle(el).backgroundColor);
+	expect(bg).not.toBe(back); // the accent colour, not the plain button
+	expect(problems).toEqual([]);
+});
+
+test('command prompt: an empty line runs nothing and stays out of the history', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await page.locator('.tab[data-tab="tab-command"]').click();
+	await page.keyboard.press('Enter');
+	await page.keyboard.type('   ');
+	await page.keyboard.press('Enter');
+	await expect(page.locator('#output')).toHaveText('');
+	expect(await page.evaluate(() => window.commandHist.length)).toBe(0);
+
+	await page.keyboard.type('1 + 2');
+	await page.keyboard.press('Enter');
+	await page.keyboard.type('1 + 2');
+	await page.keyboard.press('Enter');
+	await expect(page.locator('#output')).toHaveText('3');
+	expect(await page.evaluate(() => window.commandHist)).toEqual(['1 + 2']);
+	await page.keyboard.press('ArrowUp');
+	expect(await page.evaluate(() => window.editor2.getValue())).toBe('1 + 2');
+	await page.keyboard.press('ArrowDown'); // past the newest: an empty line again
+	expect(await page.evaluate(() => window.editor2.getValue())).toBe('');
+	expect(problems).toEqual([]);
+});
+
 test('step back replays the call stack of a recursion', async ({ page }) => {
 	const problems = await openPage(page, 'recursion.html');
 	await runBlock(page, 0);

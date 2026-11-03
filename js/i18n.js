@@ -87,6 +87,7 @@
 		// ---------------- player and editors (js/linkedlist.js) ----------------
 		stepBack: {tr: 'Geri adım', en: 'Step back', de: 'Schritt zurück'},
 		play: {tr: 'Oynat', en: 'Play', de: 'Abspielen'},
+		replay: {tr: 'Baştan oynat', en: 'Play again from the start', de: 'Von vorn abspielen'},
 		pause: {tr: 'Duraklat', en: 'Pause', de: 'Pause'},
 		stepForward: {tr: 'İleri adım', en: 'Step forward', de: 'Schritt vor'},
 		toEnd: {tr: 'Sona atla', en: 'Skip to the end', de: 'Zum Ende'},
@@ -229,6 +230,7 @@
 		eNodeNext: {tr: 'Node\'un ikinci değeri yeni düğümün next\'idir; bir düğüm ya da null olmalı ({value} verildi).', en: 'The second value of Node is the new node\'s next; it must be a node or null (got {value}).', de: 'Der zweite Wert von Node ist das next des neuen Knotens; er muss ein Knoten oder null sein ({value} angegeben).'},
 		eNestedFunction: {tr: '"{name}" bir fonksiyonun içinde tanımlanmış; Düğüm\'de fonksiyonlar yalnızca en dışta tanımlanır. Fonksiyonu dışarı taşıyın, gereken değerleri parametre olarak verin.', en: '"{name}" is defined inside a function; in Düğüm functions are defined at the top level only. Move the function out and pass the values it needs as parameters.', de: '"{name}" ist innerhalb einer Funktion definiert; in Düğüm werden Funktionen nur auf oberster Ebene definiert. Verschieben Sie die Funktion nach außen und übergeben Sie die nötigen Werte als Parameter.'},
 		eDivZero: {tr: 'Sıfıra bölme: bir tam sayı sıfıra bölünemez.', en: 'Division by zero: an integer cannot be divided by zero.', de: 'Division durch null: eine ganze Zahl kann nicht durch null geteilt werden.'},
+		eCallField: {tr: 'Bir çağrının sonucunun alanına doğrudan yazılamaz ({call}{dot}{field} = …). Önce sonucu bir değişkene alın, sonra alanına yazın: var p = {call}, ardından p{dot}{field} = …', en: 'A field of a call\'s result cannot be written directly ({call}{dot}{field} = …). Put the result in a variable first, then write its field: var p = {call}, then p{dot}{field} = …', de: 'Ein Feld eines Aufrufergebnisses kann nicht direkt beschrieben werden ({call}{dot}{field} = …). Speichern Sie das Ergebnis zuerst in einer Variable und schreiben Sie dann ihr Feld: var p = {call}, danach p{dot}{field} = …'},
 		eArraySize: {tr: 'Dizi boyutu 1 ile 50 arasında bir tam sayı olmalı ({n} verildi).', en: 'The size of an array must be a whole number from 1 to 50 (got {n}).', de: 'Die Größe eines Arrays muss eine ganze Zahl von 1 bis 50 sein ({n} angegeben).'},
 		eIndex: {tr: '{name}[{i}]: dizinin {n} hücresi var, geçerli indisler 0 ile {last} arası.', en: '{name}[{i}]: the array has {n} cells, valid indexes are 0 to {last}.', de: '{name}[{i}]: das Array hat {n} Zellen, gültige Indizes sind 0 bis {last}.'},
 		eNotArray: {tr: '"{name}" bir dizi değil; önce new Array(n) ile oluşturun.', en: '"{name}" is not an array; create it with new Array(n) first.', de: '"{name}" ist kein Array; erstellen Sie es zuerst mit new Array(n).'},

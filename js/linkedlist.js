@@ -1319,6 +1319,7 @@ var ICONS = {
 	pause: '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2h4v12H3zM9 2h4v12H9z" fill="currentColor"/></svg>',
 	next:  '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M11 2h2v12h-2zM2 2v12l8-6z" fill="currentColor"/></svg>',
 	end:   '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2v12l6-6zM7 2v12l6-6zM13 2h2v12h-2z" fill="currentColor"/></svg>',
+	replay: '<svg viewBox="0 0 16 16" width="15" height="15"><path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 1.8v3.6h3.6z" fill="currentColor"/></svg>',
 	share: '<svg viewBox="0 0 16 16" width="15" height="15"><path d="M6.5 9.5l3-3M7 4.5l1.3-1.3a2.5 2.5 0 013.5 3.5L10.5 8M9 11.5l-1.3 1.3a2.5 2.5 0 01-3.5-3.5L5.5 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
 };
 
@@ -1430,8 +1431,11 @@ var player = {
 		if(!player.ui) return;
 		var ui = player.ui;
 		var running = player.playing && player.cursor < player.steps.length;
-		ui.play.innerHTML = running ? ICONS.pause : ICONS.play;
-		ui.play.title = running ? t('pause') : t('play');
+		var atEnd = player.steps.length > 0 && player.cursor >= player.steps.length;
+		ui.play.innerHTML = running ? ICONS.pause : atEnd ? ICONS.replay : ICONS.play;
+		ui.play.title = running ? t('pause') : atEnd ? t('replay') : t('play');
+		ui.play.setAttribute('aria-label', ui.play.title);
+		ui.play.disabled = !player.steps.length; // Step 0 / 0: nothing to play
 		ui.counter.textContent = t('stepCounter', {i: player.cursor, n: player.steps.length});
 		ui.back.disabled = player.cursor === 0;
 		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
@@ -1640,7 +1644,12 @@ function createPlayerUI(){
 
 	var ui = {};
 	ui.back = button(ICONS.back, t('stepBack'), player.back);
-	ui.play = button(ICONS.pause, t('pause'), function(){ player.playing && player.cursor < player.steps.length ? player.pause() : player.play(); });
+	ui.play = button(ICONS.pause, t('pause'), function(){
+		if(!player.steps.length) return;                    // nothing to play (the button is disabled too)
+		if(player.cursor >= player.steps.length){ player.pause(); player.seek(0); player.play(); return; } // at the end: from the start again
+		player.playing ? player.pause() : player.play();
+	});
+	ui.play.classList.add('dsv-play');
 	ui.next = button(ICONS.next, t('stepForward'), function(){ player.pause(); player.forward(); });
 	ui.end  = button(ICONS.end, t('toEnd'), function(){ player.pause(); player.toEnd(); });
 
@@ -2191,6 +2200,10 @@ function explainError(err, source){
 		var loc = err.location.start;
 		var found = err.found === null ? t('eEndOfCode') : (err.found === '\n' ? t('eEndOfLine') : '"' + err.found + '"');
 		var line = (source || '').split('\n')[loc.line - 1] || '';
+		// find(3).next = x: writing to a field of a call's result is left out on purpose
+		var callField = /^\s*([A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*)\s*\(([^()]*)\)\s*(\.|->)\s*([A-Za-z_]\w*)[^=]*=(?!=)/.exec(line);
+		if(callField)
+			return t('eLine', {n: loc.line}) + t('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
 		return t('eSyntax', {line: loc.line, col: loc.column, found: found}) + '\n\n' +
 		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
 	}
