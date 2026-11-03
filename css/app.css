@@ -292,9 +292,11 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .dsv-player { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
 .dsv-btn { width: 34px; height: 32px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .dsv-btn:hover { background: var(--accent-soft); border-color: transparent; }
-.dsv-btn[title="Duraklat"], .dsv-btn[title="Oynat"] { background: var(--accent); color: #fff; border-color: var(--accent); }
-:root[data-theme="dark"] .dsv-btn[title="Duraklat"], :root[data-theme="dark"] .dsv-btn[title="Oynat"] { color: #0f141c; }
-.dsv-btn:disabled { opacity: .4; cursor: default; background: var(--surface); }
+/* play / pause / play again: the main button, in every language (it used to match the Turkish title) */
+.dsv-btn.dsv-play { background: var(--accent); color: #fff; border-color: var(--accent); }
+.dsv-btn.dsv-play:hover { background: var(--accent-hover); }
+:root[data-theme="dark"] .dsv-btn.dsv-play { color: #0f141c; }
+.dsv-btn:disabled, .dsv-btn.dsv-play:disabled { opacity: .4; cursor: default; background: var(--surface); color: var(--text); border-color: var(--border); }
 .dsv-speed { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; }
 .dsv-speed input { width: 90px; accent-color: var(--accent); }
 .dsv-counter { margin-left: auto; font-variant-numeric: tabular-nums; }

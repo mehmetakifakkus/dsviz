@@ -87,6 +87,7 @@
 		// ---------------- player and editors (js/linkedlist.js) ----------------
 		stepBack: {tr: 'Geri adım', en: 'Step back', de: 'Schritt zurück'},
 		play: {tr: 'Oynat', en: 'Play', de: 'Abspielen'},
+		replay: {tr: 'Baştan oynat', en: 'Play again from the start', de: 'Von vorn abspielen'},
 		pause: {tr: 'Duraklat', en: 'Pause', de: 'Pause'},
 		stepForward: {tr: 'İleri adım', en: 'Step forward', de: 'Schritt vor'},
 		toEnd: {tr: 'Sona atla', en: 'Skip to the end', de: 'Zum Ende'},

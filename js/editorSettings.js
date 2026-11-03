@@ -10,8 +10,14 @@ var editor2 = CodeMirror.fromTextArea(document.getElementById('command'), {
 var commandHist = [], currHist = 0;
 editor2.setOption("extraKeys", {
 	Enter: function(cm) {
+	  var command = editor2.getValue();
+	  if(!command.trim()){ // an empty line runs nothing and stays out of the history
+	    cm.setValue("");
+	    return;
+	  }
 	  evaluateCommand()
-	  commandHist.push(editor2.getValue())
+	  if(commandHist[commandHist.length - 1] !== command) // the same command twice in a row is kept once
+	    commandHist.push(command)
 	  currHist = commandHist.length;
 
 	  cm.setValue("");
@@ -26,8 +32,11 @@ editor2.setOption("extraKeys", {
 		editor2.setCursor({line: 1, ch: 50})
 	},
 	Down: function(cm){
-		if(currHist >= commandHist.length-1)
+		if(currHist >= commandHist.length-1){ // past the newest command: back to an empty line
+			currHist = commandHist.length;
+			editor2.setValue("");
 			return;
+		}
 
 		currHist++;
 		editor2.setValue(commandHist[currHist]);
