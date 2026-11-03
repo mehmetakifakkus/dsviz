@@ -2191,6 +2191,10 @@ function explainError(err, source){
 		var loc = err.location.start;
 		var found = err.found === null ? t('eEndOfCode') : (err.found === '\n' ? t('eEndOfLine') : '"' + err.found + '"');
 		var line = (source || '').split('\n')[loc.line - 1] || '';
+		// find(3).next = x: writing to a field of a call's result is left out on purpose
+		var callField = /^\s*([A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*)\s*\(([^()]*)\)\s*(\.|->)\s*([A-Za-z_]\w*)[^=]*=(?!=)/.exec(line);
+		if(callField)
+			return t('eLine', {n: loc.line}) + t('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
 		return t('eSyntax', {line: loc.line, col: loc.column, found: found}) + '\n\n' +
 		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
 	}
