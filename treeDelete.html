@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İkili arama ağacında silme | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">İkili arama ağacında silme</h1>
+<h1 data-lang="en">Deleting from a binary search tree</h1>
+<h1 data-lang="de">Löschen in einem binären Suchbaum</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Ağaçtan bir düğüm silerken arama ağacı kuralı (solda küçükler, sağda büyükler) bozulmamalıdır. Silinecek düğümün kaç çocuğu olduğuna göre üç durum vardır: yaprak, tek çocuklu düğüm ve iki çocuklu düğüm. Önce ekleme örneğindeki ağacı kuralım.</p>
+<p data-lang="en">When a node is deleted from the tree, the search tree rule (smaller values on the left, greater on the right) must still hold. There are three cases, depending on how many children the node has: a leaf, a node with one child, and a node with two children. First we build the tree from the insertion example.</p>
+<p data-lang="de">Beim Löschen eines Knotens muss die Regel des Suchbaums (kleinere Werte links, größere rechts) erhalten bleiben. Je nachdem, wie viele Kinder der Knoten hat, gibt es drei Fälle: ein Blatt, ein Knoten mit einem Kind und ein Knoten mit zwei Kindern. Zuerst bauen wir den Baum aus dem Einfügebeispiel.</p>
+
+<textarea id="text1" class="deneme">
+function insert(t, v)
+{
+  if(t == null)           // boş yer bulundu: yeni düğüm
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v &lt; t.data)
+    t.left = insert(t.left, v)    // küçükse sol alt ağaca
+  else
+    t.right = insert(t.right, v)  // büyük ya da eşitse sağa
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+function insert(t, v)
+{
+  if(t == null)           // an empty place: the new node
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // smaller: into the left subtree
+  else
+    t.right = insert(t.right, v)  // greater or equal: to the right
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+function insert(t, v)
+{
+  if(t == null)           // ein freier Platz: der neue Knoten
+  {
+    var n = new Node(v)
+    return n
+  }
+  if(v < t.data)
+    t.left = insert(t.left, v)    // kleiner: in den linken Teilbaum
+  else
+    t.right = insert(t.right, v)  // größer oder gleich: nach rechts
+  return t
+}
+var root = null
+root = insert(root, 8)
+root = insert(root, 3)
+root = insert(root, 10)
+root = insert(root, 1)
+root = insert(root, 6)
+root = insert(root, 14)
+root = insert(root, 4)
+root = insert(root, 7)
+</script>
+
+<p data-lang="tr"><code>remove(t, v)</code>, <code>t</code> alt ağacından <code>v</code>'yi siler ve alt ağacın yeni kökünü döndürür; çağıran bu sonucu kendi bağına yazar (<code>t.left = remove(t.left, v)</code>). Böylece silinen düğümün ebeveyninin bağı da kendiliğinden düzelir ve kök silinse bile <code>root = remove(root, v)</code> doğru çalışır. Düğüm bulununca: sol çocuğu yoksa sağ çocuğu, sağ çocuğu yoksa sol çocuğu yerine geçer (yaprakta ikisi de <code>null</code>'dır, yerine <code>null</code> geçer). İki çocuğu varsa düğümün kendisi silinmez: sağ alt ağacın en küçük değeri (<em>ardıl</em>, successor) buraya kopyalanır ve ardıl sağ alt ağaçtan silinir. Ardılın sol çocuğu olamaz, bu yüzden onu silmek kolay durumlardan biridir. Bu blok yalnızca fonksiyonları tanımlar.</p>
+<p data-lang="en"><code>remove(t, v)</code> deletes <code>v</code> from the subtree <code>t</code> and returns the new root of that subtree; the caller stores the result in its own link (<code>t.left = remove(t.left, v)</code>). That way the link of the deleted node's parent is fixed by itself, and even deleting the root works with <code>root = remove(root, v)</code>. Once the node is found: if it has no left child, its right child takes its place; if it has no right child, its left child does (in a leaf both are <code>null</code>, so <code>null</code> takes its place). If it has two children, the node itself is not deleted: the smallest value of the right subtree (the <em>successor</em>) is copied here, and the successor is deleted from the right subtree. The successor cannot have a left child, so deleting it is one of the easy cases. This block only defines the functions.</p>
+<p data-lang="de"><code>remove(t, v)</code> löscht <code>v</code> aus dem Teilbaum <code>t</code> und gibt die neue Wurzel dieses Teilbaums zurück; der Aufrufer speichert das Ergebnis in seiner eigenen Verbindung (<code>t.left = remove(t.left, v)</code>). So wird die Verbindung des Elternknotens von selbst richtig, und sogar das Löschen der Wurzel funktioniert mit <code>root = remove(root, v)</code>. Ist der Knoten gefunden: hat er kein linkes Kind, tritt sein rechtes Kind an seine Stelle; hat er kein rechtes Kind, sein linkes (bei einem Blatt sind beide <code>null</code>, also tritt <code>null</code> an seine Stelle). Hat er zwei Kinder, wird der Knoten selbst nicht gelöscht: der kleinste Wert des rechten Teilbaums (der <em>Nachfolger</em>) wird hierher kopiert, und der Nachfolger wird aus dem rechten Teilbaum gelöscht. Der Nachfolger kann kein linkes Kind haben, daher ist sein Löschen einer der einfachen Fälle. Dieser Block definiert nur die Funktionen.</p>
+
+<textarea id="text2" class="deneme">
+function minNode(t)        // en soldaki düğüm
+{
+  while(t.left != null)
+  {
+    t = t.left
+  }
+  return t
+}
+
+function remove(t, v)
+{
+  if(t == null)
+    return null            // boş ağaç: silinecek bir şey yok
+  if(v &lt; t.data)
+  {
+    t.left = remove(t.left, v)     // küçük: soldan sil
+    return t
+  }
+  if(v &gt; t.data)
+  {
+    t.right = remove(t.right, v)   // büyük: sağdan sil
+    return t
+  }
+  // bulundu. Sol çocuk yoksa sağ çocuk yerine geçer
+  if(t.left == null)
+  {
+    var r = t.right
+    delete t
+    return r
+  }
+  if(t.right == null)      // sağ çocuk yoksa sol çocuk yerine geçer
+  {
+    var l = t.left
+    delete t
+    return l
+  }
+  var m = minNode(t.right) // iki çocuk: sağ alt ağacın en küçüğü (ardıl)
+  t.data = m.data          // onun değerini buraya kopyala...
+  t.right = remove(t.right, m.data)   // ...ve ardılı sağ alt ağaçtan sil
+  return t
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function minNode(t)        // the leftmost node
+{
+  while(t.left != null)
+  {
+    t = t.left
+  }
+  return t
+}
+
+function remove(t, v)
+{
+  if(t == null)
+    return null            // empty tree: nothing to delete
+  if(v < t.data)
+  {
+    t.left = remove(t.left, v)     // smaller: delete on the left
+    return t
+  }
+  if(v > t.data)
+  {
+    t.right = remove(t.right, v)   // greater: delete on the right
+    return t
+  }
+  // found. No left child: the right child takes its place
+  if(t.left == null)
+  {
+    var r = t.right
+    delete t
+    return r
+  }
+  if(t.right == null)      // no right child: the left child takes its place
+  {
+    var l = t.left
+    delete t
+    return l
+  }
+  var m = minNode(t.right) // two children: the smallest in the right subtree (successor)
+  t.data = m.data          // copy its value here...
+  t.right = remove(t.right, m.data)   // ...and delete the successor from the right subtree
+  return t
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function minNode(t)        // der Knoten ganz links
+{
+  while(t.left != null)
+  {
+    t = t.left
+  }
+  return t
+}
+
+function remove(t, v)
+{
+  if(t == null)
+    return null            // leerer Baum: nichts zu löschen
+  if(v < t.data)
+  {
+    t.left = remove(t.left, v)     // kleiner: links löschen
+    return t
+  }
+  if(v > t.data)
+  {
+    t.right = remove(t.right, v)   // größer: rechts löschen
+    return t
+  }
+  // gefunden. Kein linkes Kind: das rechte Kind tritt an seine Stelle
+  if(t.left == null)
+  {
+    var r = t.right
+    delete t
+    return r
+  }
+  if(t.right == null)      // kein rechtes Kind: das linke Kind tritt an seine Stelle
+  {
+    var l = t.left
+    delete t
+    return l
+  }
+  var m = minNode(t.right) // zwei Kinder: der kleinste im rechten Teilbaum (Nachfolger)
+  t.data = m.data          // seinen Wert hierher kopieren...
+  t.right = remove(t.right, m.data)   // ...und den Nachfolger aus dem rechten Teilbaum löschen
+  return t
+}
+</script>
+
+<p data-lang="tr"><em>Yaprak:</em> 4'ün çocuğu yok; silinir ve ebeveyni 6'nın sol bağı <code>null</code> olur.</p>
+<p data-lang="en"><em>A leaf:</em> 4 has no children; it is deleted and the left link of its parent 6 becomes <code>null</code>.</p>
+<p data-lang="de"><em>Ein Blatt:</em> 4 hat keine Kinder; es wird gelöscht, und die linke Verbindung seines Elternknotens 6 wird <code>null</code>.</p>
+
+<textarea id="text3" class="deneme">
+root = remove(root, 4)
+</textarea>
+
+<p data-lang="tr"><em>Tek çocuk:</em> 10'un yalnızca sağ çocuğu (14) var; 10 silinir ve 14, 8'in sağ çocuğu olur. 14'ün altındaki her şey (burada hiçbir şey) onunla birlikte yukarı çıkar.</p>
+<p data-lang="en"><em>One child:</em> 10 only has a right child (14); 10 is deleted and 14 becomes the right child of 8. Everything below 14 (nothing, here) moves up with it.</p>
+<p data-lang="de"><em>Ein Kind:</em> 10 hat nur ein rechtes Kind (14); 10 wird gelöscht, und 14 wird das rechte Kind von 8. Alles unter 14 (hier nichts) rückt mit nach oben.</p>
+
+<textarea id="text4" class="deneme">
+root = remove(root, 10)
+</textarea>
+
+<p data-lang="tr"><em>İki çocuk:</em> 3'ün iki çocuğu var. Sağ alt ağacının en küçüğü 6'dır; 6, 3'ün kutusuna kopyalanır ve eski 6 düğümü sağ alt ağaçtan silinir (tek çocuklu durum: yerine 7 geçer). Çizimde düğüm kutusunun yerinde kaldığına, yalnızca değerinin değiştiğine dikkat edin. <code>root = remove(root, 8)</code> yazıp kökü de silmeyi deneyin.</p>
+<p data-lang="en"><em>Two children:</em> 3 has two children. The smallest value in its right subtree is 6; 6 is copied into 3's box and the old 6 node is deleted from the right subtree (the one-child case: 7 takes its place). Notice in the drawing that the box stays where it is and only its value changes. Try deleting the root too with <code>root = remove(root, 8)</code>.</p>
+<p data-lang="de"><em>Zwei Kinder:</em> 3 hat zwei Kinder. Der kleinste Wert in seinem rechten Teilbaum ist 6; 6 wird in das Kästchen von 3 kopiert, und der alte Knoten 6 wird aus dem rechten Teilbaum gelöscht (der Fall mit einem Kind: 7 tritt an seine Stelle). Achten Sie in der Zeichnung darauf, dass das Kästchen an seinem Platz bleibt und sich nur sein Wert ändert. Versuchen Sie auch, mit <code>root = remove(root, 8)</code> die Wurzel zu löschen.</p>
+
+<textarea id="text5" class="deneme">
+root = remove(root, 3)
+</textarea>
+</main>
+
+<script src="js/layout.js"></script>
+<script src="js/peg-0.9.0.min.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

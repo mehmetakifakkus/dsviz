@@ -20,7 +20,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 - Hatalar anlaşılır biçimde açıklanır (hangi satırda, ne yanlış gitti).
 - Üç dil: Türkçe, İngilizce ve Almanca. Arayüz, adım anlatımı, hata mesajları, ders metinleri ve kod yorumları çevrilmiştir. İlk açılışta tarayıcının dili seçilir.
 - Üst çubuğun sağındaki dişli düğmesi ayarları açar: dil, tema (sistem / açık / koyu), varsayılan animasyon hızı, kod yazı boyutu, adım anlatımı ve kopan düğüm uyarısı. Ayarlar tarayıcıda saklanır.
-- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, ikili arama ağacı (ekleme, arama, dolaşma, yükseklik), yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
+- Hazır örnekler: uzunluk, toplam / en büyük / arama, başa / sona / sıralı ekleme, silme, tekrar edenleri silme, ters çevirme, ortadaki düğüm, sondan k'ıncı düğüm, döngü tespiti, çift yönlü liste, dairesel liste, Josephus problemi, kabarcık / eklemeli / birleştirmeli sıralama, ikili arama ağacı (ekleme, arama, dolaşma, yükseklik, silme), yığın, kuyruk, fonksiyonlar, özyineleme, iki listeyi karşılaştırma ve birleştirme.
 
 ## Yerelde çalıştırma
 

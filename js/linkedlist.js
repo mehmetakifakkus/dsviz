@@ -1284,7 +1284,7 @@ function describe(line, res, removed){
 		return t('nValue', {name: name, value: formatValue(res)});
 	case 'object property left':
 	case 'object property left-right':
-		if(res.prop == '.data') return t('nData', {node: nodeLabel(res.target), value: formatValue(res.value)});
+		if(res.prop == '.data') return t('nData', {node: '[' + res.oldData + ']', value: formatValue(res.value)});
 		var link = {node: nodeLabel(res.target), field: res.prop.slice(1)};
 		if(res.newNode) { link['new'] = nodeLabel(res.newNode); return t('nLinkNew', link); }
 		if(res.value === null) return t('nLinkNull', link);
@@ -1670,6 +1670,7 @@ function processOneItem(item){
 		var last = item.property[item.property.length-1].join(''); // ".next" or ".data"
 		var target = evalExpr(item.lhs + path.slice(0, path.length - last.length));
 		var newNode = null;
+		var oldData = target ? target.data : undefined; // the narration names the node by its value before the change
 
 		if(item.rhs.type == 'node')
 		{
@@ -1679,7 +1680,7 @@ function processOneItem(item){
 		else
 			target[last.slice(1)] = evalExpr(rhsCode(item.rhs));
 
-		drawGraphics(item, {target: target, prop: last, value: target[last.slice(1)], newNode: newNode});
+		drawGraphics(item, {target: target, prop: last, value: target[last.slice(1)], newNode: newNode, oldData: oldData});
 	}
 	else if(item.type == 'object property right') // p1 = p1.next
 	{
@@ -1699,9 +1700,10 @@ function processOneItem(item){
 		var lastLeft = item.propertyLeft[item.propertyLeft.length-1].join('');
 		var targetLeft = evalExpr(item.lhs + pathLeft.slice(0, pathLeft.length - lastLeft.length));
 
+		var oldDataLeft = targetLeft ? targetLeft.data : undefined;
 		targetLeft[lastLeft.slice(1)] = evalExpr(item.rhs + propertyPath(item.propertyRight));
 
-		drawGraphics(item, {target: targetLeft, prop: lastLeft, value: targetLeft[lastLeft.slice(1)]});
+		drawGraphics(item, {target: targetLeft, prop: lastLeft, value: targetLeft[lastLeft.slice(1)], oldData: oldDataLeft});
 	}
 	else if(item.type == 'free object') // removes the object // free p1 / free p1.next
 	{
