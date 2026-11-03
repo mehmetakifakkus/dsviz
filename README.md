@@ -25,7 +25,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 
 ## Yerelde çalıştırma
 
-Sayfalar `grammer.pegjs` ve `js/linkedlist.js` dosyalarını tarayıcıdan yüklediği için bir web sunucusu gerekir:
+Sayfalar `js/linkedlist.js` dosyasını tarayıcıdan yüklediği için bir web sunucusu gerekir:
 
 ```bash
 python3 -m http.server 8000
@@ -53,7 +53,7 @@ Testler kendi küçük sunucularını (`tests/server.js`) başlatır; elle açma
 
 ## Nasıl çalışıyor?
 
-- `grammer.pegjs`: Düğüm dilinin PEG.js grameri. Kod sayfa açılınca tarayıcıda derlenir.
+- `grammer.pegjs`: Düğüm dilinin PEG.js grameri. Sayfalar onu değil, önceden derlenmiş hâlini (`js/grammar.js`) yükler. **Grameri değiştirdikten sonra** `npm run build:grammar` çalıştırın ve `js/grammar.js`'yi de commit edin; `js/grammar.js` eski kalırsa bir test başarısız olur. (`tools/build-grammar.js` yalnızca Node.js ister; PEG.js 0.9 repoda, `js/peg-0.9.0.min.js`.)
 - `js/linkedlist.js`: kodu çalıştıran, adımları kuyruğa alan ve paper.js ile çizen motor.
 - `js/layout.js`: her sayfanın üst çubuğunu, örnek menüsünü ve görselleştirme kartını kurar. Örneklerin listesi de buradadır; yeni bir örnek eklemek için sayfayı oluşturup listeye bir satır eklemek yeterli.
 - `js/i18n.js`: ayarlar ve arayüz metinleri (tr / en / de). Sayfadan önce yüklenir; yeni bir metin eklerken üç dili de yazın.

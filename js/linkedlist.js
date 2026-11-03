@@ -3,7 +3,8 @@
  *
  * How it works
  * ------------
- * 1. parse() turns the code of an editor into a list of statements (grammer.pegjs).
+ * 1. parse() turns the code of an editor into a list of statements (grammer.pegjs, compiled
+ *    ahead of time into js/grammar.js).
  * 2. processOneItem() EXECUTES every statement immediately (evalExpr) and hands a
  *    snapshot of everything the drawing needs to drawGraphics().
  * 3. drawGraphics() does not draw: it pushes a "step" into the player queue. The player
@@ -2041,18 +2042,8 @@ function explainError(err, source){
 
 window.explainError = explainError;
 
-var grammer = null, parser = null;
-
-(function(){
-	var request = new XMLHttpRequest();
-	request.open('GET', 'grammer.pegjs');
-	request.onload = function(){
-		grammer = request.responseText;
-		parser = PEG.buildParser(grammer);
-		window.dsvReady = true; // the page can run code now (the tests wait for this)
-	};
-	request.send();
-})();
+// the parser is compiled from grammer.pegjs ahead of time (js/grammar.js, npm run build:grammar)
+var parser = window.dsvParser;
 
 window.parse = function(text) {
 
@@ -2349,3 +2340,4 @@ function setEditors(items){
 
 setEditors(qsa(".deneme"));
 openSharedCode();
+window.dsvReady = true; // the page can run code now (the tests wait for this)

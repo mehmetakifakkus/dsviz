@@ -23,7 +23,6 @@
 
 - [ ] Sayfaların çevirisi HTML içinde duruyor; dil sayısı artarsa içerik dil başına ayrı dosyalara taşınabilir.
 
-- [ ] Grameri önceden derlemek: şu an `grammer.pegjs` her sayfa açılışında tarayıcıda derleniyor.
 
 ## Bilinen sorunlar
 
@@ -45,7 +44,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 191 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 193 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -59,3 +58,4 @@
 - [x] AVL ağacı: `height` alanı düğümün yanında `h=` olarak çizilir, sağa/sola döndürme, dört dengesizlik durumu, sıralı eklemede dengeli kalma. Bir alana ifade atanabilir (`t.height = a + 1`); `data`/bağ dışındaki alanların değişimi de anlatılır.
 - [x] Diziler (`new Array(n)`, `t[i]` okuma ve yazma) ve zincirlemeli hash tablosu: dizi solda kovalar olarak çizilir, her kovanın zinciri kendi satırında; dizi hataları açıklanır; rehbere "Diziler" bölümü eklendi.
 - [x] Kodu bağlantıyla paylaşma: değişen bloklar `#b2=...` olarak adreste (base64url); açılınca bloklara yüklenir, kendiliğinden çalışmaz (kod ziyaretçinin tarayıcısında JavaScript olarak çalıştığı için), bilgi şeridinden sayfanın koduna dönülür.
+- [x] Gramer önceden derleniyor (`npm run build:grammar` → `js/grammar.js`): sayfalar PEG.js'yi ve grameri indirip derlemiyor (sıkıştırılmış aktarım ~35 KB → ~18 KB, bir istek ve derleme adımı eksik); `js/grammar.js` gramerle güncel değilse test başarısız olur.

@@ -17,6 +17,12 @@ function buildParser() {
 }
 
 const parser = buildParser();
+
+test('js/grammar.js is compiled from the current grammer.pegjs', () => {
+	const { compileGrammar } = require('../tools/build-grammar.js');
+	const built = fs.readFileSync(path.join(ROOT, 'js/grammar.js'), 'utf8');
+	expect(built === compileGrammar(), 'grammer.pegjs changed: run "npm run build:grammar" and commit js/grammar.js').toBe(true);
+});
 const parse = code => JSON.parse(JSON.stringify(parser.parse(code)));
 
 // every statement of a parse result, nested ones too
