@@ -1548,7 +1548,14 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2'];
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2',
+                      'taban', 'tavan', 'karekök', 'mutlak'];
+
+// the language's math functions (Turkish names): taban(7 / 2) is 3
+window.taban = Math.floor;
+window.tavan = Math.ceil;
+window['karekök'] = Math.sqrt;
+window.mutlak = Math.abs;
 
 // an error of our own: "Line 3: ..." in the chosen language, shown as it is
 function ownError(line, key, vars){

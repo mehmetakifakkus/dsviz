@@ -186,6 +186,14 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .viz-col { min-width: 0; }
 .viz { position: sticky; top: 72px; overflow: hidden; }
 
+/* reference tables in a lesson (the language guide) */
+.table-wrap { overflow-x: auto; margin: 8px 0 24px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.ref-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ref-table th, .ref-table td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.ref-table tr:last-child td { border-bottom: 0; }
+.ref-table th { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface-2); }
+.ref-table td:first-child { white-space: nowrap; }
+
 /* code blocks */
 .code-card { position: relative; margin: 8px 0 24px; }
 .code-label { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 6px 2px; }

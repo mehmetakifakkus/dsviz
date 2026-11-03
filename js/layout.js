@@ -20,6 +20,9 @@
 	var t = dsv.t, lang = dsv.settings.lang;
 
 	var EXAMPLES = [
+		{ group: {tr: 'Başlarken', en: 'Getting started', de: 'Erste Schritte'}, items: [
+			['language.html', {tr: 'Düğüm dili rehberi', en: 'Guide to the Düğüm language', de: 'Leitfaden zur Sprache Düğüm'}]
+		]},
 		{ group: {tr: 'Listeyi dolaşma', en: 'Traversal', de: 'Durchlaufen'}, items: [
 			['lengthOfALinkedList.html', {tr: 'Listenin uzunluğunu bulma', en: 'Length of a list', de: 'Länge einer Liste'}],
 			['sumMaxAndSearchInALinkedList.html', {tr: 'Toplam, en büyük değer ve arama', en: 'Sum, maximum and search', de: 'Summe, Maximum und Suche'}]

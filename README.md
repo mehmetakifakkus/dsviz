@@ -8,6 +8,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 
 ## Neler var?
 
+- Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
 - Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `for`, `if`, `function`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).
@@ -51,7 +52,7 @@ Testler kendi küçük sunucularını (`tests/server.js`) başlatır; elle açma
 
 ## Nasıl çalışıyor?
 
-- `grammer.pegjs`: dilin PEG.js grameri. Kod sayfa açılınca tarayıcıda derlenir.
+- `grammer.pegjs`: Düğüm dilinin PEG.js grameri. Kod sayfa açılınca tarayıcıda derlenir.
 - `js/linkedlist.js`: kodu çalıştıran, adımları kuyruğa alan ve paper.js ile çizen motor.
 - `js/layout.js`: her sayfanın üst çubuğunu, örnek menüsünü ve görselleştirme kartını kurar. Örneklerin listesi de buradadır; yeni bir örnek eklemek için sayfayı oluşturup listeye bir satır eklemek yeterli.
 - `js/i18n.js`: ayarlar ve arayüz metinleri (tr / en / de). Sayfadan önce yüklenir; yeni bir metin eklerken üç dili de yazın.

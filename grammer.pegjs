@@ -183,7 +183,7 @@ init_declarator_list
  = 	init:init_declarator (',' _ init_declarator)* _ nl{return init;}
 
 init_declarator
-	= _ left:name _"="_ exp: (node / dogru / yanlis / math_functions / object_poperty / expression_statement) _ nl{
+	= _ left:name _"="_ exp: (node / dogru / yanlis / (o:object_poperty !(_ [-+*/%(]) { return o; }) / expression_statement) _ nl{   // taban(x) + 1 is a call in an expression
 
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
@@ -207,7 +207,7 @@ print_statement = _ "print" !idChar _ first:print_item rest:( _ '+' _ print_item
     return {'type':'print', 'list': list, 'lineNumber': line}
 }
 
-print_item = math_functions / StringLiteral / expression_statement
+print_item = StringLiteral / expression_statement // taban(x), karekök(x)... are calls (defined by the engine)
 
 
 /////////////////////////			 Object reference 		////////////////
