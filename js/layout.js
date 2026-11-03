@@ -47,6 +47,7 @@
 		]},
 		{ group: {tr: 'Dairesel liste', en: 'Circular list', de: 'Zirkuläre Liste'}, items: [
 			['circularLinkedList.html', {tr: 'Dolaşma, ekleme ve silme', en: 'Traverse, insert and delete', de: 'Durchlaufen, einfügen und löschen'}],
+			['circularDoublyLinkedList.html', {tr: 'Dairesel çift yönlü liste', en: 'Circular doubly linked list', de: 'Zirkuläre doppelt verkettete Liste'}],
 			['josephus.html', {tr: 'Josephus problemi', en: 'The Josephus problem', de: 'Das Josephus-Problem'}]
 		]},
 		{ group: {tr: 'Yığın ve kuyruk', en: 'Stack and queue', de: 'Stapel und Warteschlange'}, items: [
