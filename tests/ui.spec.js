@@ -1,6 +1,6 @@
 // The user interface: player, panels, command prompt, theme, menu and layout.
 const { test } = require('@playwright/test');
-const { expect, openPage, skipToEnd, runBlock, runAllBlocks, runCode, valueOf, stepCounter } = require('./helpers');
+const { expect, openPage, skipToEnd, runBlock, runAllBlocks, runCode, valueOf, outputText, stepCounter } = require('./helpers');
 
 const player = (page, title) => page.locator(`.dsv-player button[title="${title}"]`);
 
@@ -245,6 +245,37 @@ test.describe('learning aids', () => {
 		await runCode(page, 'var x = new Node(1)\nx.next = new Node(2)\nx.data = x.next.data\n');
 		expect((await state(page)).rows).toEqual([[2, 2]]);
 		await expect(page.locator('#narration')).toContainText('2');
+		expect(problems).toEqual([]);
+	});
+
+	test('a binary tree is drawn by depth, sorted from left to right', async ({ page }) => {
+		const problems = await openPage(page, 'treeTraversal.html');
+		await runBlock(page, 0);
+		const drawn = await state(page);
+		expect(drawn.tree).toBe(true);
+		expect(drawn.rows).toEqual([[8], [3, 10], [1, 6, 14], [4, 7]]);
+
+		await runBlock(page, 1);
+		expect(await outputText(page)).toBe('1\n3\n4\n6\n7\n8\n10\n14\n');
+		await runBlock(page, 2);
+		expect(await outputText(page)).toBe('8\n3\n1\n6\n4\n7\n10\n14\n1\n4\n7\n6\n3\n14\n10\n8\n');
+
+		await page.locator('.tab[data-tab="tab-command"]').click();
+		await page.keyboard.type('root.left');
+		await page.keyboard.press('Enter');
+		expect(JSON.parse(await outputText(page))).toMatchObject({ data: 3, left: { data: 1, left: null, right: null }, right: { data: 6 } });
+		expect(problems).toEqual([]);
+	});
+
+	test('a lost subtree is marked, and running a list page after a tree draws a list again', async ({ page }) => {
+		const problems = await openPage(page, 'binarySearchTree.html');
+		await runBlock(page, 0);
+		await runCode(page, 'root.left = null\n');
+		expect((await state(page)).lost.sort((a, b) => a - b)).toEqual([1, 3, 4, 6, 7]);
+		await page.goto('/reverseALinkedList.html');
+		await page.waitForFunction(() => window.dsvReady === true);
+		await runBlock(page, 0);
+		expect((await state(page)).tree).toBe(false);
 		expect(problems).toEqual([]);
 	});
 

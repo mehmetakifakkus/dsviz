@@ -63,6 +63,10 @@
 			['bubbleSort.html', {tr: 'Kabarcık sıralama (değerleri değiştirerek)', en: 'Bubble sort (swapping values)', de: 'Bubblesort (Werte tauschen)'}],
 			['insertionSort.html', {tr: 'Eklemeli sıralama (bağları değiştirerek)', en: 'Insertion sort (relinking nodes)', de: 'Insertion Sort (Knoten umhängen)'}],
 			['mergeSort.html', {tr: 'Birleştirmeli sıralama (merge sort)', en: 'Merge sort', de: 'Mergesort'}]
+	]},
+		{ group: {tr: 'Ağaçlar', en: 'Trees', de: 'Bäume'}, items: [
+			['binarySearchTree.html', {tr: 'İkili arama ağacı: ekleme ve arama', en: 'Binary search tree: insert and search', de: 'Binärer Suchbaum: einfügen und suchen'}],
+			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}]
 		]}
 	];
 

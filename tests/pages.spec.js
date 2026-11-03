@@ -37,6 +37,8 @@ const EXPECTED = {
 	'bubbleSort.html': ['walk(x)', '1>2>3>4>5'],
 	'insertionSort.html': ['walk(x)', '1>2>3>4>5'],
 	'mergeSort.html': ['walk(x)', '1>2>3>4>5>6'],
+	'binarySearchTree.html': ['[p.data, m.data, output()]', [6, 1, '6,1']],
+	'treeTraversal.html': ['[h, output()]', [4, '4']],
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };
 

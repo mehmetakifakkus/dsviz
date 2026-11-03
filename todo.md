@@ -19,7 +19,7 @@
 
 ## Yeni konular
 
-- [ ] İkili arama ağacı (BST): ekleme, arama, dolaşma (yeni bir yerleşim türü gerekir).
+- [ ] İkili arama ağacında silme (iki çocuklu düğüm: sağ alt ağacın en küçüğüyle değiştirme) ve dengeli ağaçlar (AVL döndürmeleri).
 - [ ] Hash tablosu (zincirleme / chaining).
 
 ## Altyapı
@@ -48,7 +48,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 164 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 172 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -56,3 +56,4 @@
 - [x] `x = new Node(9)` (`var` olmadan) artık doğru okunuyor; hız kaydırıcısı çalışıyor (PaperScript tekli `+` / `++` yeniden yazımı).
 - [x] Dairesel bağlı liste (dolaşma, başa/sona O(1) ekleme, silme) ve Josephus problemi; başa dönen bağ pointer adlarının üstünden çizilir, halka `tail`'den sonra başlar; komut satırı döngülü listeleri sonsuza gitmeden yazdırır.
 - [x] Sıralama: kabarcık (değerleri değiştirerek), eklemeli (bağları değiştirerek, bekçi düğümle) ve özyinelemeli birleştirmeli sıralama. `x.next = f(...)` gramerde; `p.data = q.data` çizimde güncellenir; bir çalıştırmanın sonunda sağdan sola kalan liste soldan sağa dizilir; çok sayıda pointer adı bir sütuna sığdırılır ("+2").
+- [x] İkili arama ağacı: ağaç kipi (`left` / `right`, derinlik × sıralı dolaşım yerleşimi, pointer'lar düğümün altında), özyinelemeli ekleme, arama, en küçük değer, in/pre/post-order dolaşma, yükseklik; komut satırı ağaçları `{data, left, right}` olarak yazdırır.

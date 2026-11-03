@@ -86,14 +86,18 @@ function evaluateCommand(){
 
 	// a node and the nodes after it as nested {data, next}; a link back to a node already
 	// listed (a cycle or a circular list) ends the summary instead of looping forever
-	function createSummary(tree, seen){
+	function createSummary(tree, seen, isTree){
 		if(tree == null)
 			return null;
 		seen = seen || [];
+		if(isTree === undefined) // a tree when the first node has a child; then its leaves are tree nodes too
+			isTree = !!(tree.left || tree.right);
 		if(seen.indexOf(tree) >= 0)
 			return window.dsv ? window.dsv.t("cycleBack", {data: tree.data}) : "↺ [" + tree.data + "]";
 		seen.push(tree);
-		return {data: tree.data, next: createSummary(tree.next, seen)};
+		if(isTree)
+			return {data: tree.data, left: createSummary(tree.left, seen, true), right: createSummary(tree.right, seen, true)};
+		return {data: tree.data, next: createSummary(tree.next, seen, false)};
 	}
 
 	if(res.type == 'expression')
