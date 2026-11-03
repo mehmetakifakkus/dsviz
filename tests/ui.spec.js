@@ -145,6 +145,55 @@ test('a broken shared link is ignored', async ({ page }) => {
 	expect(problems).toEqual([]);
 });
 
+test('lesson mode shows one part at a time and runs its block', async ({ page }) => {
+	const problems = await openPage(page, 'stack.html');
+	const visibleCards = () => page.locator('.code-card:visible');
+	await expect(page.locator('.lesson-nav')).toBeHidden();
+	expect(await visibleCards().count()).toBe(3);
+
+	await page.locator('.lesson-toggle').click();
+	await expect(page.locator('.lesson-toggle')).toHaveText('Tüm sayfayı göster');
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 1 / 3');
+	await expect(visibleCards()).toHaveCount(1);
+	await expect(visibleCards().locator('.code-label')).toHaveText('Blok 1');
+	await expect(page.locator('.lesson-prev')).toBeDisabled();
+	await expect(page.locator('.pager')).toBeHidden(); // only on the last part
+
+	await page.locator('.lesson-next').click(); // part 2: its block runs (block 1 again at once)
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 2 / 3');
+	await expect(visibleCards().locator('.code-label')).toHaveText('Blok 2');
+	await skipToEnd(page);
+	expect(await valueOf(page, '[walk(tepe), value]')).toEqual(['2>1', 3]);
+
+	await page.locator('.lesson-next').click();
+	await expect(page.locator('.lesson-next')).toBeDisabled();
+	await expect(page.locator('.pager')).toBeVisible();
+	await page.locator('.lesson-prev').click();
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 2 / 3');
+
+	// remembered, also in the settings panel; turning it off shows the whole page
+	await page.reload();
+	await page.waitForFunction(() => window.dsvReady === true);
+	await expect(page.locator('.lesson-count')).toHaveText('Bölüm 1 / 3');
+	await page.locator('.topbar .settings-btn').click();
+	await expect(page.locator('#settings-panel [name=lessonMode]')).toBeChecked();
+	await page.locator('#settings-panel [name=lessonMode]').uncheck();
+	await page.keyboard.press('Escape');
+	await expect(page.locator('.lesson-nav')).toBeHidden();
+	expect(await visibleCards().count()).toBe(3);
+	expect(problems).toEqual([]);
+});
+
+test('lesson mode is offered only on pages with two or more blocks', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await expect(page.locator('.lesson-toggle')).toHaveCount(0);
+	await page.goto('/insertIntoASortedLinkedList.html');
+	await page.waitForFunction(() => window.dsvReady === true);
+	const blocks = await page.locator('.code-card').count();
+	await expect(page.locator('.lesson-toggle')).toHaveCount(blocks >= 2 ? 1 : 0);
+	expect(problems).toEqual([]);
+});
+
 test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const problems = await openPage(page, 'queue.html');
 	await page.locator('.menu-btn').click();

@@ -179,6 +179,7 @@
 			options([0, 1, 2, 3, 4], t('speeds'), s.speed) + '</select></label>' +
 		'<div class="setting"><span>' + esc(t('fontSize')) + '</span>' +
 			segmented('fontSize', ['normal', 'large', 'xlarge'], [sizes.normal, sizes.large, sizes.xlarge], s.fontSize) + '</div>' +
+		'<label class="setting switch"><span>' + esc(t('lessonModeSetting')) + '</span><input type="checkbox" name="lessonMode"' + (s.lessonMode ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('narrationSetting')) + '</span><input type="checkbox" name="narration"' + (s.narration ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('warningsSetting')) + '</span><input type="checkbox" name="warnings"' + (s.warnings ? ' checked' : '') + '></label>' +
 		'<div class="setting-note">' + esc(t('shortcuts')) + '</div>' +
@@ -206,6 +207,7 @@
 		if(name === 'speed') dsv.set('speed', Number(input.value));
 		else if(input.type === 'checkbox') dsv.set(name, input.checked);
 		else dsv.set(name, input.value);
+		if(name === 'lessonMode' && window.dsvApplyLessonMode) window.dsvApplyLessonMode();
 	});
 	panel.querySelector('[name=reset]').addEventListener('click', function(){
 		dsv.reset();
@@ -214,6 +216,8 @@
 		panel.querySelector('[name=speed]').value = dsv.settings.speed;
 		panel.querySelector('[name=narration]').checked = dsv.settings.narration;
 		panel.querySelector('[name=warnings]').checked = dsv.settings.warnings;
+		panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+		if(window.dsvApplyLessonMode) window.dsvApplyLessonMode();
 	});
 
 	// ---------- code blocks ----------
@@ -251,6 +255,75 @@
 
 	lesson.appendChild(el('footer', {'class': 'footer'},
 		t('footer', {author: '<a href="http://www.ceng.metu.edu.tr/~akifakkus/doku.php" target="_blank" rel="noopener">Mehmet Akif AKKUS</a>'})));
+
+	// ---------- lesson mode ----------
+	// The page shows one part at a time: the text before a code block and the block. Next and
+	// Previous move between parts and run the block of the part (the blocks above it run again
+	// at once, so the drawing is the same as when reading the whole page).
+	var cards = Array.prototype.filter.call(lesson.children, function(e){ return e.classList.contains('code-card'); });
+	if(page !== 'index.html' && cards.length >= 2){
+		var parts = [], tail = [], partNow = [];
+		Array.prototype.forEach.call(lesson.children, function(e){
+			if(e.tagName === 'H1') return;
+			if(e.tagName === 'FOOTER' || e.classList.contains('pager')){ tail.push(e); return; }
+			partNow.push(e);
+			if(e.classList.contains('code-card')){ parts.push(partNow); partNow = []; }
+		});
+		partNow.forEach(function(e){ parts[parts.length - 1].push(e); }); // text after the last block
+		var partIndex = 0;
+
+		var toggle = el('button', {'class': 'lesson-toggle', type: 'button'});
+		lesson.querySelector('h1').insertAdjacentElement('afterend', toggle);
+		var lessonNav = el('nav', {'class': 'lesson-nav', hidden: ''},
+			'<button type="button" class="lesson-prev">' + esc(t('previous')) + '</button>' +
+			'<span class="lesson-count"></span>' +
+			'<button type="button" class="lesson-next">' + esc(t('next')) + '</button>');
+		lesson.insertBefore(lessonNav, tail[0] || null);
+
+		var refreshEditors = function(elems){
+			elems.forEach(function(e){
+				Array.prototype.forEach.call(e.querySelectorAll('.CodeMirror'), function(cm){ if(cm.CodeMirror) cm.CodeMirror.refresh(); });
+			});
+		};
+		var showPart = function(k, run){
+			partIndex = Math.max(0, Math.min(parts.length - 1, k));
+			parts.forEach(function(list, i){ list.forEach(function(e){ e.classList.toggle('lesson-hidden', i !== partIndex); }); });
+			tail.forEach(function(e){ e.classList.toggle('lesson-hidden', partIndex !== parts.length - 1); });
+			lessonNav.querySelector('.lesson-count').textContent = t('lessonPart', {i: partIndex + 1, n: parts.length});
+			lessonNav.querySelector('.lesson-prev').disabled = partIndex === 0;
+			lessonNav.querySelector('.lesson-next').disabled = partIndex === parts.length - 1;
+			refreshEditors(parts[partIndex]);
+			if(run && window.dsvRunBlock)
+				window.dsvRunBlock(partIndex); // each part holds exactly one block, in order
+		};
+		window.dsvApplyLessonMode = function(){
+			var on = !!dsv.settings.lessonMode;
+			document.documentElement.classList.toggle('lesson-mode', on);
+			toggle.textContent = on ? t('lessonOff') : t('lessonOn');
+			toggle.title = on ? '' : t('lessonOnTitle');
+			toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+			lessonNav.hidden = !on;
+			if(on)
+				showPart(partIndex, false);
+			else {
+				parts.concat([tail]).forEach(function(list){ list.forEach(function(e){ e.classList.remove('lesson-hidden'); }); });
+				refreshEditors(parts.reduce(function(a, b){ return a.concat(b); }, []));
+			}
+		};
+		toggle.addEventListener('click', function(){
+			dsv.set('lessonMode', !dsv.settings.lessonMode);
+			panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+			window.dsvApplyLessonMode();
+		});
+		var move = function(d){
+			showPart(partIndex + d, true);
+			var top = lesson.getBoundingClientRect().top + window.pageYOffset - 70;
+			if(window.pageYOffset > top) window.scrollTo(0, top); // the part starts at the top
+		};
+		lessonNav.querySelector('.lesson-prev').addEventListener('click', function(){ move(-1); });
+		lessonNav.querySelector('.lesson-next').addEventListener('click', function(){ move(1); });
+		window.dsvApplyLessonMode();
+	}
 
 	// ---------- visualisation card ----------
 	var viz = el('div', {'class': 'card viz'},

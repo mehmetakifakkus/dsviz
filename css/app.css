@@ -341,6 +341,26 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 
 .footer { margin-top: 32px; font-size: 13px; color: var(--muted); }
 
+/* lesson mode: one part of the page at a time */
+.lesson-toggle {
+  display: inline-flex; align-items: center; height: 30px; margin: -4px 0 10px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--accent-text);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lesson-toggle:hover, .lesson-toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; }
+.lesson-hidden { display: none !important; }
+.lesson-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 20px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.lesson-nav[hidden] { display: none; }
+.lesson-nav button {
+  height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+:root[data-theme="dark"] .lesson-nav button { color: #0f141c; }
+.lesson-nav button:disabled { background: var(--surface-2); color: var(--muted); cursor: default; }
+.lesson-count { font-size: 13px; color: var(--muted); font-weight: 600; }
+
 /* folding the panels under the canvas: only on narrow screens */
 .viz-folds { display: none; }
 .fold-btn {

@@ -1800,7 +1800,7 @@ window.showNode = function(node){
 // user variables are globals. Some global names belong to the browser and cannot be
 // changed (top, parent, self, name...): the assignment would be silently ignored.
 var userGlobals = {}; // names of the user's global variables and functions
-var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink',
+var ENGINE_GLOBALS = ['Node', 'Pointer', 'parse', 'showNode', 'explainError', 'dsvApplyTheme', 'dsvApplySettings', 'dsvExamples', 'dsv', 'activeEditor', 'editor2', 'dsvShareLink', 'dsvRunBlock', 'dsvApplyLessonMode',
                       'taban', 'tavan', 'karekök', 'mutlak'];
 
 // the language's math functions (Turkish names): taban(7 / 2) is 3
@@ -2243,6 +2243,8 @@ function insertAfter(el, referenceNode) {
 // twice does not draw a second copy of the list, a block always starts from what the
 // blocks above it produce (also after they were edited), and block 2 can be run first.
 var blockEditors = [];
+
+window.dsvRunBlock = function(k){ runBlock(k); }; // lesson mode runs the block of a part
 
 function runBlock(k){
 	resetProgram();
