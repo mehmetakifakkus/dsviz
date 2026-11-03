@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Başa ekleme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Başa ekleme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Başa ekleme</h1>
+<h1 data-lang="en">Insert at the head</h1>
+<h1 data-lang="de">Am Anfang einfügen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Önce üç düğümlü bir liste oluşturalım. <code>x</code> listenin başı.</p>
+<p data-lang="tr">Önce üç düğümlü bir liste oluşturalım. <code>x</code> listenin başı.</p>
+<p data-lang="en">First let's build a list with three nodes. <code>x</code> is the head of the list.</p>
+<p data-lang="de">Zuerst bauen wir eine Liste mit drei Knoten. <code>x</code> ist der Kopf der Liste.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -29,12 +28,24 @@ x.next = y
 y.next = z
 </textarea>
 
-<p>Başa ekleme O(1) bir işlemdir: yeni düğümü oluşturun, <code>next</code>'ini şimdiki başa bağlayın, sonra baş pointer'ını yeni düğüme taşıyın. Listeyi dolaşmaya gerek yoktur.</p>
+<p data-lang="tr">Başa ekleme O(1) bir işlemdir: yeni düğümü oluşturun, <code>next</code>'ini şimdiki başa bağlayın, sonra baş pointer'ını yeni düğüme taşıyın. Listeyi dolaşmaya gerek yoktur.</p>
+<p data-lang="en">Inserting at the head is an O(1) operation: create the new node, link its <code>next</code> to the current head, then move the head pointer to the new node. There is no need to walk the list.</p>
+<p data-lang="de">Einfügen am Anfang ist eine O(1)-Operation: neuen Knoten erzeugen, sein <code>next</code> mit dem aktuellen Kopf verbinden und dann den Kopfzeiger auf den neuen Knoten setzen. Die Liste muss nicht durchlaufen werden.</p>
 
 <textarea id="text2" class="deneme">
 var h = new Node(9)  // yeni düğüm
 h.next = x           // başın önüne bağla
 x = h                // x artık yeni baş</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var h = new Node(9)  // the new node
+h.next = x           // link it in front of the head
+x = h                // x is now the new head
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var h = new Node(9)  // der neue Knoten
+h.next = x           // vor den Kopf hängen
+x = h                // x ist jetzt der neue Kopf
+</script>
 </main>
 
 <script src="js/layout.js"></script>

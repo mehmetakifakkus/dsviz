@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Toplam, en büyük değer ve arama | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Toplam, en büyük değer ve arama</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Toplam, en büyük değer ve arama</h1>
+<h1 data-lang="en">Sum, maximum and search</h1>
+<h1 data-lang="de">Summe, Maximum und Suche</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Bir liste oluşturalım.</p>
+<p data-lang="tr">Bir liste oluşturalım.</p>
+<p data-lang="en">Let's create a list.</p>
+<p data-lang="de">Erstellen wir eine Liste.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(4)
@@ -31,7 +30,9 @@ y.next = z
 z.next = w
 </textarea>
 
-<p>Tek bir dolaşmada birkaç şey birden hesaplanabilir. <code>sum</code> her değeri toplar, <code>max</code> o ana kadar görülen en büyük değeri tutar. Listenin altındaki Değişkenler alanını izleyin.</p>
+<p data-lang="tr">Tek bir dolaşmada birkaç şey birden hesaplanabilir. <code>sum</code> her değeri toplar, <code>max</code> o ana kadar görülen en büyük değeri tutar. Listenin altındaki Değişkenler alanını izleyin.</p>
+<p data-lang="en">A single pass can compute several things at once. <code>sum</code> adds up every value, <code>max</code> keeps the largest value seen so far. Watch the Variables area below the list.</p>
+<p data-lang="de">Ein einziger Durchlauf kann mehrere Dinge gleichzeitig berechnen. <code>sum</code> addiert alle Werte, <code>max</code> merkt sich den bisher größten Wert. Beobachten Sie den Bereich Variablen unter der Liste.</p>
 
 <textarea id="text2" class="deneme">
 var p = x
@@ -46,7 +47,9 @@ while(p != null)
 }
 </textarea>
 
-<p>Arama, değer bulunur bulunmaz <code>break</code> ile durur: <code>p</code> o düğümde kalır. Değer listede yoksa <code>p</code> sonunda <code>null</code> olur. 2'yi 5 yapıp tekrar deneyin.</p>
+<p data-lang="tr">Arama, değer bulunur bulunmaz <code>break</code> ile durur: <code>p</code> o düğümde kalır. Değer listede yoksa <code>p</code> sonunda <code>null</code> olur. 2'yi 5 yapıp tekrar deneyin.</p>
+<p data-lang="en">The search stops with <code>break</code> as soon as the value is found: <code>p</code> stays on that node. If the value is not in the list, <code>p</code> ends up <code>null</code>. Change the 2 to a 5 and try again.</p>
+<p data-lang="de">Die Suche endet mit <code>break</code>, sobald der Wert gefunden ist: <code>p</code> bleibt auf diesem Knoten stehen. Ist der Wert nicht in der Liste, ist <code>p</code> am Ende <code>null</code>. Ändern Sie die 2 in eine 5 und versuchen Sie es noch einmal.</p>
 
 <textarea id="text3" class="deneme">
 var p = x
@@ -57,6 +60,24 @@ while(p != null)
   p = p.next
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var p = x
+while(p != null)
+{
+  if(p.data == 2)
+    break     // found it, stop searching
+  p = p.next
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var p = x
+while(p != null)
+{
+  if(p.data == 2)
+    break     // gefunden, Suche beenden
+  p = p.next
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

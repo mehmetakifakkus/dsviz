@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Çift yönlü listede ekleme ve silme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Çift yönlü listede ekleme ve silme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Çift yönlü listede ekleme ve silme</h1>
+<h1 data-lang="en">Insert and delete in a doubly linked list</h1>
+<h1 data-lang="de">Einfügen und Löschen in einer doppelt verketteten Liste</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Dört düğümlü çift yönlü bir liste oluşturalım.</p>
+<p data-lang="tr">Dört düğümlü çift yönlü bir liste oluşturalım.</p>
+<p data-lang="en">Let's build a doubly linked list with four nodes.</p>
+<p data-lang="de">Bauen wir eine doppelt verkettete Liste mit vier Knoten.</p>
 
 <textarea id="text1" class="deneme">
 var a = new Node(1)
@@ -34,7 +33,9 @@ c.next = d
 d.prev = c
 </textarea>
 
-<p><code>b</code> ile <code>c</code> arasına 9 değerli bir düğüm ekleyelim. Dört bağ değişir. Önce yeni düğümün kendi bağları kurulur, sonra komşuların bağları yeni düğüme çevrilir. <code>b.next = n</code> en sona kalmalıdır: önce yapılsaydı <code>b.next.prev</code> artık <code>c</code>'yi değil <code>n</code>'yi gösterirdi.</p>
+<p data-lang="tr"><code>b</code> ile <code>c</code> arasına 9 değerli bir düğüm ekleyelim. Dört bağ değişir. Önce yeni düğümün kendi bağları kurulur, sonra komşuların bağları yeni düğüme çevrilir. <code>b.next = n</code> en sona kalmalıdır: önce yapılsaydı <code>b.next.prev</code> artık <code>c</code>'yi değil <code>n</code>'yi gösterirdi.</p>
+<p data-lang="en">Let's insert a node with value 9 between <code>b</code> and <code>c</code>. Four links change. First the new node's own links are set, then the neighbours' links are turned towards the new node. <code>b.next = n</code> must come last: done earlier, <code>b.next.prev</code> would point to <code>n</code> instead of <code>c</code>.</p>
+<p data-lang="de">Fügen wir zwischen <code>b</code> und <code>c</code> einen Knoten mit dem Wert 9 ein. Vier Verbindungen ändern sich. Zuerst werden die eigenen Verbindungen des neuen Knotens gesetzt, dann die der Nachbarn auf den neuen Knoten umgebogen. <code>b.next = n</code> muss zuletzt kommen: früher ausgeführt, würde <code>b.next.prev</code> nicht mehr <code>c</code>, sondern <code>n</code> meinen.</p>
 
 <textarea id="text2" class="deneme">
 var n = new Node(9)
@@ -43,8 +44,24 @@ n.next = b.next
 b.next.prev = n   // komşuları yeni düğüme bağla
 b.next = n
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var n = new Node(9)
+n.prev = b        // the new node's links
+n.next = b.next
+b.next.prev = n   // link the neighbours to the new node
+b.next = n
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var n = new Node(9)
+n.prev = b        // Verbindungen des neuen Knotens
+n.next = b.next
+b.next.prev = n   // Nachbarn mit dem neuen Knoten verbinden
+b.next = n
+</script>
 
-<p>Çift yönlü listenin asıl avantajı silmede ortaya çıkar. Silinecek düğümü gösteren bir pointer varsa önceki düğümü aramaya gerek kalmaz: <code>t.prev</code> ile <code>t.next</code> birbirine bağlanır ve düğüm O(1) zamanda listeden çıkar. Tek yönlü listede önceki düğümü bulmak için listeyi baştan dolaşmak gerekirdi.</p>
+<p data-lang="tr">Çift yönlü listenin asıl avantajı silmede ortaya çıkar. Silinecek düğümü gösteren bir pointer varsa önceki düğümü aramaya gerek kalmaz: <code>t.prev</code> ile <code>t.next</code> birbirine bağlanır ve düğüm O(1) zamanda listeden çıkar. Tek yönlü listede önceki düğümü bulmak için listeyi baştan dolaşmak gerekirdi.</p>
+<p data-lang="en">The real advantage of a doubly linked list shows up when deleting. If a pointer already points to the node to delete, there is no need to search for the previous node: <code>t.prev</code> and <code>t.next</code> are linked to each other and the node leaves the list in O(1) time. In a singly linked list you would have to walk from the head to find the previous node.</p>
+<p data-lang="de">Der eigentliche Vorteil einer doppelt verketteten Liste zeigt sich beim Löschen. Zeigt bereits ein Zeiger auf den zu löschenden Knoten, muss der Vorgänger nicht gesucht werden: <code>t.prev</code> und <code>t.next</code> werden miteinander verbunden und der Knoten verlässt die Liste in O(1). In einer einfach verketteten Liste müsste man vom Kopf aus laufen, um den Vorgänger zu finden.</p>
 
 <textarea id="text3" class="deneme">
 var t = c
@@ -52,6 +69,18 @@ t.prev.next = t.next  // önceki, sonrakine bağlanır
 t.next.prev = t.prev  // sonraki, öncekine bağlanır
 delete t
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var t = c
+t.prev.next = t.next  // the previous one links to the next
+t.next.prev = t.prev  // the next one links to the previous
+delete t
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var t = c
+t.prev.next = t.next  // der Vorgänger zeigt auf den Nachfolger
+t.next.prev = t.prev  // der Nachfolger zeigt auf den Vorgänger
+delete t
+</script>
 </main>
 
 <script src="js/layout.js"></script>

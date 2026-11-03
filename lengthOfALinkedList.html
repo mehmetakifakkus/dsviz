@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Listenin uzunluğu | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Listenin uzunluğu</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Listenin uzunluğu</h1>
+<h1 data-lang="en">Length of a list</h1>
+<h1 data-lang="de">Länge einer Liste</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Önce bir liste oluşturalım.</p>
+<p data-lang="tr">Önce bir liste oluşturalım.</p>
+<p data-lang="en">First let's build a list.</p>
+<p data-lang="de">Zuerst bauen wir eine Liste.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -31,7 +30,9 @@ y.next = z
 var p1 = x
 </textarea>
 
-<p>Şimdi bir pointer ile listenin başından sonuna kadar ilerleyelim. Her adımda <code>count</code> değişkenini bir artırarak düğümleri sayıyoruz. <code>p1</code> <code>null</code> olduğunda listenin sonuna gelmişiz demektir.</p>
+<p data-lang="tr">Şimdi bir pointer ile listenin başından sonuna kadar ilerleyelim. Her adımda <code>count</code> değişkenini bir artırarak düğümleri sayıyoruz. <code>p1</code> <code>null</code> olduğunda listenin sonuna gelmişiz demektir.</p>
+<p data-lang="en">Now let's walk a pointer from the head of the list to its end. At each step we add one to <code>count</code>, which counts the nodes. When <code>p1</code> is <code>null</code>, we have reached the end of the list.</p>
+<p data-lang="de">Jetzt laufen wir mit einem Zeiger vom Kopf der Liste bis zu ihrem Ende. Bei jedem Schritt erhöhen wir <code>count</code> um eins und zählen so die Knoten. Wenn <code>p1</code> <code>null</code> ist, haben wir das Ende der Liste erreicht.</p>
 
 <textarea id="text3" class="deneme">
 var count = 0
@@ -41,8 +42,26 @@ while(p1 != null) // son düğüme git
   count = count + 1
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var count = 0
+while(p1 != null) // go to the last node
+{
+  p1 = p1.next
+  count = count + 1
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var count = 0
+while(p1 != null) // bis zum letzten Knoten
+{
+  p1 = p1.next
+  count = count + 1
+}
+</script>
 
-<p>Aynı dolaşma <code>for</code> ile tek satırda yazılabilir: başlangıç (<code>var p = x</code>), koşul (<code>p != null</code>) ve her turun sonunda yapılacak adım (<code>p = p.next</code>) parantezin içinde durur. <code>length++</code>, <code>length = length + 1</code> ile aynı anlama gelir. Koşul kısaca <code>p</code> diye de yazılabilir (<code>for(var p = x; p; p = p.next)</code>): <code>p</code> bir düğümü gösterdiği sürece doğru, <code>null</code> olunca yanlıştır.</p>
+<p data-lang="tr">Aynı dolaşma <code>for</code> ile tek satırda yazılabilir: başlangıç (<code>var p = x</code>), koşul (<code>p != null</code>) ve her turun sonunda yapılacak adım (<code>p = p.next</code>) parantezin içinde durur. <code>length++</code>, <code>length = length + 1</code> ile aynı anlama gelir. Koşul kısaca <code>p</code> diye de yazılabilir (<code>for(var p = x; p; p = p.next)</code>): <code>p</code> bir düğümü gösterdiği sürece doğru, <code>null</code> olunca yanlıştır.</p>
+<p data-lang="en">The same walk fits on one line with <code>for</code>: the start (<code>var p = x</code>), the condition (<code>p != null</code>) and the step done at the end of each round (<code>p = p.next</code>) all sit inside the parentheses. <code>length++</code> means the same as <code>length = length + 1</code>. The condition can also be written simply as <code>p</code> (<code>for(var p = x; p; p = p.next)</code>): it is true while <code>p</code> points to a node and false once it is <code>null</code>.</p>
+<p data-lang="de">Derselbe Durchlauf passt mit <code>for</code> in eine Zeile: der Start (<code>var p = x</code>), die Bedingung (<code>p != null</code>) und der Schritt am Ende jeder Runde (<code>p = p.next</code>) stehen in den Klammern. <code>length++</code> bedeutet dasselbe wie <code>length = length + 1</code>. Die Bedingung lässt sich auch kurz als <code>p</code> schreiben (<code>for(var p = x; p; p = p.next)</code>): sie ist wahr, solange <code>p</code> auf einen Knoten zeigt, und falsch, sobald er <code>null</code> ist.</p>
 
 <textarea id="text4" class="deneme">
 var length = 0

@@ -41,8 +41,14 @@ test('every code block of the example pages parses', () => {
 			expect(() => parser.parse(code), `${file} #${m[1]}`).not.toThrow();
 			blocks++;
 		}
+		// English and German versions of a block: raw text, no HTML entities
+		for (const m of html.matchAll(/<script type="text\/plain" class="code-variant" data-for="(\w+)" data-lang="(\w+)">\n?([\s\S]*?)<\/script>/g)) {
+			expect(m[3], `${file} #${m[1]} (${m[2]}) has an HTML entity`).not.toMatch(/&\w+;/);
+			expect(() => parser.parse(m[3]), `${file} #${m[1]} (${m[2]})`).not.toThrow();
+			blocks++;
+		}
 	}
-	expect(blocks).toBeGreaterThan(40);
+	expect(blocks).toBeGreaterThan(80);
 });
 
 test('names that start with a keyword are names', () => {

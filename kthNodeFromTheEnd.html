@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sondan k'ıncı düğüm | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Sondan k'ıncı düğüm</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Sondan k'ıncı düğüm</h1>
+<h1 data-lang="en">k-th node from the end</h1>
+<h1 data-lang="de">k-ter Knoten vom Ende</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Beş düğümlü bir liste oluşturalım.</p>
+<p data-lang="tr">Beş düğümlü bir liste oluşturalım.</p>
+<p data-lang="en">Let's build a list with five nodes.</p>
+<p data-lang="de">Bauen wir eine Liste mit fünf Knoten.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -33,7 +32,9 @@ z.next = w
 w.next = v
 </textarea>
 
-<p>Önce bir <code>for</code> döngüsüyle <code>fast</code>'i k düğüm ileri götürün. Sonra iki pointer'ı birlikte ilerletin. Aralarındaki mesafe hep k kalır, bu yüzden <code>fast</code> listenin sonundan düştüğünde <code>slow</code> sondan k'ıncı düğümdedir. k = 2 için bu düğüm 4'tür. Tek geçiş yeterli, uzunluğu bilmek gerekmez.</p>
+<p data-lang="tr">Önce bir <code>for</code> döngüsüyle <code>fast</code>'i k düğüm ileri götürün. Sonra iki pointer'ı birlikte ilerletin. Aralarındaki mesafe hep k kalır, bu yüzden <code>fast</code> listenin sonundan düştüğünde <code>slow</code> sondan k'ıncı düğümdedir. k = 2 için bu düğüm 4'tür. Tek geçiş yeterli, uzunluğu bilmek gerekmez.</p>
+<p data-lang="en">First move <code>fast</code> k nodes ahead with a <code>for</code> loop. Then advance both pointers together. The distance between them stays k, so when <code>fast</code> falls off the end of the list, <code>slow</code> is at the k-th node from the end. For k = 2 that node is 4. One pass is enough and the length is never needed.</p>
+<p data-lang="de">Zuerst bringt eine <code>for</code>-Schleife <code>fast</code> k Knoten nach vorn. Dann laufen beide Zeiger gemeinsam weiter. Ihr Abstand bleibt immer k, also steht <code>slow</code> auf dem k-ten Knoten vom Ende, wenn <code>fast</code> über das Listenende hinausläuft. Für k = 2 ist das der Knoten 4. Ein Durchlauf genügt, die Länge muss man nicht kennen.</p>
 
 <textarea id="text2" class="deneme">
 var fast = x
@@ -46,6 +47,28 @@ while(fast != null)
   fast = fast.next
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var fast = x
+for(var i = 0; i < 2; i++)  // move fast k = 2 nodes ahead
+  fast = fast.next
+var slow = x
+while(fast != null)
+{
+  slow = slow.next
+  fast = fast.next
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var fast = x
+for(var i = 0; i < 2; i++)  // fast k = 2 Knoten vorrücken
+  fast = fast.next
+var slow = x
+while(fast != null)
+{
+  slow = slow.next
+  fast = fast.next
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

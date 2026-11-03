@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Listeyi ters çevirme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Listeyi ters çevirme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Listeyi ters çevirme</h1>
+<h1 data-lang="en">Reverse a list</h1>
+<h1 data-lang="de">Eine Liste umdrehen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Dört düğümlü bir liste oluşturalım.</p>
+<p data-lang="tr">Dört düğümlü bir liste oluşturalım.</p>
+<p data-lang="en">Let's create a list with four nodes.</p>
+<p data-lang="de">Erstellen wir eine Liste mit vier Knoten.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -31,7 +30,9 @@ y.next = z
 z.next = w
 </textarea>
 
-<p>Listeyi üç pointer ile dolaşıyoruz. <code>curr</code> işlenen düğüm, <code>prev</code> ters çevrilmiş kısım; <code>nxt</code> ise bağ kopmadan önce listenin geri kalanını aklında tutar. Her turda bir ok ters döner. <code>curr</code> <code>null</code> olduğunda yeni baş <code>prev</code>'dir.</p>
+<p data-lang="tr">Listeyi üç pointer ile dolaşıyoruz. <code>curr</code> işlenen düğüm, <code>prev</code> ters çevrilmiş kısım; <code>nxt</code> ise bağ kopmadan önce listenin geri kalanını aklında tutar. Her turda bir ok ters döner. <code>curr</code> <code>null</code> olduğunda yeni baş <code>prev</code>'dir.</p>
+<p data-lang="en">We walk the list with three pointers. <code>curr</code> is the node being processed, <code>prev</code> is the part already reversed, and <code>nxt</code> remembers the rest of the list before the link is cut. Each round turns one arrow around. When <code>curr</code> is <code>null</code>, the new head is <code>prev</code>.</p>
+<p data-lang="de">Wir durchlaufen die Liste mit drei Pointern. <code>curr</code> ist der Knoten, der gerade bearbeitet wird, <code>prev</code> der schon umgedrehte Teil, und <code>nxt</code> merkt sich den Rest der Liste, bevor die Verbindung getrennt wird. In jeder Runde dreht sich ein Pfeil um. Wenn <code>curr</code> <code>null</code> ist, ist <code>prev</code> der neue Kopf.</p>
 
 <textarea id="text2" class="deneme">
 var prev = null
@@ -44,6 +45,28 @@ while(curr != null)
   curr = nxt           // curr'ü bir adım ilerlet
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var prev = null
+var curr = x
+while(curr != null)
+{
+  var nxt = curr.next  // remember the rest of the list
+  curr.next = prev     // turn the arrow around
+  prev = curr          // move prev one step forward
+  curr = nxt           // move curr one step forward
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var prev = null
+var curr = x
+while(curr != null)
+{
+  var nxt = curr.next  // den Rest der Liste merken
+  curr.next = prev     // den Pfeil umdrehen
+  prev = curr          // prev einen Schritt weiter
+  curr = nxt           // curr einen Schritt weiter
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>İki sıralı listeyi birleştirme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>İki sıralı listeyi birleştirme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">İki sıralı listeyi birleştirme</h1>
+<h1 data-lang="en">Merge two sorted lists</h1>
+<h1 data-lang="de">Zwei sortierte Listen zusammenführen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>İki sıralı liste oluşturalım.</p>
+<p data-lang="tr">İki sıralı liste oluşturalım.</p>
+<p data-lang="en">Let's create two sorted lists.</p>
+<p data-lang="de">Erstellen wir zwei sortierte Listen.</p>
 
 <textarea id="text1" class="deneme">
 var a1 = new Node(1)
@@ -34,7 +33,9 @@ b1.next = b2
 b2.next = b3
 </textarea>
 
-<p>Kukla (dummy) bir <code>head</code> düğümü başlangıcı kolaylaştırır: <code>tail</code> her zaman birleşmiş listenin son düğümünü gösterir. Her adımda <code>a</code> ile <code>b</code>'den küçük olanı <code>tail</code>'in arkasına bağlanır. Listelerden biri bittiğinde diğerinin kalanı tek adımda bağlanır. Yeni düğüm oluşturulmaz, sadece oklar değişir. Birleşmiş liste <code>head.next</code>'ten başlar.</p>
+<p data-lang="tr">Kukla (dummy) bir <code>head</code> düğümü başlangıcı kolaylaştırır: <code>tail</code> her zaman birleşmiş listenin son düğümünü gösterir. Her adımda <code>a</code> ile <code>b</code>'den küçük olanı <code>tail</code>'in arkasına bağlanır. Listelerden biri bittiğinde diğerinin kalanı tek adımda bağlanır. Yeni düğüm oluşturulmaz, sadece oklar değişir. Birleşmiş liste <code>head.next</code>'ten başlar.</p>
+<p data-lang="en">A dummy <code>head</code> node makes the start easier: <code>tail</code> always points to the last node of the merged list. In each step, the smaller of <code>a</code> and <code>b</code> is linked after <code>tail</code>. When one of the lists runs out, the rest of the other is linked in a single step. No new nodes are created, only the arrows change. The merged list starts at <code>head.next</code>.</p>
+<p data-lang="de">Ein Platzhalterknoten (dummy) <code>head</code> erleichtert den Anfang: <code>tail</code> zeigt immer auf den letzten Knoten der zusammengeführten Liste. In jedem Schritt wird der kleinere von <code>a</code> und <code>b</code> hinter <code>tail</code> gehängt. Ist eine der Listen zu Ende, wird der Rest der anderen in einem Schritt angehängt. Es entstehen keine neuen Knoten, nur die Pfeile ändern sich. Die zusammengeführte Liste beginnt bei <code>head.next</code>.</p>
 
 <textarea id="text2" class="deneme">
 var a = a1
@@ -60,6 +61,54 @@ if(a != null)
 else
   tail.next = b
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var a = a1
+var b = b1
+var head = new Node(0)  // dummy node
+var tail = head
+while(a != null && b != null)
+{
+  if(a.data <= b.data)
+  {
+    tail.next = a
+    a = a.next
+  }
+  else
+  {
+    tail.next = b
+    b = b.next
+  }
+  tail = tail.next
+}
+if(a != null)
+  tail.next = a
+else
+  tail.next = b
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var a = a1
+var b = b1
+var head = new Node(0)  // Platzhalterknoten
+var tail = head
+while(a != null && b != null)
+{
+  if(a.data <= b.data)
+  {
+    tail.next = a
+    a = a.next
+  }
+  else
+  {
+    tail.next = b
+    b = b.next
+  }
+  tail = tail.next
+}
+if(a != null)
+  tail.next = a
+else
+  tail.next = b
+</script>
 </main>
 
 <script src="js/layout.js"></script>

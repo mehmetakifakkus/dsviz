@@ -4,21 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Bağlı Listeler</h1>
-<p class="lead">Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu adım adım çizerek gösteren bir eğitim aracı. Kurulum gerektirmez.</p>
+<h1 data-lang="tr">Bağlı Listeler</h1>
+<h1 data-lang="en">Linked Lists</h1>
+<h1 data-lang="de">Verkettete Listen</h1>
+<p class="lead" data-lang="tr">Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu adım adım çizerek gösteren bir eğitim aracı. Kurulum gerektirmez.</p>
+<p class="lead" data-lang="en">A teaching tool that shows how linked lists work by drawing the code you write, step by step. Nothing to install.</p>
+<p class="lead" data-lang="de">Ein Lernwerkzeug, das zeigt, wie verkettete Listen funktionieren, indem es Ihren Code Schritt für Schritt zeichnet. Keine Installation nötig.</p>
 
-<h2>Deneme alanı</h2>
+<h2 data-lang="tr">Deneme alanı</h2>
+<h2 data-lang="en">Playground</h2>
+<h2 data-lang="de">Spielwiese</h2>
 <textarea id="text1" class="deneme">
 var x = new Node(1)
 var y = new Node(2)
@@ -29,10 +30,16 @@ y.next = z
 
 var p1 = x
 </textarea>
-<p>Kodu <strong>Çalıştır</strong> düğmesiyle ya da kod bloğunun içindeyken <kbd>CTRL</kbd>+<kbd>ENTER</kbd> ile çalıştırın. Animasyonu görselleştirmenin üstündeki düğmelerle adım adım ileri ve geri oynatabilirsiniz. Kodu değiştirip yeniden çalıştırdığınızda çizim temiz başlar.</p>
-<p>Görselleştirmenin altındaki <strong>Komut satırı</strong> sekmesine tek satırlık kodlar da yazabilirsiniz, Enter ile çalışır.</p>
+<p data-lang="tr">Kodu <strong>Çalıştır</strong> düğmesiyle ya da kod bloğunun içindeyken <kbd>CTRL</kbd>+<kbd>ENTER</kbd> ile çalıştırın. Animasyonu görselleştirmenin üstündeki düğmelerle adım adım ileri ve geri oynatabilirsiniz. Kodu değiştirip yeniden çalıştırdığınızda çizim temiz başlar.</p>
+<p data-lang="en">Run the code with the <strong>Run</strong> button, or with <kbd>CTRL</kbd>+<kbd>ENTER</kbd> while inside the code block. Use the buttons above the visualization to play the animation step by step, forwards and backwards. When you change the code and run it again, the drawing starts clean.</p>
+<p data-lang="de">Führen Sie den Code mit der Schaltfläche <strong>Ausführen</strong> aus, oder mit <kbd>STRG</kbd>+<kbd>ENTER</kbd>, während Sie im Codeblock sind. Mit den Schaltflächen über der Visualisierung spielen Sie die Animation Schritt für Schritt vor und zurück ab. Wenn Sie den Code ändern und erneut ausführen, beginnt die Zeichnung sauber.</p>
+<p data-lang="tr">Görselleştirmenin altındaki <strong>Komut satırı</strong> sekmesine tek satırlık kodlar da yazabilirsiniz, Enter ile çalışır.</p>
+<p data-lang="en">You can also type one-line commands in the <strong>Command line</strong> tab below the visualization; Enter runs them.</p>
+<p data-lang="de">Im Reiter <strong>Befehlszeile</strong> unter der Visualisierung können Sie auch einzeilige Befehle eingeben; Enter führt sie aus.</p>
 
-<h2>Örnekler</h2>
+<h2 data-lang="tr">Örnekler</h2>
+<h2 data-lang="en">Examples</h2>
+<h2 data-lang="de">Beispiele</h2>
 <div id="example-list"></div>
 </main>
 

@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sıralı listeye ekleme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Sıralı listeye ekleme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Sıralı listeye ekleme</h1>
+<h1 data-lang="en">Insert into a sorted list</h1>
+<h1 data-lang="de">In eine sortierte Liste einfügen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Sıralı bir liste oluşturalım.</p>
+<p data-lang="tr">Sıralı bir liste oluşturalım.</p>
+<p data-lang="en">Let's build a sorted list.</p>
+<p data-lang="de">Bauen wir eine sortierte Liste.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -31,7 +30,9 @@ y.next = z
 z.next = w
 </textarea>
 
-<p>Listenin sıralı kalması için yeni düğüm, kendisinden büyük olan ilk düğümün önüne girmelidir. Baştaki düğümden küçükse yeni baş olur. Değilse <code>p</code>, <code>p.next</code> daha büyük olana kadar ilerler ve yeni düğüm araya bağlanır: <em>önce</em> <code>n.next = p.next</code>, <em>sonra</em> <code>p.next = n</code>. Sıra ters olsaydı listenin geri kalanı kaybolurdu.</p>
+<p data-lang="tr">Listenin sıralı kalması için yeni düğüm, kendisinden büyük olan ilk düğümün önüne girmelidir. Baştaki düğümden küçükse yeni baş olur. Değilse <code>p</code>, <code>p.next</code> daha büyük olana kadar ilerler ve yeni düğüm araya bağlanır: <em>önce</em> <code>n.next = p.next</code>, <em>sonra</em> <code>p.next = n</code>. Sıra ters olsaydı listenin geri kalanı kaybolurdu.</p>
+<p data-lang="en">To keep the list sorted, the new node must go in front of the first node that is larger than it. If it is smaller than the head, it becomes the new head. Otherwise <code>p</code> moves forward until <code>p.next</code> is larger, and the new node is linked in between: <em>first</em> <code>n.next = p.next</code>, <em>then</em> <code>p.next = n</code>. In the opposite order the rest of the list would be lost.</p>
+<p data-lang="de">Damit die Liste sortiert bleibt, muss der neue Knoten vor den ersten Knoten, der größer ist als er. Ist er kleiner als der Kopf, wird er der neue Kopf. Sonst läuft <code>p</code> weiter, bis <code>p.next</code> größer ist, und der neue Knoten wird dazwischen eingehängt: <em>zuerst</em> <code>n.next = p.next</code>, <em>dann</em> <code>p.next = n</code>. In umgekehrter Reihenfolge ginge der Rest der Liste verloren.</p>
 
 <textarea id="text2" class="deneme">
 var n = new Node(5)

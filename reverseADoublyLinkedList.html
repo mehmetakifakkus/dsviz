@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Çift yönlü listeyi ters çevirme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Çift yönlü listeyi ters çevirme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Çift yönlü listeyi ters çevirme</h1>
+<h1 data-lang="en">Reverse a doubly linked list</h1>
+<h1 data-lang="de">Doppelt verkettete Liste umdrehen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Dört düğümlü çift yönlü bir liste oluşturalım.</p>
+<p data-lang="tr">Dört düğümlü çift yönlü bir liste oluşturalım.</p>
+<p data-lang="en">Let's create a doubly linked list with four nodes.</p>
+<p data-lang="de">Erstellen wir eine doppelt verkettete Liste mit vier Knoten.</p>
 
 <textarea id="text1" class="deneme">
 var a = new Node(1)
@@ -34,7 +33,9 @@ c.next = d
 d.prev = c
 </textarea>
 
-<p>Her düğümde <code>next</code> ile <code>prev</code> yer değiştirir; takas için geçici bir değişken (<code>tmp</code>) gerekir. Takastan sonra sıradaki düğüm artık <code>p.prev</code>'dedir, bu yüzden <code>p = p.prev</code> ile ilerlenir. Sonunda <code>d</code> listenin yeni başı olur. Düğümler yerinde kalır, okların yönü değişir: <code>next</code> okları artık sola (üstten), <code>prev</code> okları sağa (alttan) gider.</p>
+<p data-lang="tr">Her düğümde <code>next</code> ile <code>prev</code> yer değiştirir; takas için geçici bir değişken (<code>tmp</code>) gerekir. Takastan sonra sıradaki düğüm artık <code>p.prev</code>'dedir, bu yüzden <code>p = p.prev</code> ile ilerlenir. Sonunda <code>d</code> listenin yeni başı olur. Düğümler yerinde kalır, okların yönü değişir: <code>next</code> okları artık sola (üstten), <code>prev</code> okları sağa (alttan) gider.</p>
+<p data-lang="en">In every node, <code>next</code> and <code>prev</code> swap places; the swap needs a temporary variable (<code>tmp</code>). After the swap the next node is in <code>p.prev</code>, so we move on with <code>p = p.prev</code>. At the end <code>d</code> is the new head of the list. The nodes stay where they are and the arrows change direction: <code>next</code> arrows now go left (over the top), <code>prev</code> arrows go right (underneath).</p>
+<p data-lang="de">In jedem Knoten tauschen <code>next</code> und <code>prev</code> die Plätze; für den Tausch braucht man eine Hilfsvariable (<code>tmp</code>). Nach dem Tausch steht der nächste Knoten in <code>p.prev</code>, deshalb geht es mit <code>p = p.prev</code> weiter. Am Ende ist <code>d</code> der neue Kopf der Liste. Die Knoten bleiben an ihrem Platz, die Pfeile ändern ihre Richtung: <code>next</code>-Pfeile zeigen jetzt nach links (oben), <code>prev</code>-Pfeile nach rechts (unten).</p>
 
 <textarea id="text2" class="deneme">
 var p = a
@@ -47,6 +48,28 @@ while(p != null)
   p = p.prev        // takastan sonra sıradaki düğüm prev'de
 }
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var p = a
+var tmp = null
+while(p != null)
+{
+  tmp = p.prev      // swap next and prev
+  p.prev = p.next
+  p.next = tmp
+  p = p.prev        // after the swap the next node is in prev
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var p = a
+var tmp = null
+while(p != null)
+{
+  tmp = p.prev      // next und prev tauschen
+  p.prev = p.next
+  p.next = tmp
+  p = p.prev        // nach dem Tausch steht der nächste Knoten in prev
+}
+</script>
 </main>
 
 <script src="js/layout.js"></script>

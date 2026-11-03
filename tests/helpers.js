@@ -2,8 +2,9 @@
 const { expect } = require('@playwright/test');
 
 // Opens a page, records page errors, console errors and requests that leave the site,
-// and waits until the engine has compiled the grammar.
-async function openPage(page, file) {
+// and waits until the engine has compiled the grammar. settings (e.g. {lang: 'en'}) are
+// stored before the page loads, as if the user had chosen them in the settings panel.
+async function openPage(page, file, settings) {
 	const problems = [];
 	page.on('pageerror', e => problems.push('page error: ' + e.message));
 	page.on('console', m => {
@@ -17,6 +18,13 @@ async function openPage(page, file) {
 		return route.abort();
 	});
 
+	if (settings)
+		await page.addInitScript(s => {
+			if (!sessionStorage.getItem('dsv-test-settings')) { // only once: a reload keeps what the page saved
+				sessionStorage.setItem('dsv-test-settings', '1');
+				localStorage.setItem('dsv-settings', JSON.stringify(s));
+			}
+		}, settings);
 	await page.goto('/' + file);
 	await page.waitForFunction(() => window.dsvReady === true);
 	return problems;
@@ -26,7 +34,7 @@ async function openPage(page, file) {
 // page: a short animation can finish (and disable the button) between two separate calls.
 async function skipToEnd(page) {
 	await page.evaluate(() => {
-		const button = document.querySelector('.dsv-player button[title="Sona atla"]');
+		const button = document.querySelector('.dsv-player button[title="' + window.dsv.t('toEnd') + '"]');
 		if (button && !button.disabled)
 			button.click();
 	});
@@ -70,7 +78,7 @@ function valueOf(page, expression) {
 
 const outputText = page => page.evaluate(() => document.getElementById('output').textContent);
 const stepCounter = async page => {
-	const m = (await page.locator('.dsv-counter').textContent()).match(/Adım (\d+) \/ (\d+)/);
+	const m = (await page.locator('.dsv-counter').textContent()).match(/(\d+) \/ (\d+)/);
 	return { current: +m[1], total: +m[2] };
 };
 

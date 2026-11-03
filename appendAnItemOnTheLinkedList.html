@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sona ekleme | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Sona ekleme</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Sona ekleme</h1>
+<h1 data-lang="en">Append at the end</h1>
+<h1 data-lang="de">Am Ende anhängen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Önce bir liste oluşturalım.</p>
+<p data-lang="tr">Önce bir liste oluşturalım.</p>
+<p data-lang="en">First, let's build a list.</p>
+<p data-lang="de">Zuerst bauen wir eine Liste.</p>
 
 <textarea id="text1" class="deneme">
 var x = new Node(1)
@@ -31,13 +30,25 @@ y.next = z
 var p1 = x
 </textarea>
 
-<p>Şimdi <code>p1</code> pointer'ını son düğüme kadar ilerletip yeni düğümü sona ekleyelim. Döngü <code>p1.next</code> <code>null</code> olunca durur, yani <code>p1</code> son düğümdedir.</p>
+<p data-lang="tr">Şimdi <code>p1</code> pointer'ını son düğüme kadar ilerletip yeni düğümü sona ekleyelim. Döngü <code>p1.next</code> <code>null</code> olunca durur, yani <code>p1</code> son düğümdedir.</p>
+<p data-lang="en">Now let's move the pointer <code>p1</code> forward to the last node and append the new node at the end. The loop stops when <code>p1.next</code> is <code>null</code>, so <code>p1</code> is on the last node.</p>
+<p data-lang="de">Jetzt bewegen wir den Zeiger <code>p1</code> bis zum letzten Knoten und hängen den neuen Knoten am Ende an. Die Schleife hält an, sobald <code>p1.next</code> <code>null</code> ist; <code>p1</code> steht also auf dem letzten Knoten.</p>
 
 <textarea id="text2" class="deneme">
 while(p1.next != null)  // son düğüme git
   p1 = p1.next          // p1 pointer'ı ile
 p1.next = new Node(5)
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+while(p1.next != null)  // go to the last node
+  p1 = p1.next          // with the pointer p1
+p1.next = new Node(5)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+while(p1.next != null)  // zum letzten Knoten gehen
+  p1 = p1.next          // mit dem Zeiger p1
+p1.next = new Node(5)
+</script>
 </main>
 
 <script src="js/layout.js"></script>

@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Özyineleme (recursion) | Bağlı Listeler</title>
-<script>
-  // apply the saved or the system theme before the page is drawn
-  (function(){ var t; try { t = localStorage.getItem('dsv-theme'); } catch(e) {}
-    if(!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
-</script>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
 <link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <main class="lesson">
-<h1>Özyineleme (recursion)</h1>
-<p class="lead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+<h1 data-lang="tr">Özyineleme (recursion)</h1>
+<h1 data-lang="en">Recursion</h1>
+<h1 data-lang="de">Rekursion</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
 
-<p>Dört düğümlü bir liste oluşturalım.</p>
+<p data-lang="tr">Dört düğümlü bir liste oluşturalım.</p>
+<p data-lang="en">Let's create a list with four nodes.</p>
+<p data-lang="de">Erstellen wir eine Liste mit vier Knoten.</p>
 <textarea id="text1" class="deneme">
 var x = new Node(1)
 var y = new Node(2)
@@ -30,7 +29,9 @@ y.next = z
 z.next = w
 </textarea>
 
-<p>Bir fonksiyon kendini çağırabilir; buna <em>özyineleme</em> denir. Bağlı liste özyinelemeye çok uygundur: bir liste ya boştur (<code>null</code>) ya da bir düğüm ve onun arkasındaki <em>daha kısa</em> bir listedir. <code>count</code> boş liste için 0 döndürür (durma koşulu), değilse 1 ile kalan listenin uzunluğunu toplar. Çağrı yığınında aynı fonksiyonun çağrılarını üst üste görebilirsiniz; her çağrının kendi <code>p</code>'si vardır (<code>p</code>, <code>p₂</code>, <code>p₃</code>…).</p>
+<p data-lang="tr">Bir fonksiyon kendini çağırabilir; buna <em>özyineleme</em> denir. Bağlı liste özyinelemeye çok uygundur: bir liste ya boştur (<code>null</code>) ya da bir düğüm ve onun arkasındaki <em>daha kısa</em> bir listedir. <code>count</code> boş liste için 0 döndürür (durma koşulu), değilse 1 ile kalan listenin uzunluğunu toplar. Çağrı yığınında aynı fonksiyonun çağrılarını üst üste görebilirsiniz; her çağrının kendi <code>p</code>'si vardır (<code>p</code>, <code>p₂</code>, <code>p₃</code>…).</p>
+<p data-lang="en">A function can call itself; this is called <em>recursion</em>. Linked lists suit recursion very well: a list is either empty (<code>null</code>) or a node followed by a <em>shorter</em> list. <code>count</code> returns 0 for an empty list (the base case); otherwise it adds 1 to the length of the rest of the list. In the Call stack you can see the calls of the same function stacked on top of each other; each call has its own <code>p</code> (<code>p</code>, <code>p₂</code>, <code>p₃</code>…).</p>
+<p data-lang="de">Eine Funktion kann sich selbst aufrufen; das nennt man <em>Rekursion</em>. Verkettete Listen eignen sich sehr gut dafür: eine Liste ist entweder leer (<code>null</code>) oder ein Knoten, gefolgt von einer <em>kürzeren</em> Liste. <code>count</code> gibt für eine leere Liste 0 zurück (die Abbruchbedingung), sonst addiert es 1 zur Länge der restlichen Liste. Im Aufrufstapel sehen Sie die Aufrufe derselben Funktion übereinander; jeder Aufruf hat sein eigenes <code>p</code> (<code>p</code>, <code>p₂</code>, <code>p₃</code>…).</p>
 <textarea id="text2" class="deneme">
 function count(p)
 {
@@ -40,8 +41,28 @@ function count(p)
 }
 var n = count(x)
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function count(p)
+{
+  if(p == null)  // base case: empty list
+    return 0
+  return 1 + count(p.next)
+}
+var n = count(x)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function count(p)
+{
+  if(p == null)  // Abbruchbedingung: leere Liste
+    return 0
+  return 1 + count(p.next)
+}
+var n = count(x)
+</script>
 
-<p>Özyinelemeli çağrının <em>önündeki</em> ve <em>arkasındaki</em> işler farklı zamanlarda çalışır. Burada <code>print</code>, özyinelemeli çağrıdan <em>sonra</em> geldiği için önce en derindeki çağrı yazar: liste sondan başa yazılır. Aynı işi döngüyle yapmak için listeyi önce ters çevirmek gerekirdi.</p>
+<p data-lang="tr">Özyinelemeli çağrının <em>önündeki</em> ve <em>arkasındaki</em> işler farklı zamanlarda çalışır. Burada <code>print</code>, özyinelemeli çağrıdan <em>sonra</em> geldiği için önce en derindeki çağrı yazar: liste sondan başa yazılır. Aynı işi döngüyle yapmak için listeyi önce ters çevirmek gerekirdi.</p>
+<p data-lang="en">The work <em>before</em> and <em>after</em> the recursive call runs at different times. Here <code>print</code> comes <em>after</em> the recursive call, so the deepest call prints first: the list is printed from the end to the start. Doing the same with a loop would mean reversing the list first.</p>
+<p data-lang="de">Was <em>vor</em> und was <em>nach</em> dem rekursiven Aufruf steht, läuft zu verschiedenen Zeiten. Hier steht <code>print</code> <em>nach</em> dem rekursiven Aufruf, deshalb schreibt der tiefste Aufruf zuerst: die Liste wird vom Ende zum Anfang ausgegeben. Mit einer Schleife müsste man die Liste dafür erst umdrehen.</p>
 <textarea id="text3" class="deneme">
 function printReverse(p)
 {
@@ -52,8 +73,30 @@ function printReverse(p)
 }
 printReverse(x)
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function printReverse(p)
+{
+  if(p == null)
+    return
+  printReverse(p.next)  // first the rest of the list
+  print p.data          // then this node
+}
+printReverse(x)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function printReverse(p)
+{
+  if(p == null)
+    return
+  printReverse(p.next)  // zuerst der Rest der Liste
+  print p.data          // dann dieser Knoten
+}
+printReverse(x)
+</script>
 
-<p>İleri seviye: listeyi özyinelemeyle ters çevirme. <code>reverse(p.next)</code>, <code>p</code>'nin arkasındaki listeyi ters çevirip yeni başı döndürür. O listenin son düğümü <code>p.next</code>'tir; onun arkasına <code>p</code> bağlanır ve <code>p</code>'nin kendi bağı koparılır. Adım adım geri giderek her çağrının neyi değiştirdiğini izleyin.</p>
+<p data-lang="tr">İleri seviye: listeyi özyinelemeyle ters çevirme. <code>reverse(p.next)</code>, <code>p</code>'nin arkasındaki listeyi ters çevirip yeni başı döndürür. O listenin son düğümü <code>p.next</code>'tir; onun arkasına <code>p</code> bağlanır ve <code>p</code>'nin kendi bağı koparılır. Adım adım geri giderek her çağrının neyi değiştirdiğini izleyin.</p>
+<p data-lang="en">Advanced: reversing a list recursively. <code>reverse(p.next)</code> reverses the list after <code>p</code> and returns its new head. The last node of that list is <code>p.next</code>; <code>p</code> is linked after it and <code>p</code>'s own link is cut. Step backwards to see what each call changes.</p>
+<p data-lang="de">Für Fortgeschrittene: eine Liste rekursiv umdrehen. <code>reverse(p.next)</code> dreht die Liste hinter <code>p</code> um und gibt ihren neuen Kopf zurück. Der letzte Knoten dieser Liste ist <code>p.next</code>; dahinter wird <code>p</code> gehängt und die eigene Verbindung von <code>p</code> getrennt. Gehen Sie schrittweise zurück, um zu sehen, was jeder Aufruf ändert.</p>
 <textarea id="text4" class="deneme">
 function reverse(p)
 {
@@ -66,6 +109,30 @@ function reverse(p)
 }
 x = reverse(x)
 </textarea>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="en">
+function reverse(p)
+{
+  if(p == null || p.next == null)
+    return p
+  var rest = reverse(p.next)  // reverse the rest
+  p.next.next = p             // link p after its end
+  p.next = null
+  return rest
+}
+x = reverse(x)
+</script>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="de">
+function reverse(p)
+{
+  if(p == null || p.next == null)
+    return p
+  var rest = reverse(p.next)  // den Rest umdrehen
+  p.next.next = p             // p an dessen Ende hängen
+  p.next = null
+  return rest
+}
+x = reverse(x)
+</script>
 </main>
 
 <script src="js/layout.js"></script>

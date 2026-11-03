@@ -11,6 +11,7 @@ module.exports = defineConfig({
 	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL: `http://localhost:${PORT}`,
+		locale: 'tr-TR', // the tests check the Turkish texts; tests/i18n.spec.js switches languages
 		trace: 'retain-on-failure'
 	},
 	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
