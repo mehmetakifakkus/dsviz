@@ -14,7 +14,7 @@ const EXPECTED = {
 	'index.html': ['walk(x)', '1>2>3'],
 	'lengthOfALinkedList.html': ['[count, length]', [3, 3]],
 	'sumMaxAndSearchInALinkedList.html': ['[sum, max, p.data]', [22, 9, 2]],
-	'insertAtTheHeadOfALinkedList.html': ['walk(x)', '9>1>2>3'],
+	'insertAtTheHeadOfALinkedList.html': ['walk(x)', '8>9>1>2>3'],
 	'appendAnItemOnTheLinkedList.html': ['walk(x)', '1>2>3>5'],
 	'insertIntoASortedLinkedList.html': ['walk(x)', '1>3>5>7>9'],
 	'deleteANodeFromALinkedList.html': ['walk(x)', '1>2>4'],

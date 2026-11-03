@@ -207,7 +207,7 @@ init_declarator
 	if( typeof(exp) == 'boolean')
     	return {'lhs': left, 'rhs': exp.toString()}; // evaluate it, then return it
     else if(exp.type == 'node') // x = new Node(9): without this it was read as "x = new" and "Node(9)"
-        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Node(' + exp.data + ')'};
+        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Node(' + exp.data + (exp.next ? ', ' + exp.next : '') + ')'};
     else if(exp.type == 'array') // table = new Array(5)
         return {'lhs': left, 'rhs': exp, 'text': left + ' = new Array(' + exp.size + ')'};
     else
@@ -255,14 +255,15 @@ index_access
 index_assignment
  = _ a:name _ '[' _ i:expression_statement _ ']' _ '=' !'=' _ right:(Object_Constructor / e:expression_statement { return e.text.trim(); }) _ nl {
 	return {'type': 'array assignment', '#evaluation': 0, 'array': a, 'index': i.text, 'rhs': right,
-	        'text': a + '[' + i.text + '] = ' + (typeof right === 'string' ? right : 'new Node(' + right.data + ')'), 'lineNumber': location().start.line};
+	        'text': a + '[' + i.text + '] = ' + (typeof right === 'string' ? right : 'new Node(' + right.data + (right.next ? ', ' + right.next : '') + ')'), 'lineNumber': location().start.line};
  }
  
 // Node(5), Node(i), Node(p.data + 1): a number literal stays a number, anything else is
 // kept as an expression and evaluated when the statement runs
+// the second value is the new node's next: new Node(0, head), Node(5, p.next), Node(1, null)
 node
- = _ 'new'? _ 'Node' '('_ value:node_value _ next:("," _ name)? ")" _ comment? _ nl{ 
-	return {'type': 'node', 'data': value, 'next': next? next[2]: null, 'lineNumber': location().start.line}
+ = _ 'new'? _ 'Node' '('_ value:node_value _ next:("," _ e:expression_statement { return e.text.trim(); })? _ ")" _ comment? _ nl{
+	return {'type': 'node', 'data': value, 'next': next, 'lineNumber': location().start.line}
  } 
 
 node_value

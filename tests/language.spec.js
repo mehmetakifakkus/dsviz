@@ -127,3 +127,18 @@ var total = f(4), c = a + b
 	expect((await page.evaluate(() => window.dsvState())).pointers).toEqual(['x', 'y', 'z']);
 	expect(problems).toEqual([]);
 });
+
+test('Node(value, next) links the new node, also in a field and an array cell', async ({ page }) => {
+	const problems = await openPage(page, 'index.html');
+	await runCode(page, 'var x = new Node(3)\nvar y = new Node(2, x)\ny = new Node(1, y)\nx.next = new Node(4, null)\n');
+	expect(await valueOf(page, 'walk(y)')).toBe('1>2>3>4');
+	expect((await page.evaluate(() => window.dsvState())).rows).toEqual([[1, 2, 3, 4]]);
+	await expect(page.locator('#narration')).toHaveText("Yeni bir düğüm [4] oluşturuldu ve [3] düğümünün next'i ona bağlandı.");
+
+	await runCode(page, 'var t = new Array(2)\nt[1] = new Node(7, y)\n');
+	expect(await valueOf(page, 'walk(t[1])')).toBe('7>1>2>3>4');
+
+	await runCode(page, 'var bad = new Node(1, 5)\n');
+	await expect(page.locator('#output')).toContainText("Node'un ikinci değeri yeni düğümün next'idir; bir düğüm ya da null olmalı (5 verildi).");
+	expect(problems).toEqual([]);
+});

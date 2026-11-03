@@ -130,6 +130,7 @@
 		nPointsNull: {tr: '{name} artık null: hiçbir düğümü göstermiyor.', en: '{name} is now null: it points to no node.', de: '{name} ist jetzt null: zeigt auf keinen Knoten.'},
 		nPointsTo: {tr: '{name} artık {node} düğümünü gösteriyor.', en: '{name} now points to {node}.', de: '{name} zeigt jetzt auf {node}.'},
 		nNewNode: {tr: '{name} adında yeni bir düğüm oluşturuldu: {node}.', en: 'A new node {node} was created as {name}.', de: 'Ein neuer Knoten {node} wurde als {name} erstellt.'},
+		nNewNodeNext: {tr: '{name} adında yeni bir düğüm oluşturuldu: {node}; next\'i {next} düğümünü gösteriyor.', en: 'A new node {node} was created as {name}; its next points to {next}.', de: 'Ein neuer Knoten {node} wurde als {name} erstellt; sein next zeigt auf {next}.'},
 		nValue: {tr: '{name} = {value}.', en: '{name} = {value}.', de: '{name} = {value}.'},
 		nNewArray: {tr: '{name} adında {n} hücreli bir dizi oluşturuldu; hücrelerin hepsi null.', en: 'An array of {n} cells was created as {name}; all cells are null.', de: 'Ein Array mit {n} Zellen wurde als {name} erstellt; alle Zellen sind null.'},
 		nCellNode: {tr: '{cell} artık {node} düğümünü gösteriyor.', en: '{cell} now points to {node}.', de: '{cell} zeigt jetzt auf {node}.'},
@@ -214,6 +215,7 @@
 			en: '"{name}" is not a function. Define the function with function before calling it.',
 			de: '"{name}" ist keine Funktion. Definieren Sie die Funktion mit function, bevor Sie sie aufrufen.'
 		},
+		eNodeNext: {tr: 'Node\'un ikinci değeri yeni düğümün next\'idir; bir düğüm ya da null olmalı ({value} verildi).', en: 'The second value of Node is the new node\'s next; it must be a node or null (got {value}).', de: 'Der zweite Wert von Node ist das next des neuen Knotens; er muss ein Knoten oder null sein ({value} angegeben).'},
 		eArraySize: {tr: 'Dizi boyutu 1 ile 50 arasında bir tam sayı olmalı ({n} verildi).', en: 'The size of an array must be a whole number from 1 to 50 (got {n}).', de: 'Die Größe eines Arrays muss eine ganze Zahl von 1 bis 50 sein ({n} angegeben).'},
 		eIndex: {tr: '{name}[{i}]: dizinin {n} hücresi var, geçerli indisler 0 ile {last} arası.', en: '{name}[{i}]: the array has {n} cells, valid indexes are 0 to {last}.', de: '{name}[{i}]: das Array hat {n} Zellen, gültige Indizes sind 0 bis {last}.'},
 		eNotArray: {tr: '"{name}" bir dizi değil; önce new Array(n) ile oluşturun.', en: '"{name}" is not an array; create it with new Array(n) first.', de: '"{name}" ist kein Array; erstellen Sie es zuerst mit new Array(n).'},
