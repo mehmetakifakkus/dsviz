@@ -37,7 +37,7 @@ window.dsvParser = (function() {
         peg$startRuleFunctions = { start: peg$parsestart },
         peg$startRuleFunction  = peg$parsestart,
 
-        peg$c0 = function(s) { return s.filter(isItem); },
+        peg$c0 = function(s) { return flat(s); },
         peg$c1 = { type: "other", description: "if" },
         peg$c2 = "if",
         peg$c3 = { type: "literal", value: "if", description: "\"if\"" },
@@ -139,7 +139,7 @@ window.dsvParser = (function() {
         peg$c49 = /^[ \n]/,
         peg$c50 = { type: "class", value: "[ \\n]", description: "[ \\n]" },
         peg$c51 = function(n, params, body, end) {
-        	return {'type': 'function', 'name': n, 'params': params || [], 'body': body.filter(isItem),
+        	return {'type': 'function', 'name': n, 'params': params || [], 'body': flat(body),
         	        'lineNumber': location().start.line, 'endLine': end};
         },
         peg$c52 = ",",
@@ -158,7 +158,7 @@ window.dsvParser = (function() {
         },
         peg$c64 = function(n, args) { return text(); },
         peg$c65 = function(b) {  // block itemlar yerine bos da olabilir
-         	return b.filter(isItem)
+         	return flat(b)
          },
         peg$c66 = /^[ \t\r]/,
         peg$c67 = { type: "class", value: "[ \\t\\r]", description: "[ \\t\\r]" },
@@ -170,13 +170,21 @@ window.dsvParser = (function() {
          },
         peg$c72 = "var",
         peg$c73 = { type: "literal", value: "var", description: "\"var\"" },
-        peg$c74 = function(dec) {
-        	return {'type': 'declaration', '#evaluation': 0, 'text': dec.text ? 'var ' + dec.text : 'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': location().start.line};
+        peg$c74 = function(list) {
+        	var line = location().start.line;
+        	var items = list.map(function(dec){
+        		return {'type': 'declaration', '#evaluation': 0, 'text': dec.text ? 'var ' + dec.text : 'var '+dec.lhs+' = ' + dec.rhs, 'lhs':dec.lhs, 'rhs': dec.rhs, 'lineNumber': line};
+        	});
+        	return items.length === 1 ? items[0] : items; // var a = 1, b = 2: one statement for each name
          },
-        peg$c75 = function(ass) {
-        	return {'type': 'assignment', '#evaluation': 0, 'text': ass.text || ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': location().start.line};
+        peg$c75 = function(list) {
+        	var line = location().start.line;
+        	var items = list.map(function(ass){
+        		return {'type': 'assignment', '#evaluation': 0, 'text': ass.text || ass.lhs+' = '+ass.rhs, 'lhs':ass.lhs, 'rhs': ass.rhs, 'lineNumber': line};
+        	});
+        	return items.length === 1 ? items[0] : items;
          },
-        peg$c76 = function(init) {return init;},
+        peg$c76 = function(first, rest) { return [first].concat(rest.map(function(r){ return r[2]; })); },
         peg$c77 = "=",
         peg$c78 = { type: "literal", value: "=", description: "\"=\"" },
         peg$c79 = /^[\-+*\/%(]/,
@@ -213,7 +221,7 @@ window.dsvParser = (function() {
         peg$c89 = { type: "literal", value: "var ", description: "\"var \"" },
         peg$c90 = "new",
         peg$c91 = { type: "literal", value: "new", description: "\"new\"" },
-        peg$c92 = function(name, obj) {
+        peg$c92 = function(name, obj) {   // var x = new Node(1), y = ... is a declaration list
         	return {'type': 'declaration', 'lhs': name, 'rhs': obj, 'lineNumber': location().start.line}
          },
         peg$c93 = "Array",
@@ -2523,7 +2531,7 @@ window.dsvParser = (function() {
             s4 = peg$parsenl();
             if (s4 !== peg$FAILED) {
               peg$savedPos = s0;
-              s1 = peg$c76(s1);
+              s1 = peg$c76(s1, s2);
               s0 = s1;
             } else {
               peg$currPos = s0;
@@ -2839,7 +2847,7 @@ window.dsvParser = (function() {
     }
 
     function peg$parseobject_statement() {
-      var s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11;
+      var s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15;
 
       s0 = peg$currPos;
       if (input.substr(peg$currPos, 4) === peg$c88) {
@@ -2885,9 +2893,44 @@ window.dsvParser = (function() {
                         if (s10 !== peg$FAILED) {
                           s11 = peg$parsenl();
                           if (s11 !== peg$FAILED) {
-                            peg$savedPos = s0;
-                            s1 = peg$c92(s3, s9);
-                            s0 = s1;
+                            s12 = peg$currPos;
+                            peg$silentFails++;
+                            s13 = peg$currPos;
+                            s14 = peg$parse_();
+                            if (s14 !== peg$FAILED) {
+                              if (input.charCodeAt(peg$currPos) === 44) {
+                                s15 = peg$c52;
+                                peg$currPos++;
+                              } else {
+                                s15 = peg$FAILED;
+                                if (peg$silentFails === 0) { peg$fail(peg$c53); }
+                              }
+                              if (s15 !== peg$FAILED) {
+                                s14 = [s14, s15];
+                                s13 = s14;
+                              } else {
+                                peg$currPos = s13;
+                                s13 = peg$FAILED;
+                              }
+                            } else {
+                              peg$currPos = s13;
+                              s13 = peg$FAILED;
+                            }
+                            peg$silentFails--;
+                            if (s13 === peg$FAILED) {
+                              s12 = void 0;
+                            } else {
+                              peg$currPos = s12;
+                              s12 = peg$FAILED;
+                            }
+                            if (s12 !== peg$FAILED) {
+                              peg$savedPos = s0;
+                              s1 = peg$c92(s3, s9);
+                              s0 = s1;
+                            } else {
+                              peg$currPos = s0;
+                              s0 = peg$FAILED;
+                            }
                           } else {
                             peg$currPos = s0;
                             s0 = peg$FAILED;
@@ -6696,6 +6739,16 @@ window.dsvParser = (function() {
 
       // whitespace-only matches return the string 'ws'; keep only real statement objects
       function isItem(x) { return x !== null && typeof x === 'object'; }
+
+      // a statement may stand for several (var a = 1, b = 2): such lists are spread out
+      function flat(list) {
+        var out = [];
+        list.forEach(function(x) {
+          if (x instanceof Array) out.push.apply(out, x.filter(isItem));
+          else if (isItem(x)) out.push(x);
+        });
+        return out;
+      }
 
 
     peg$result = peg$startRuleFunction();

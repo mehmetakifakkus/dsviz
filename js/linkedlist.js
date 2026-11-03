@@ -1759,8 +1759,8 @@ function processOneItem(item){
 		}
 		else if(item.mainType == 'while' || item.mainType == 'for')
 		{
-			if(item.init)
-				processOneItem(item.init);
+			if(item.init) // for(var i = 0, j = 9; ...): several declarations
+				[].concat(item.init).forEach(processOneItem);
 
 			var guard = 0, stopped = false;
 			while(evalExpr(item.text)){
@@ -1772,7 +1772,7 @@ function processOneItem(item){
 				}
 
 				if(item.update)
-					processOneItem(item.update);
+					[].concat(item.update).forEach(processOneItem);
 
 				guard = guard + 1;
 				if(guard > 1000)

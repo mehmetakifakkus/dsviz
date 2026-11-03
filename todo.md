@@ -6,7 +6,6 @@
 
 - [ ] Fonksiyon içinde fonksiyon tanımı (closure) yok: fonksiyonlar yalnızca kendi yerel değişkenlerini ve globalleri görür.
 - [ ] Çağrı sonucunun alanına erişim (`pop().data`) gramerde yok.
-- [ ] `var a = 1, b = 2` yalnızca `a`'yı tanımlıyor; virgülle ayrılan tanımların hepsi işlenmeli.
 - [ ] `Node(3, y)` yazımında ikinci argüman (next) gramerde var ama motor yok sayıyor.
 - [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
 - [ ] Dizi desteğini genişletmek: dizi hücrelerini yan yana (yatay) çizme seçeneği; yığın ve kuyruğun dizi ile yapılmış hâlleri; aynı anda birden çok dizinin çizimi (şu an yalnızca ilki çizilir).
@@ -44,7 +43,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 193 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 195 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -59,3 +58,4 @@
 - [x] Diziler (`new Array(n)`, `t[i]` okuma ve yazma) ve zincirlemeli hash tablosu: dizi solda kovalar olarak çizilir, her kovanın zinciri kendi satırında; dizi hataları açıklanır; rehbere "Diziler" bölümü eklendi.
 - [x] Kodu bağlantıyla paylaşma: değişen bloklar `#b2=...` olarak adreste (base64url); açılınca bloklara yüklenir, kendiliğinden çalışmaz (kod ziyaretçinin tarayıcısında JavaScript olarak çalıştığı için), bilgi şeridinden sayfanın koduna dönülür.
 - [x] Gramer önceden derleniyor (`npm run build:grammar` → `js/grammar.js`): sayfalar PEG.js'yi ve grameri indirip derlemiyor (sıkıştırılmış aktarım ~35 KB → ~18 KB, bir istek ve derleme adımı eksik); `js/grammar.js` gramerle güncel değilse test başarısız olur.
+- [x] Virgülle ayrılan tanımların hepsi işleniyor: `var a = 1, b = 2`, `var x = new Node(1), y = new Node(2)`, `a = 3, b = 4`, fonksiyon gövdesinde ve `for` başlığında da.
