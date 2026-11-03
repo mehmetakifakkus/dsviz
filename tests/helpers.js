@@ -22,12 +22,14 @@ async function openPage(page, file) {
 	return problems;
 }
 
-const skipButton = page => page.locator('.dsv-player button[title="Sona atla"]');
-
-// Plays the animation to the end (the button is disabled when there is nothing left).
+// Plays the animation to the end. The check and the click happen in one go inside the
+// page: a short animation can finish (and disable the button) between two separate calls.
 async function skipToEnd(page) {
-	if (await skipButton(page).isEnabled())
-		await skipButton(page).click();
+	await page.evaluate(() => {
+		const button = document.querySelector('.dsv-player button[title="Sona atla"]');
+		if (button && !button.disabled)
+			button.click();
+	});
 }
 
 // Runs code block i with its Çalıştır button and skips the animation.

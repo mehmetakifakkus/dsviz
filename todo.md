@@ -13,7 +13,6 @@
 
 ## Görselleştirme ve arayüz
 
-- [ ] Bir kod bloğu ikinci kez çalıştırılınca eski çizimler kalıyor ve listenin ikinci bir kopyası çiziliyor; blok tekrar çalışınca onun önceki çizimleri temizlenmeli.
 - [ ] Kodu bağlantı ile paylaşma (kod URL'de saklanır).
 - [ ] İsteğe bağlı "ders modu": blokları tek tek gösteren, Önceki/Sonraki ile ilerleyen görünüm (değerlendirilen alternatiflerden B).
 - [ ] Telefonda görselleştirme kartı ekranın yarısını kaplıyor; değişkenler ve çıktı bölümü katlanabilir olabilir.
@@ -50,3 +49,4 @@
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
 - [x] Tarayıcı testleri (Playwright, 82 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
