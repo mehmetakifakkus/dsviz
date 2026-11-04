@@ -75,8 +75,28 @@
 
 	function exprCpp(s){ return exprIn(s, 'cpp'); }
 
+	// taban((i - 1) / 2) is written (i - 1) / 2: an index halved, as C++ and Java code does it
+	// with integer division (the same for every index that is not negative). Only for a whole
+	// number divisor and a bracketed left side without decimals.
+	function plainHalving(s){
+		var re = /\btaban\s*\(/g, m;
+		while((m = re.exec(s))){
+			var open = m.index + m[0].length - 1, end = closing(s, open);
+			if(end < 0) break;
+			var arg = s.slice(open + 1, end), lead = arg.search(/\S/);
+			var inner = lead >= 0 && arg.charAt(lead) === '(' ? closing(arg, lead) : -1;
+			var div = inner > 0 ? /^\s*\/\s*(\d+)\s*$/.exec(arg.slice(inner + 1)) : null;
+			if(div && !/\d\.\d/.test(arg)){
+				s = s.slice(0, m.index) + arg.slice(lead, inner + 1) + ' / ' + div[1] + s.slice(end + 1);
+				re.lastIndex = m.index;
+			}
+		}
+		return s;
+	}
+
 	function exprIn(s, lang){
 		var java = lang === 'java', math = java ? 'Math.' : '';
+		s = plainHalving(s);
 		return outsideStrings(s, function(part){
 			part = part
 				.replace(/\bdeğil\b\s*/g, '!').replace(/\bnot\b\s*/g, '!')
