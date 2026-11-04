@@ -629,7 +629,7 @@ test.describe('learning aids', () => {
 		const problems = await openPage(page, 'graph.html');
 		await runBlock(page, 0);
 		const graph = async () => (await state(page)).arrays.find(a => a.name === 'adj').graph;
-		expect(await graph()).toEqual({ edges: ['0-1', '0-5', '1-2', '1-4', '2-3', '3-4', '4-5'], visited: [] });
+		expect(await graph()).toMatchObject({ edges: ['0-1', '0-5', '1-2', '1-4', '2-3', '3-4', '4-5'], visited: [], weights: {}, tree: [] });
 
 		let oneWay = false; // stepping back into addEdge(4, 5): a moment when only 4 -> 5 is there (an arrow)
 		for (let k = 0; k < 6 && !oneWay; k++) {
@@ -655,6 +655,25 @@ test.describe('learning aids', () => {
 		await page.waitForFunction(() => window.dsvReady === true);
 		await runBlock(page, 1);
 		expect((await state(page)).arrays[0].graph).toBeNull();
+		expect(problems).toEqual([]);
+	});
+
+	test('a weighted graph: weights on the edges, distances at the vertices, the tree of shortest paths', async ({ page }) => {
+		const problems = await openPage(page, 'dijkstra.html');
+		await runBlock(page, 0);
+		const graph = async () => (await state(page)).arrays.find(a => a.name === 'adj').graph;
+		expect((await graph()).weights).toEqual({ '0-1': 4, '0-2': 1, '0-4': 10, '1-2': 2, '2-3': 5, '3-4': 3 });
+		expect((await graph()).dist).toEqual([null, null, null, null, null]);
+
+		await runBlock(page, 1);
+		expect(await graph()).toMatchObject({ dist: ['0', '3', '1', '6', '9'], tree: ['0-2', '1-2', '2-3', '3-4'], visited: [0, 1, 2, 3, 4] });
+		await page.locator('.dsv-timeline').evaluate(el => { el.value = Math.round(el.max * 0.3); el.dispatchEvent(new Event('input')); });
+		expect((await graph()).dist).toContain('∞'); // INF is drawn as infinity until a vertex is reached
+
+		await openPage(page, 'dijkstra.html', { codeLang: 'turkce' }); // the field in Turkish code
+		await expect(page.locator('.CodeMirror').first()).toContainText('e.ağırlık = w');
+		await runBlock(page, 1);
+		expect((await graph()).dist).toEqual(['0', '3', '1', '6', '9']);
 		expect(problems).toEqual([]);
 	});
 

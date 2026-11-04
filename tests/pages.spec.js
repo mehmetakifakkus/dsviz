@@ -46,6 +46,7 @@ const EXPECTED = {
 	'arrayStackQueue.html': ['[Array.from(s), size, a, Array.from(q), front, rear, count, b, c]', [[10, 20, null, null, null], 2, 30, [6, null, 3, 4, 5], 2, 1, 4, 1, 2]],
 	'circularDoublyLinkedList.html': ['[head.prev.data, tail.data, head.prev.prev.data, tail.next.data, output()]', [5, 5, 4, 1, '']],
 	'heap.html': ['[n, a, b, output()]', [0, 1, 2, '3,4,5,8,9']],
+	'dijkstra.html': ['[Array.from(dist), Array.from(parent), output()]', [[0, 3, 1, 6, 9], [-1, 2, 0, 2, 3], '4,3,2,0']],
 	'graph.html': ['[output(), Array.from(visited), Array.from(q)]', ['0,5,4,3,2,1', [true, true, true, true, true, true], [0, 5, 1, 4, 2, 3]]],
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };

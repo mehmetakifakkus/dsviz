@@ -829,7 +829,7 @@
 	// değilse (else), yinele (while), için (for), fonksiyon, döndür (return), kır (break),
 	// devam (continue), yaz (print), boş (null), doğru / yanlış, yeni Düğüm(...) (new Node),
 	// yeni Dizi(n) (new Array), sil (delete), ve / veya / değil (and / or / not), and the fields
-	// .veri, .sonraki, .önceki, .sol, .sağ, .yükseklik. It is translated word by word in both
+	// .veri, .sonraki, .önceki, .sol, .sağ, .yükseklik, .ağırlık. It is translated word by word in both
 	// directions (outside strings and comments), so every line keeps its number.
 
 	var TR_WORDS = {'var': 'değişken', 'if': 'eğer', 'else': 'değilse', 'while': 'yinele', 'for': 'için',
@@ -837,7 +837,7 @@
 	                'print': 'yaz', 'null': 'boş', 'true': 'doğru', 'false': 'yanlış', 'new': 'yeni',
 	                'Node': 'Düğüm', 'Array': 'Dizi', 'delete': 'sil', 'free': 'sil',
 	                'and': 've', 'or': 'veya', 'not': 'değil'};
-	var TR_FIELDS = {'data': 'veri', 'next': 'sonraki', 'prev': 'önceki', 'left': 'sol', 'right': 'sağ', 'height': 'yükseklik'};
+	var TR_FIELDS = {'data': 'veri', 'next': 'sonraki', 'prev': 'önceki', 'left': 'sol', 'right': 'sağ', 'height': 'yükseklik', 'weight': 'ağırlık'};
 	function inverse(map){
 		var out = {};
 		Object.keys(map).forEach(function(k){ if(!(map[k] in out)) out[map[k]] = k; });
