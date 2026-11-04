@@ -20,7 +20,6 @@
 
 ## Bilinen sorunlar
 
-- [ ] Çift yönlü listede ters çevirmeden sonra tüm oklar yay olarak çiziliyor (düğümler yerinde kaldığı için); okunuyor ama kalabalık.
 
 ## Bilerek yapılmayanlar
 
@@ -42,7 +41,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 298 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 299 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -68,3 +67,4 @@
 - [x] C++ ve Java'da tam sayı bölmesi: kaynak koddaki türler toplanır, iki tarafı da tam sayı olan `/` sıfıra doğru kesilir (`7 / 2` = 3, `-7 / 2` = -3), sıfıra bölme açıklamalı hata verir; anlatımda yine `a / b` görünür.
 - [x] Birden çok kova dizisi yan yana çizilir (her biri bir öncekinin en uzun zincirinin sağında); kova satırları sıklaştırıldı; çok uzun çizimler ekrana sığacak kadar küçültülür. Hash sayfasına yeniden hash'leme bloğu eklendi.
 - [x] Dairesel çift yönlü liste: baştan sona dönen `prev` satırın altından dolaşan bir okla çizilir (sondan başa dönen `next`'in aynası); yeni sayfa: halka, geriye dolaşma, yalnızca `head` ile O(1) sona ekleme.
+- [x] Ters çevrilen listede komşuya giden ters oklar büyük yaylar yerine kısa kancalar: `next` kendi düğümünün üstünden kıvrılıp soldaki düğümün sağ kenarına, `prev` altından sağdakinin sol kenarına girer; kancalar birbirini kesmez. Son adımda liste yeni başından soldan sağa yeniden dizilir (tek ve çift yönlü).
