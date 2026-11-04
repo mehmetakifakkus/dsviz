@@ -87,12 +87,12 @@ const EXPECTED_CPP = Object.assign({}, EXPECTED, {
 // Java: the same (an empty cell of an int array is 0 too; delete is a comment, nothing checked here depends on it)
 const EXPECTED_JAVA = EXPECTED_CPP;
 
-for (const lang of ['tr', 'en', 'de', 'cpp', 'java']) {
+for (const lang of ['tr', 'en', 'de', 'turkce', 'cpp', 'java']) {
 	for (const file of PAGES) {
-		const code = lang === 'cpp' || lang === 'java';
-		test(`${file} runs to the end` + (lang === 'tr' ? '' : ` (${lang === 'cpp' ? 'C++' : lang === 'java' ? 'Java' : lang})`), async ({ page }) => {
+		const code = lang === 'cpp' || lang === 'java' || lang === 'turkce';
+		test(`${file} runs to the end` + (lang === 'tr' ? '' : ` (${lang === 'cpp' ? 'C++' : lang === 'java' ? 'Java' : lang === 'turkce' ? 'Türkçe kod' : lang})`), async ({ page }) => {
 			const problems = await openPage(page, file, lang === 'tr' ? null : code ? { codeLang: lang } : { lang });
-			if (code && file !== 'language.html') // the blocks are shown in C++ / Java
+			if (code && file !== 'language.html') // the blocks are shown in C++ / Java / Turkish words
 				expect(await page.evaluate(() => [...document.querySelectorAll('.CodeMirror')].map(e => e.CodeMirror.getValue()).join('\n'))).not.toMatch(/^\s*var\s/m);
 
 			expect(await runAllBlocks(page)).toBeGreaterThan(0);
@@ -103,7 +103,7 @@ for (const lang of ['tr', 'en', 'de', 'cpp', 'java']) {
 
 			expect(await page.locator('#output').textContent()).not.toMatch(/Hata|hatası|tanımlı değil|null olan|Error|Fehler|Satır \d|Line \d|Zeile \d/);
 
-			const [expression, expected] = (lang === 'tr' ? EXPECTED : lang === 'cpp' ? EXPECTED_CPP : lang === 'java' ? EXPECTED_JAVA : EXPECTED_EN_DE)[file];
+			const [expression, expected] = (lang === 'tr' || lang === 'turkce' ? EXPECTED : lang === 'cpp' ? EXPECTED_CPP : lang === 'java' ? EXPECTED_JAVA : EXPECTED_EN_DE)[file];
 			expect(await valueOf(page, expression)).toEqual(expected);
 			expect(problems).toEqual([]);
 		});

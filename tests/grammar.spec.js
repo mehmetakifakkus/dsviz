@@ -305,3 +305,34 @@ test('new Node takes a number or an expression', () => {
 	expect(parse('var a = new Node(5)\n')[0].rhs.data).toBe(5);
 	expect(parse('var a = new Node(i * 10)\n')[0].rhs.data).toBe('i * 10');
 });
+
+test('Düğüm with Turkish words: translated word by word both ways, strings and comments left alone', () => {
+	const w = loadCodeLang();
+	const dugum = 'var p = head   // null olabilir\nwhile(p != null && p.next.data > 2.5)\n{\n  print "null kalır", p.data\n  p = p.next\n}\nvar x = new Node(3, null)\nif(!ok || not done)\n{\n  delete x\n}\nelse\n  var t = new Array(5)\nfor(var i = 0; i < 3; i++)\n  break\nvar prev = true, next = false';
+	const turkish = w.dsvCode.toTurkish([dugum])[0];
+	expect(turkish.split('\n')).toEqual([
+		'değişken p = head   // null olabilir',
+		'yinele(p != boş ve p.sonraki.veri > 2.5)',
+		'{',
+		'  yaz "null kalır", p.veri',
+		'  p = p.sonraki',
+		'}',
+		'değişken x = yeni Düğüm(3, boş)',
+		'eğer(!ok veya değil done)',
+		'{',
+		'  sil x',
+		'}',
+		'değilse',
+		'  değişken t = yeni Dizi(5)',
+		'için(değişken i = 0; i < 3; i++)',
+		'  kır',
+		'değişken prev = doğru, next = yanlış' // names of variables stay, only fields (.next) are words
+	]);
+	const back = w.dsvCode.fromTurkish(turkish);
+	expect(back.split('\n').length).toBe(dugum.split('\n').length); // every line keeps its number
+	expect(back).toContain('while(p != null and p.next.data > 2.5)');
+	expect(back).toContain('  delete x');
+	expect(back).toContain('var prev = true, next = false');
+	expect(w.dsvCode.langs.turkce.display('p.left = null')).toBe('p.sol = boş');
+	expect(w.dsvCode.langs.turkce.field('right')).toBe('sağ');
+});
