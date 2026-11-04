@@ -490,7 +490,7 @@
 		{target: null},                                                         // welcome
 		{target: function(){ return visible('.code-card'); }},
 		{target: function(){ return visible('.code-card .dsv-run'); }},
-		{target: function(){ return visible('.viz-canvas'); }},
+		{target: function(){ return visible('#myCanvas0'); }},                  // the drawing, without the player above it
 		{target: function(){ return visible('.dsv-player'); }},
 		{target: function(){ return visible('#narration'); }},
 		{target: function(){ return visible('.viz-vars') || visible('.viz-folds'); }},
