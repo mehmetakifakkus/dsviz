@@ -774,3 +774,53 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+test('the first visit: a tour lights each part in turn, shows the code language setting, and comes only once', async ({ page }) => {
+	const problems = await openPage(page, 'reverseALinkedList.html', { tour: true });
+	const card = page.locator('.tour-card');
+	await expect(card).toBeVisible();
+	await expect(card.locator('.tour-title')).toHaveText('Hoş geldiniz');
+	await expect(card.locator('.tour-back')).toBeHidden();
+	await expect(card.locator('.tour-count')).toHaveText('1 / 10');
+
+	// the page under it does not take clicks while the tour is on
+	await page.locator('.tour-block').click({ position: { x: 5, y: 300 } });
+	await expect(card).toBeVisible();
+
+	await card.locator('.tour-next').click();
+	await expect(card.locator('.tour-title')).toHaveText('Kod blokları');
+	const spot = await page.locator('.tour-spot').boundingBox();
+	const block = await page.locator('.code-card').first().boundingBox();
+	expect(Math.abs(spot.x - (block.x - 6))).toBeLessThan(2); // the lit box is over the first code block
+	expect(Math.abs(spot.width - (block.width + 12))).toBeLessThan(2);
+
+	await page.keyboard.press('ArrowRight'); // the arrow keys move the tour, not the player
+	await expect(card.locator('.tour-title')).toHaveText('Çalıştır');
+	await page.keyboard.press('ArrowLeft');
+	await expect(card.locator('.tour-title')).toHaveText('Kod blokları');
+
+	for (let i = 0; i < 7; i++) await card.locator('.tour-next').click();
+	await expect(card.locator('.tour-title')).toHaveText('Kod dili: Düğüm, C++ ya da Java');
+	await expect(page.locator('#settings-panel')).toBeVisible(); // the panel opens on the code language
+	await expect(page.locator('#settings-panel select[name=codeLang]')).toHaveValue('dugum'); // the site opens in Düğüm
+	await card.locator('.tour-next').click();
+	await expect(page.locator('#settings-panel')).toBeHidden();
+	await expect(card.locator('.tour-next')).toHaveText('Başlayalım');
+	await card.locator('.tour-next').click();
+	await expect(card).toHaveCount(0);
+	await expect(page.locator('.tour-spot, .tour-block')).toHaveCount(0);
+
+	// only once; the settings panel starts it again, and Escape ends it
+	await page.reload();
+	await page.waitForFunction(() => window.dsvReady === true);
+	await page.waitForTimeout(500);
+	await expect(card).toHaveCount(0);
+	await page.locator('.topbar .settings-btn').click();
+	await page.locator('#settings-panel [name=tour]').click();
+	await expect(card.locator('.tour-title')).toHaveText('Hoş geldiniz');
+	await page.keyboard.press('Escape');
+	await expect(card).toHaveCount(0);
+	await runBlock(page, 0); // the page works as before
+	expect(await valueOf(page, 'walk(x)')).toBe('1>2>3>4');
+	expect(problems).toEqual([]);
+});

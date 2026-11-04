@@ -405,3 +405,31 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
   .menu-btn .label { display: none; }
   .menu-btn { width: 38px; padding: 0; }
 }
+
+/* ---------- the introduction tour (js/layout.js) ---------- */
+.tour-block { position: fixed; inset: 0; z-index: 60; }
+.tour-spot {
+  position: fixed; z-index: 61; pointer-events: none; border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 0 100vmax rgba(10, 15, 28, .62);
+  transition: left .25s, top .25s, width .25s, height .25s;
+}
+.tour-spot-none { left: 50%; top: 50%; width: 0; height: 0; box-shadow: 0 0 0 100vmax rgba(10, 15, 28, .62); }
+.tour-card {
+  position: fixed; z-index: 62; width: 380px; padding: 16px 18px 12px; box-sizing: border-box;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .28); transition: left .25s, top .25s;
+}
+.tour-count { font-size: 12px; color: var(--muted); }
+.tour-title { margin: 2px 0 6px; font-size: 17px; }
+.tour-text { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--text); }
+.tour-actions { display: flex; align-items: center; gap: 8px; }
+.tour-actions .spacer { flex: 1; }
+.tour-actions .link-btn { padding: 0; }
+.tour-back, .tour-next {
+  font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.tour-next { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.tour-back[hidden] { display: none; }
+.tour-on .settings-panel { z-index: 59; }
+@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
+.settings-panel .link-btn { display: block; }
