@@ -62,6 +62,50 @@
 			en: ['Very slow', 'Slow', 'Normal', 'Fast', 'Very fast'],
 			de: ['Sehr langsam', 'Langsam', 'Normal', 'Schnell', 'Sehr schnell']
 		},
+		tourNext: {tr: 'Sonraki', en: 'Next', de: 'Weiter'},
+		tourBack: {tr: 'Geri', en: 'Back', de: 'Zurück'},
+		tourDone: {tr: 'Başlayalım', en: "Let's start", de: 'Los geht\'s'},
+		tourSkip: {tr: 'Turu atla', en: 'Skip the tour', de: 'Tour überspringen'},
+		tourCount: {tr: '{i} / {n}', en: '{i} / {n}', de: '{i} / {n}'},
+		tourRestart: {tr: 'Tanıtım turunu yeniden başlat', en: 'Start the introduction tour again', de: 'Einführungstour erneut starten'},
+		tourSteps: {
+			tr: [
+				['Hoş geldiniz', 'Burada veri yapılarının kodunu çalıştırıp her adımı çizimde izlersiniz. Bu kısa tur sayfanın bölümlerini tanıtır; Sonraki ile ilerleyin, istediğiniz an atlayabilirsiniz.'],
+				['Kod blokları', 'Örnekler Düğüm dilinde yazılmıştır: JavaScript\'e benzeyen, bu iş için geliştirilmiş sade bir dil. Kodu değiştirip yeniden çalıştırabilirsiniz.'],
+				['Çalıştır', 'Bloğu çalıştırır. Üstündeki bloklar da kendiliğinden yeniden çalışır, çizim her seferinde temiz başlar.'],
+				['Çizim', 'Düğümler, bağlar (oklar) ve pointer\'lar burada çizilir. Son adımda değişen bağ turuncu görünür; ulaşılamayan düğümler uyarıyla işaretlenir.'],
+				['Oynatıcı', 'Çalışmayı adım adım geri ve ileri oynatın, hızı ayarlayın ya da çubukla istediğiniz adıma gidin. Klavyede ← → ve boşluk tuşu da çalışır.'],
+				['Anlatım', 'Her adımda ne olduğu bir cümleyle anlatılır; kodda o anda çalışan satır da vurgulanır.'],
+				['Değişkenler ve çıktı', 'Değişkenlerin o adımdaki değerleri, fonksiyon çağrıları ve programın çıktısı burada. Komut satırı sekmesinden tek satırlık kod da deneyebilirsiniz.'],
+				['Ders modu', 'Sayfayı bölüm bölüm izlemek için: her bölümde bir açıklama ve bir kod bloğu, bölümün kodu kendiliğinden çalışır.'],
+				['Kod dili: Düğüm, C++ ya da Java', 'Site Düğüm diliyle açılır. Derste C++ ya da Java kullanıyorsanız buradan seçin: bütün örnekler o dile çevrilerek gösterilir ve öyle çalışır. Türkçe kelimelerle yazılan Düğüm de seçilebilir. Arayüz dili, tema ve yazı boyutu da bu panelde.'],
+				['Örnekler', 'Bütün konular bu menüde: bağlı listeler, yığın ve kuyruk, sıralama, ağaçlar, heap ve hash tablosu. Düğüm dilinin rehberi "Başlarken" bölümünde.']
+			],
+			en: [
+				['Welcome', 'Here you run the code of data structures and follow every step in the drawing. This short tour shows the parts of the page; go on with Next, and skip it whenever you like.'],
+				['Code blocks', 'The examples are written in Düğüm: a small language like JavaScript, made for this site. You can change the code and run it again.'],
+				['Run', 'Runs the block. The blocks above it run again by themselves, so the drawing always starts clean.'],
+				['Drawing', 'Nodes, links (arrows) and pointers are drawn here. The link the last step changed is orange; nodes nothing reaches any more are marked with a warning.'],
+				['Player', 'Play the run step by step backwards and forwards, set the speed or jump to a step with the slider. The keys ← → and space work too.'],
+				['Narration', 'Every step is told in a sentence, and the line that runs is highlighted in the code.'],
+				['Variables and output', 'The values of the variables at this step, the function calls and the output of the program. In the command line tab you can try a single line of code.'],
+				['Lesson mode', 'To go through the page part by part: each part has an explanation and a code block, and its code runs by itself.'],
+				['Code language: Düğüm, C++ or Java', 'The site opens in Düğüm. If your course uses C++ or Java, choose it here: all examples are shown and run in that language. Düğüm with Turkish words is there too. The interface language, the theme and the font size are in this panel as well.'],
+				['Examples', 'All topics are in this menu: linked lists, stacks and queues, sorting, trees, heaps and hash tables. The guide to the Düğüm language is under "Getting started".']
+			],
+			de: [
+				['Willkommen', 'Hier führen Sie den Code von Datenstrukturen aus und verfolgen jeden Schritt in der Zeichnung. Diese kurze Tour zeigt die Teile der Seite; mit Weiter geht es voran, überspringen können Sie jederzeit.'],
+				['Codeblöcke', 'Die Beispiele sind in Düğüm geschrieben: einer kleinen, JavaScript-ähnlichen Sprache, die für diese Seite gemacht ist. Sie können den Code ändern und erneut ausführen.'],
+				['Ausführen', 'Führt den Block aus. Die Blöcke darüber laufen von selbst erneut, so beginnt die Zeichnung immer sauber.'],
+				['Zeichnung', 'Knoten, Verbindungen (Pfeile) und Zeiger werden hier gezeichnet. Die Verbindung, die der letzte Schritt geändert hat, ist orange; Knoten, die nichts mehr erreicht, werden mit einer Warnung markiert.'],
+				['Player', 'Spielen Sie den Ablauf Schritt für Schritt vor und zurück, stellen Sie die Geschwindigkeit ein oder springen Sie mit dem Regler zu einem Schritt. Die Tasten ← → und Leertaste funktionieren auch.'],
+				['Erzählung', 'Jeder Schritt wird in einem Satz erklärt, und die laufende Zeile wird im Code hervorgehoben.'],
+				['Variablen und Ausgabe', 'Die Werte der Variablen in diesem Schritt, die Funktionsaufrufe und die Ausgabe des Programms. Im Reiter Befehlszeile können Sie eine einzelne Codezeile ausprobieren.'],
+				['Lektionsmodus', 'Um die Seite Teil für Teil durchzugehen: jeder Teil hat eine Erklärung und einen Codeblock, dessen Code von selbst läuft.'],
+				['Code-Sprache: Düğüm, C++ oder Java', 'Die Seite öffnet sich in Düğüm. Wenn Ihr Kurs C++ oder Java benutzt, wählen Sie es hier: alle Beispiele werden in dieser Sprache gezeigt und ausgeführt. Düğüm mit türkischen Wörtern gibt es auch. Oberflächensprache, Design und Schriftgröße finden Sie ebenfalls in diesem Bereich.'],
+				['Beispiele', 'Alle Themen stehen in diesem Menü: verkettete Listen, Stapel und Warteschlangen, Sortieren, Bäume, Heaps und Hashtabellen. Der Leitfaden zur Sprache Düğüm steht unter „Erste Schritte“.']
+			]
+		},
 		codeLang: {tr: 'Kod dili', en: 'Code language', de: 'Code-Sprache'},
 		codeLangNote: {tr: 'Örnekler seçilen dilde gösterilir ve çalışır; değişince sayfa yeniden yüklenir.', en: 'The examples are shown and run in the chosen language; changing it reloads the page.', de: 'Die Beispiele werden in der gewählten Sprache gezeigt und ausgeführt; beim Wechsel wird die Seite neu geladen.'},
 		lessonModeSetting: {tr: 'Ders modu: blokları tek tek göster', en: 'Lesson mode: one block at a time', de: 'Lektionsmodus: ein Block nach dem anderen'},

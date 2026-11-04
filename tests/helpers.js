@@ -18,7 +18,13 @@ async function openPage(page, file, settings) {
 		return route.abort();
 	});
 
-	if (settings)
+	// the introduction tour of a first visit would cover the page: the tests are not first visits
+	// (except the tour's own test, which passes {tour: true})
+	const tour = settings && settings.tour;
+	if (settings) settings = Object.fromEntries(Object.entries(settings).filter(([k]) => k !== 'tour'));
+	if (!tour)
+		await page.addInitScript(() => localStorage.setItem('dsv-tour-done', '1'));
+	if (settings && Object.keys(settings).length)
 		await page.addInitScript(s => {
 			if (!sessionStorage.getItem('dsv-test-settings')) { // only once: a reload keeps what the page saved
 				sessionStorage.setItem('dsv-test-settings', '1');

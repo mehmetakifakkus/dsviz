@@ -230,6 +230,7 @@
 		'<label class="setting switch"><span>' + esc(t('narrationSetting')) + '</span><input type="checkbox" name="narration"' + (s.narration ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('warningsSetting')) + '</span><input type="checkbox" name="warnings"' + (s.warnings ? ' checked' : '') + '></label>' +
 		'<div class="setting-note">' + esc(t('shortcuts')) + '</div>' +
+		'<button class="link-btn" name="tour">' + esc(t('tourRestart')) + '</button>' +
 		'<button class="link-btn" name="reset">' + esc(t('resetSettings')) + '</button>');
 	var panelClose = el('button', {'class': 'icon-btn', 'aria-label': t('close'), title: t('close')}, ICON.close);
 	panel.querySelector('.settings-head').appendChild(panelClose);
@@ -464,6 +465,174 @@
 		matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){
 			if(dsv.settings.theme === 'system') dsv.set('theme', 'system');
 		});
+
+	// ---------- the tour: on the first visit, each part of the page explained in turn ----------
+	//
+	// One part is lit, the rest of the page is darkened (a box with a huge shadow over the
+	// part) and a card next to it explains it; Next / Back move on, Skip or Escape ends it.
+	// It shows once (localStorage); the settings panel can start it again.
+	var TOUR_KEY = 'dsv-tour-done';
+	function tourDone(){
+		try { if(localStorage.getItem(TOUR_KEY)) return true; } catch(e) {}
+		try { return !!sessionStorage.getItem(TOUR_KEY); } catch(e) { return true; } // no storage at all: do not show it every time
+	}
+	function markTourDone(){
+		try { localStorage.setItem(TOUR_KEY, '1'); } catch(e) {}
+		try { sessionStorage.setItem(TOUR_KEY, '1'); } catch(e) {}
+	}
+	function visible(sel){
+		return Array.prototype.filter.call(document.querySelectorAll(sel), function(e){
+			return !e.hidden && e.getClientRects().length > 0;
+		})[0] || null;
+	}
+	// the parts, in order; a part missing from this page (or hidden on a phone) is left out
+	var TOUR = [
+		{target: null},                                                         // welcome
+		{target: function(){ return visible('.code-card'); }},
+		{target: function(){ return visible('.code-card .dsv-run'); }},
+		{target: function(){ return visible('.viz-canvas'); }},
+		{target: function(){ return visible('.dsv-player'); }},
+		{target: function(){ return visible('#narration'); }},
+		{target: function(){ return visible('.viz-vars') || visible('.viz-folds'); }},
+		{target: function(){ return visible('.lesson-toggle'); }},
+		{target: function(){ var sel = panel.querySelector('select[name=codeLang]'); return sel && [sel.closest('.setting'), sel.closest('.setting').nextElementSibling]; }, // with its note
+		 enter: function(){ setPanel(true); }, leave: function(){ setPanel(false); }}, // the code language: Düğüm, C++ or Java
+		{target: function(){ return visible('.menu-btn'); }}
+	];
+
+	var tour = null;
+	function startTour(){
+		if(tour || !document.querySelector('.dsv-player'))
+			return;
+		setDrawer(false);
+		setPanel(false);
+		var texts = t('tourSteps');
+		var steps = TOUR.map(function(step, i){ return {target: step.target, enter: step.enter, leave: step.leave, title: texts[i][0], text: texts[i][1]}; })
+		                .filter(function(step){
+			if(!step.target) return true;
+			if(step.enter) step.enter();
+			var here = !!step.target();
+			if(step.leave) step.leave();
+			return here;
+		});
+
+		var blocker = el('div', {'class': 'tour-block'});
+		var spot = el('div', {'class': 'tour-spot'});
+		var card = el('div', {'class': 'tour-card card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'tour-title'},
+			'<div class="tour-count"></div><h2 id="tour-title" class="tour-title"></h2><p class="tour-text"></p>' +
+			'<div class="tour-actions"><button type="button" class="link-btn tour-skip">' + esc(t('tourSkip')) + '</button>' +
+			'<span class="spacer"></span><button type="button" class="tour-back">' + esc(t('tourBack')) + '</button>' +
+			'<button type="button" class="tour-next"></button></div>');
+		document.body.appendChild(blocker);
+		document.body.appendChild(spot);
+		document.body.appendChild(card);
+		document.documentElement.classList.add('tour-on');
+		tour = {steps: steps, index: -1, card: card, spot: spot, blocker: blocker};
+
+		card.addEventListener('click', function(e){
+			e.stopPropagation(); // the settings panel closes on a click outside it
+			if(e.target.closest('.tour-next')) go(tour.index + 1);
+			else if(e.target.closest('.tour-back')) go(tour.index - 1);
+			else if(e.target.closest('.tour-skip')) endTour();
+		});
+		blocker.addEventListener('click', function(e){ e.stopPropagation(); });
+		document.addEventListener('keydown', tourKeys, true);
+		window.addEventListener('resize', placeTour);
+		window.addEventListener('scroll', placeTour, true);
+		go(0);
+	}
+	function tourKeys(e){
+		if(!tour) return;
+		if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); endTour(); }
+		else if(e.key === 'ArrowRight'){ e.preventDefault(); e.stopPropagation(); go(tour.index + 1); }
+		else if(e.key === 'ArrowLeft'){ e.preventDefault(); e.stopPropagation(); go(tour.index - 1); }
+		else if(e.key === ' ' && e.target === document.body){ e.preventDefault(); e.stopPropagation(); } // the player's shortcut waits
+	}
+	function go(index){
+		var steps = tour.steps;
+		if(index < 0) return;
+		if(index >= steps.length){ endTour(); return; }
+		var old = steps[tour.index];
+		if(old && old.leave) old.leave();
+		tour.index = index;
+		var step = steps[index];
+		if(step.enter) step.enter();
+		var card = tour.card;
+		card.querySelector('.tour-count').textContent = t('tourCount', {i: index + 1, n: steps.length});
+		card.querySelector('.tour-title').textContent = step.title;
+		card.querySelector('.tour-text').textContent = step.text;
+		card.querySelector('.tour-back').hidden = index === 0;
+		card.querySelector('.tour-next').textContent = index === steps.length - 1 ? t('tourDone') : t('tourNext');
+		var target = step.target && step.target();
+		var first = target && (target.length ? target[0] : target);
+		if(first && first.scrollIntoView && !first.closest('.topbar, .settings-panel, .viz-col')){
+			first.scrollIntoView({block: 'center', inline: 'nearest'});
+			// what stays on top while scrolling (the top bar; on a phone also the drawing) must not cover it
+			var cover = 0;
+			Array.prototype.forEach.call(document.querySelectorAll('.topbar, .viz-col'), function(e){
+				var pos = getComputedStyle(e).position;
+				if(pos === 'sticky' || pos === 'fixed') cover = Math.max(cover, e.getBoundingClientRect().bottom);
+			});
+			var top = first.getBoundingClientRect().top;
+			if(top < cover + 12) window.scrollBy(0, top - cover - 12);
+		}
+		placeTour();
+		card.querySelector('.tour-next').focus({preventScroll: true});
+	}
+	// the lit box over the part, the card under it (or over it when there is no room below)
+	function placeTour(){
+		if(!tour) return;
+		var step = tour.steps[tour.index], target = step.target && step.target();
+		var spot = tour.spot, card = tour.card, pad = 6, gap = 12, margin = 12;
+		var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+		card.style.maxWidth = Math.min(380, vw - 2 * margin) + 'px';
+		if(!target){
+			spot.className = 'tour-spot tour-spot-none';
+			card.style.left = Math.max(margin, (vw - card.offsetWidth) / 2) + 'px';
+			card.style.top = Math.max(margin, (vh - card.offsetHeight) / 2) + 'px';
+			return;
+		}
+		spot.className = 'tour-spot';
+		var r = [].concat(target.length ? Array.prototype.slice.call(target) : [target]).filter(Boolean).reduce(function(box, e){ // several elements: around all of them
+			var b = e.getBoundingClientRect();
+			return box ? {left: Math.min(box.left, b.left), top: Math.min(box.top, b.top), right: Math.max(box.right, b.right), bottom: Math.max(box.bottom, b.bottom)} : b;
+		}, null);
+		r = {left: r.left, top: r.top, bottom: r.bottom, width: r.right - r.left};
+		var top = Math.max(r.top - pad, 4), bottom = Math.min(r.bottom + pad, vh - 4);
+		spot.style.left = (r.left - pad) + 'px';
+		spot.style.top = top + 'px';
+		spot.style.width = (r.width + 2 * pad) + 'px';
+		spot.style.height = Math.max(0, bottom - top) + 'px';
+		var w = card.offsetWidth, h = card.offsetHeight;
+		var y = bottom + gap;
+		if(y + h > vh - margin) y = top - gap - h;             // no room below: above
+		if(y < margin) y = Math.min(vh - h - margin, Math.max(margin, bottom - h)); // tall part: inside it, at its foot
+		var x = Math.min(Math.max(margin, r.left), vw - w - margin);
+		card.style.left = x + 'px';
+		card.style.top = y + 'px';
+	}
+	function endTour(){
+		if(!tour) return;
+		var step = tour.steps[tour.index];
+		if(step && step.leave) step.leave();
+		[tour.card, tour.spot, tour.blocker].forEach(function(e){ e.parentNode.removeChild(e); });
+		document.documentElement.classList.remove('tour-on');
+		document.removeEventListener('keydown', tourKeys, true);
+		window.removeEventListener('resize', placeTour);
+		window.removeEventListener('scroll', placeTour, true);
+		tour = null;
+		markTourDone();
+	}
+	window.dsvStartTour = startTour;
+	panel.querySelector('[name=tour]').addEventListener('click', function(e){ e.stopPropagation(); setPanel(false); startTour(); });
+
+	// the first visit: once the page can run code (the editors and the player are there)
+	if(!tourDone()){
+		(function waitForPage(){
+			if(window.dsvReady) setTimeout(startTour, 300);
+			else setTimeout(waitForPage, 100);
+		})();
+	}
 
 	window.dsvExamples = EXAMPLES;
 })();
