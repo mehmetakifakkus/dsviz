@@ -78,6 +78,9 @@
 	]},
 		{ group: {tr: 'Hash tablosu', en: 'Hash table', de: 'Hashtabelle'}, items: [
 			['hashTable.html', {tr: 'Zincirlemeli hash tablosu', en: 'Hash table with chaining', de: 'Hashtabelle mit Verkettung'}]
+		]},
+		{ group: {tr: 'Graflar', en: 'Graphs', de: 'Graphen'}, items: [
+			['graph.html', {tr: 'Komşuluk listesi, BFS ve DFS', en: 'Adjacency lists, BFS and DFS', de: 'Adjazenzlisten, BFS und DFS'}]
 		]}
 	];
 

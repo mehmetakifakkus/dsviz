@@ -581,12 +581,12 @@ test.describe('learning aids', () => {
 	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
 		const problems = await openPage(page, 'arrayStackQueue.html');
 		await runBlock(page, 0);
-		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, heap: null }]); // no heap formulas: no tree
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, heap: null, graph: null }]); // no heap formulas: no tree
 		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
 		await runBlock(page, 1);
 		const both = (await state(page)).arrays;
 		expect(both.map(a => a.name)).toEqual(['s', 'q']);
-		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, heap: null });
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, heap: null, graph: null });
 
 		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
 		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
@@ -622,6 +622,39 @@ test.describe('learning aids', () => {
 		h = (await state(page)).arrays[0];
 		expect(h.cells.slice(0, 6)).toEqual([3, 5, 8, 9, 0, 0]);
 		expect(h.heap).toEqual([3, 5, 8, 9]);
+		expect(problems).toEqual([]);
+	});
+
+	test('an adjacency list named adj is also drawn as its graph; visited vertices are coloured', async ({ page }) => {
+		const problems = await openPage(page, 'graph.html');
+		await runBlock(page, 0);
+		const graph = async () => (await state(page)).arrays.find(a => a.name === 'adj').graph;
+		expect(await graph()).toEqual({ edges: ['0-1', '0-5', '1-2', '1-4', '2-3', '3-4', '4-5'], visited: [] });
+
+		let oneWay = false; // stepping back into addEdge(4, 5): a moment when only 4 -> 5 is there (an arrow)
+		for (let k = 0; k < 6 && !oneWay; k++) {
+			await page.locator('.dsv-player button[title="Geri adım"]').click();
+			oneWay = (await graph()).edges.includes('4>5');
+		}
+		expect(oneWay).toBe(true);
+
+		await runBlock(page, 1);
+		expect(await graph()).toMatchObject({ visited: [0, 1, 2, 3, 4, 5] });
+		await page.locator('.dsv-timeline').evaluate(el => { el.value = Math.round(el.max * 0.55); el.dispatchEvent(new Event('input')); }); // the middle of BFS
+		const middle = (await graph()).visited;
+		expect(middle.length).toBeGreaterThan(0);
+		expect(middle.length).toBeLessThan(6);
+		expect(middle).toContain(0);
+
+		await runCode(page, 'var big = new Array(3)\nbig[0] = new Node(7)\n'); // not named adj: buckets only
+		expect((await state(page)).arrays.find(a => a.name === 'big').graph).toBeNull();
+		await runCode(page, 'var graph = new Array(3)\ngraph[0] = new Node(1)\ngraph[1] = new Node(9)\n'); // 9 is no vertex
+		expect((await state(page)).arrays.find(a => a.name === 'graph').graph).toBeNull();
+
+		await page.goto('/hashTable.html'); // a hash table is no graph
+		await page.waitForFunction(() => window.dsvReady === true);
+		await runBlock(page, 1);
+		expect((await state(page)).arrays[0].graph).toBeNull();
 		expect(problems).toEqual([]);
 	});
 
