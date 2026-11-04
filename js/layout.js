@@ -80,7 +80,8 @@
 			['hashTable.html', {tr: 'Zincirlemeli hash tablosu', en: 'Hash table with chaining', de: 'Hashtabelle mit Verkettung'}]
 		]},
 		{ group: {tr: 'Graflar', en: 'Graphs', de: 'Graphen'}, items: [
-			['graph.html', {tr: 'Komşuluk listesi, BFS ve DFS', en: 'Adjacency lists, BFS and DFS', de: 'Adjazenzlisten, BFS und DFS'}]
+			['graph.html', {tr: 'Komşuluk listesi, BFS ve DFS', en: 'Adjacency lists, BFS and DFS', de: 'Adjazenzlisten, BFS und DFS'}],
+			['dijkstra.html', {tr: 'Dijkstra: ağırlıklı kenarlar ve en kısa yol', en: 'Dijkstra: weighted edges and shortest paths', de: 'Dijkstra: gewichtete Kanten und kürzeste Wege'}]
 		]}
 	];
 

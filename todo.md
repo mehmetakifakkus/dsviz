@@ -8,9 +8,11 @@
 
 ## Görselleştirme ve arayüz
 
+- [ ] Adım karşılaştırma: bir önceki adımın çizimi soluk ve kesik çizgili olarak arkada kalır (eski bağ, pointer'ın eski yeri ve kayışı); neyin değiştiği bir bakışta görünür.
 
 ## Yeni konular
 
+- [ ] Topolojik sıralama (yönlü graf, DFS ile), istenirse heap ile Dijkstra.
 
 ## Altyapı
 
@@ -40,7 +42,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 352 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 359 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -72,3 +74,4 @@
 - [x] İlk ziyarette tanıtım turu: sayfanın bölümleri (kod blokları, Çalıştır, çizim, oynatıcı, anlatım, değişkenler ve çıktı, ders modu, kod dili ayarı, örnekler menüsü) sırayla aydınlatılır, sayfanın geri kalanı kararır; Sonraki/Geri (ya da ← →) ile ilerlenir, Atla ya da Esc ile çıkılır. Kod dili adımında ayarlar paneli açılır: site Düğüm ile açılır, C++, Java ya da Türkçe Düğüm seçilebilir. Bir kez gösterilir (localStorage), ayarlardan yeniden başlatılır; telefonda yapışkan çizim alanının altına kaydırır.
 - [x] Hata mesajlarındaki kod örnekleri seçilen kod dilinde: Türkçe kodda `p != boş`, `.veri`, `kır` / `yinele` / `için`, `değişken b = ...`, `yeni Dizi(n)`; C++'ta `nullptr`, `->data`, `auto b = ...`, `int t[n]`; Java'da `int[] t = new int[n]`. Mesajlarda belirli bir dilin anahtar kelimesine dayanan anlatımlar ("var ile tanımlayın", "function ile") sadeleşti.
 - [x] Graflar: adı `adj` (ya da `graph`, `graf`, `komşu`) olan ve listelerinde yalnızca köşe numaraları bulunan düğüm dizisi, kova ve listelerin sağında graf olarak da çizilir (köşeler dairede, iki yönlü kenar düz çizgi, tek yönlü kenar ok, yeni eklenen kenar turuncu); aynı boydaki `visited` dizisinde dolu köşeler renklenir, indis değişkenleri köşelerin yanında. Yeni sayfa: komşuluk listesi, BFS (kuyrukla) ve DFS (özyinelemeyle). Satır dizilerinde `true`/`false` seçilen kod dilinde ve hücreye sığacak boyda yazılır.
+- [x] Ağırlıklı graflar ve Dijkstra: kenar düğümünün ağırlığı (`e.weight = w`, Türkçe kodda `.ağırlık`) listede düğümün üstünde, grafta kenarın ortasında; aynı boydaki `dist` dizisinin değerleri köşelerin içinde (`INF` ∞ olarak), `parent` dizisinin en kısa yol ağacı kalın mavi. Yeni sayfa: O(n²) Dijkstra ve yolun `parent` ile geri izlenmesi.

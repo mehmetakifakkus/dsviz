@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra: en kısa yol | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Dijkstra: en kısa yol</h1>
+<h1 data-lang="en">Dijkstra: shortest paths</h1>
+<h1 data-lang="de">Dijkstra: kürzeste Wege</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Kenarların bir ağırlığı olabilir: yolun uzunluğu, süresi ya da maliyeti. Ağırlığı kenar düğümünün bir alanında tutuyoruz: <code>e.weight = w</code>. Ağırlık listede düğümün üstünde, grafta kenarın ortasında görünür. Önce beş köşeli, ağırlıklı yönsüz bir graf kuralım.</p>
+<p data-lang="en">Edges can have a weight: the length of a road, its time or its cost. We keep the weight in a field of the edge's node: <code>e.weight = w</code>. The weight shows over the node in the list and in the middle of the edge in the graph. First we build a weighted undirected graph with five vertices.</p>
+<p data-lang="de">Kanten können ein Gewicht haben: die Länge einer Straße, ihre Dauer oder ihre Kosten. Das Gewicht steht in einem Feld des Kantenknotens: <code>e.weight = w</code>. Es erscheint in der Liste über dem Knoten und im Graphen in der Mitte der Kante. Zuerst bauen wir einen gewichteten ungerichteten Graphen mit fünf Knoten.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(5)        // her köşenin komşu listesi
+function addEdge(u, v, w)     // ağırlıklı yönsüz kenar
+{
+  var e = new Node(v, adj[u])
+  e.weight = w                // kenarın ağırlığı (ör. km)
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 1)
+addEdge(1, 2, 2)
+addEdge(2, 3, 5)
+addEdge(3, 4, 3)
+addEdge(0, 4, 10)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(5)        // the neighbour list of every vertex
+function addEdge(u, v, w)     // a weighted undirected edge
+{
+  var e = new Node(v, adj[u])
+  e.weight = w                // the weight of the edge (e.g. km)
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 1)
+addEdge(1, 2, 2)
+addEdge(2, 3, 5)
+addEdge(3, 4, 3)
+addEdge(0, 4, 10)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(5)        // die Nachbarliste jedes Knotens
+function addEdge(u, v, w)     // eine gewichtete ungerichtete Kante
+{
+  var e = new Node(v, adj[u])
+  e.weight = w                // das Gewicht der Kante (z. B. km)
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 1)
+addEdge(1, 2, 2)
+addEdge(2, 3, 5)
+addEdge(3, 4, 3)
+addEdge(0, 4, 10)
+</script>
+
+<p data-lang="tr">Dijkstra algoritması bir köşeden bütün köşelere en kısa uzaklıkları bulur (ağırlıklar negatif olmamalı). <code>dist</code> dizisi şimdiye kadar bulunan en kısa uzaklıkları tutar; başta hepsi <code>INF</code>'tir (çizimde ∞), başlangıç 0'dır. Her turda uzaklığı kesinleşmemiş en yakın köşe <code>u</code> seçilir ve kesinleşir (<code>visited</code>, grafta renkli). Sonra komşularının uzaklığı gevşetilir: <code>u</code> üzerinden gitmek daha kısaysa <code>dist</code> ve <code>parent</code> güncellenir. Uzaklıklar köşelerin içinde, <code>parent</code>'ın oluşturduğu en kısa yol ağacı kalın mavi çizilir. Burada 0'dan 4'e doğrudan kenar 10 iken 0 → 2 → 3 → 4 yolu 9'dur. En yakın köşe her turda bütün köşelere bakılarak seçildiği için bu hali O(<em>n</em>²) sürer; bir heap ile O((<em>n</em> + <em>m</em>) log <em>n</em>) olur.</p>
+<p data-lang="en">Dijkstra's algorithm finds the shortest distances from one vertex to all others (the weights must not be negative). The array <code>dist</code> holds the shortest distances found so far; at first they are all <code>INF</code> (∞ in the drawing), the start is 0. In every round the nearest vertex <code>u</code> whose distance is not final yet is picked and becomes final (<code>visited</code>, coloured in the graph). Then the distances of its neighbours are relaxed: if going through <code>u</code> is shorter, <code>dist</code> and <code>parent</code> are updated. The distances stand inside the vertices, and the tree of shortest paths that <code>parent</code> forms is drawn thick and blue. Here the direct edge from 0 to 4 is 10, but the way 0 → 2 → 3 → 4 is 9. The nearest vertex is picked by looking at all vertices in every round, so this version takes O(<em>n</em>²); with a heap it takes O((<em>n</em> + <em>m</em>) log <em>n</em>).</p>
+<p data-lang="de">Der Algorithmus von Dijkstra findet die kürzesten Abstände von einem Knoten zu allen anderen (die Gewichte dürfen nicht negativ sein). Das Array <code>dist</code> hält die bisher gefundenen kürzesten Abstände; anfangs sind alle <code>INF</code> (∞ in der Zeichnung), der Start ist 0. In jeder Runde wird der nächste Knoten <code>u</code> gewählt, dessen Abstand noch nicht endgültig ist, und wird endgültig (<code>visited</code>, im Graphen eingefärbt). Dann werden die Abstände seiner Nachbarn verbessert: ist der Weg über <code>u</code> kürzer, werden <code>dist</code> und <code>parent</code> aktualisiert. Die Abstände stehen innen an den Knoten, der Baum der kürzesten Wege, den <code>parent</code> bildet, wird dick und blau gezeichnet. Hier ist die direkte Kante von 0 nach 4 10 lang, der Weg 0 → 2 → 3 → 4 aber 9. Der nächste Knoten wird in jeder Runde unter allen Knoten gesucht, diese Fassung dauert also O(<em>n</em>²); mit einem Heap O((<em>n</em> + <em>m</em>) log <em>n</em>).</p>
+
+<textarea id="text2" class="deneme">
+var INF = 999                 // "sonsuz": henüz ulaşılmadı
+var dist = new Array(5)       // başlangıçtan en kısa uzaklıklar
+var parent = new Array(5)     // en kısa yolda bir önceki köşe
+var visited = new Array(5)    // uzaklığı kesinleşen köşeler
+for(var i = 0; i &lt; 5; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var k = 0; k &lt; 5; k++)
+{
+  var u = -1                  // kesinleşmemiş en yakın köşeyi seç
+  for(var j = 0; j &lt; 5; j++)
+  {
+    if(!visited[j] &amp;&amp; (u == -1 || dist[j] &lt; dist[u]))
+    {
+      u = j
+    }
+  }
+  if(dist[u] == INF)          // kalan köşelere ulaşılamıyor
+  {
+    break
+  }
+  visited[u] = true
+  var p = adj[u]              // komşuların uzaklığını gevşet
+  while(p != null)
+  {
+    var v = p.data
+    var d = dist[u] + p.weight
+    if(d &lt; dist[v])           // daha kısa bir yol bulundu
+    {
+      dist[v] = d
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var INF = 999                 // "infinity": not reached yet
+var dist = new Array(5)       // the shortest distances from the start
+var parent = new Array(5)     // the vertex before it on a shortest path
+var visited = new Array(5)    // the vertices whose distance is final
+for(var i = 0; i < 5; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var k = 0; k < 5; k++)
+{
+  var u = -1                  // pick the nearest vertex not final yet
+  for(var j = 0; j < 5; j++)
+  {
+    if(!visited[j] && (u == -1 || dist[j] < dist[u]))
+    {
+      u = j
+    }
+  }
+  if(dist[u] == INF)          // the other vertices cannot be reached
+  {
+    break
+  }
+  visited[u] = true
+  var p = adj[u]              // relax the distances of the neighbours
+  while(p != null)
+  {
+    var v = p.data
+    var d = dist[u] + p.weight
+    if(d < dist[v])           // a shorter way was found
+    {
+      dist[v] = d
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var INF = 999                 // „unendlich“: noch nicht erreicht
+var dist = new Array(5)       // die kürzesten Abstände vom Start
+var parent = new Array(5)     // der Knoten davor auf einem kürzesten Weg
+var visited = new Array(5)    // die Knoten mit endgültigem Abstand
+for(var i = 0; i < 5; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var k = 0; k < 5; k++)
+{
+  var u = -1                  // den nächsten noch nicht endgültigen Knoten wählen
+  for(var j = 0; j < 5; j++)
+  {
+    if(!visited[j] && (u == -1 || dist[j] < dist[u]))
+    {
+      u = j
+    }
+  }
+  if(dist[u] == INF)          // die übrigen Knoten sind nicht erreichbar
+  {
+    break
+  }
+  visited[u] = true
+  var p = adj[u]              // die Abstände der Nachbarn verbessern
+  while(p != null)
+  {
+    var v = p.data
+    var d = dist[u] + p.weight
+    if(d < dist[v])           // ein kürzerer Weg wurde gefunden
+    {
+      dist[v] = d
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+</script>
+
+<p data-lang="tr">En kısa yolun kendisini <code>parent</code> dizisi verir: hedeften başlayıp <code>parent</code>'ı izleyerek başlangıca döneriz. Yol tersten yazılır: 4, 3, 2, 0.</p>
+<p data-lang="en">The shortest path itself comes from the array <code>parent</code>: we start at the target and follow <code>parent</code> back to the start. The path comes out backwards: 4, 3, 2, 0.</p>
+<p data-lang="de">Den kürzesten Weg selbst liefert das Array <code>parent</code>: wir beginnen am Ziel und folgen <code>parent</code> zurück zum Start. Der Weg kommt rückwärts heraus: 4, 3, 2, 0.</p>
+
+<textarea id="text3" class="deneme">
+var t = 4                     // yolu sondan başa izle
+while(t != -1)
+{
+  print t
+  t = parent[t]
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var t = 4                     // follow the path from its end back
+while(t != -1)
+{
+  print t
+  t = parent[t]
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var t = 4                     // den Weg vom Ende zurück verfolgen
+while(t != -1)
+{
+  print t
+  t = parent[t]
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
