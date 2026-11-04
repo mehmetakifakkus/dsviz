@@ -453,12 +453,19 @@ function nodeArrow(from, to, kind, color){
 
 	var sameRow = Math.abs(a.y - b.y) < 1;
 	var dx = b.x - a.x;
-	var neighbour = sameRow && (isNext ? dx > 0 : dx < 0) && Math.abs(dx) <= colWidth + 1;
+	var near = sameRow && Math.abs(dx) <= colWidth + 1;
+	var neighbour = near && (isNext ? dx > 0 : dx < 0);
+	var flipped = near && (isNext ? dx < 0 : dx > 0);   // to the neighbour on the "wrong" side (a list being reversed)
 
 	if(neighbour) {                                       // straight to the neighbour
 		end = isNext ? b + [0, g.nextY] : b + [g.width, g.prevY];
 		line = new Path.Line({from: start, to: end, strokeColor: color, strokeWidth: 2});
 		angle = (end - start).angle;
+	}
+	else if(flipped) {                                    // a short hook into the facing side of the neighbour
+		var h = flippedHook(a, b, start, isNext);
+		line = h.line; end = h.end; angle = h.angle;
+		line.strokeColor = color; line.strokeWidth = 2;
 	}
 	else if(sameRow && isNext && dx < -colWidth - 1) {    // back past other nodes (a circle): a loop over the pointers
 		var r = returnLoop(from, to, start);
@@ -487,7 +494,25 @@ function nodeArrow(from, to, kind, color){
 	if(color !== PAL.stroke)
 		line.strokeWidth = 3;
 	var dot = new Path.Circle({radius: 4, fillColor: color, center: start});
-	return new Group([line, arrowTip(end, angle, color), dot]);
+	var group = new Group([line, arrowTip(end, angle, color), dot]);
+	group.data = {arrow: flipped ? 'hook' : neighbour ? 'straight' : 'other'};
+	return group;
+}
+
+// A link to the neighbour on the other side, as while a list is being reversed: next from the
+// right cell up just over its own node, down in the gap and into the right side of the left
+// neighbour; prev the mirror of it under the row. Each hook stays over its own node and its own
+// gap, so the hooks of a half-reversed list never cross one another (next ends higher in the gap
+// than prev starts, and the two run on opposite sides of the gap's middle).
+var HOOK_RISE = 10;
+function flippedHook(a, b, start, isNext){
+	var g = geometry();
+	var left = Math.min(a.x, b.x) + g.width, gap = Math.max(a.x, b.x) - left; // the free space between the two nodes
+	var x = left + gap * (isNext ? 0.58 : 0.42);
+	var lane = isNext ? a.y - HOOK_RISE : a.y + NODE_H + HOOK_RISE;
+	var end = isNext ? b + [g.width, g.nextY] : b + [0, g.prevY];
+	var points = [start, new Point(start.x, lane), new Point(x, lane), new Point(x, end.y), end];
+	return {line: roundedPath(points, 6), end: end, angle: isNext ? 180 : 0};
 }
 
 // a path through the points with rounded corners
@@ -2379,6 +2404,17 @@ window.dsvState = function(){
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
 		narration: (document.getElementById('narration') || {}).textContent || '',
+		// how the next / prev arrows on the canvas are drawn: {straight: 3, hook: 2, other: 0}
+		arrows: (function(){
+			var count = {straight: 0, hook: 0, other: 0};
+			(function visit(items){
+				items.forEach(function(item){
+					if(item.data && item.data.arrow) count[item.data.arrow] = count[item.data.arrow] + 1;
+					else if(item.children) visit(item.children);
+				});
+			})(project.layers);
+			return count;
+		})(),
 		// the drawn values row by row, left to right
 		rows: (function(){
 			var byRow = {};

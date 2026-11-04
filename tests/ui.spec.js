@@ -667,6 +667,26 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('a list being reversed: links to the neighbour on the other side are short hooks, the end is laid out again', async ({ page }) => {
+		const problems = await openPage(page, 'reverseADoublyLinkedList.html');
+		await runAllBlocks(page);
+		let drawn = await state(page);
+		expect(drawn.rows).toEqual([[4, 3, 2, 1]]); // the last step lays the list out from its new head
+		expect(drawn.arrows).toEqual({ straight: 6, hook: 0, other: 0 });
+
+		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before that: the nodes still stand where they were
+		drawn = await state(page);
+		expect(drawn.rows).toEqual([[1, 2, 3, 4]]);
+		expect(drawn.arrows).toEqual({ straight: 0, hook: 6, other: 0 });
+
+		await openPage(page, 'reverseALinkedList.html'); // a singly linked list too
+		await runAllBlocks(page);
+		await page.locator('.dsv-player button[title="Geri adım"]').click();
+		expect((await state(page)).arrows.other).toBe(0);
+		expect((await state(page)).arrows.hook).toBeGreaterThan(0);
+		expect(problems).toEqual([]);
+	});
+
 	test('a null link is drawn as null', async ({ page }) => {
 		const problems = await openPage(page, 'reverseALinkedList.html');
 		await runBlock(page, 0);
