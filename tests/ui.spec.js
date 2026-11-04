@@ -659,7 +659,7 @@ test.describe('learning aids', () => {
 		await player(page, 'Geri adım').click();
 		await expect(narration(page)).toHaveText('prev artık [4] düğümünü gösteriyor.');
 		await player(page, 'Geri adım').click();
-		await expect(narration(page)).toHaveText("[4] düğümünün next'i artık [3] düğümünü gösteriyor.");
+		await expect(narration(page)).toHaveText('[4] düğümünün next bağı artık [3] düğümünü gösteriyor.');
 		expect(problems).toEqual([]);
 	});
 

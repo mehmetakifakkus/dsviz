@@ -1094,9 +1094,9 @@ function Pointer(node, name, color, direction, scope){
 		self.points = null;
 		self.active = false;
 		if(self.scope)
-			setFrameVar(self.scope.id, self.name, 'null', true, true);
+			setFrameVar(self.scope.id, self.name, codeWord('null'), true, true);
 		else
-			showVariable(self.name, 'null', true); // listed in the variables area
+			showVariable(self.name, codeWord('null'), true); // listed in the variables area
 		redrawPointers();
 	}
 
@@ -1274,7 +1274,7 @@ function showValue(name, value, scope){
 		if(rowArrays().length)
 			drawRowArrays();
 	}
-	if(isArray(value))
+	if(isArray(value) || value === true || value === false)
 		value = formatValue(value);
 	if(scope)
 		setFrameVar(scope.id, name, formatValue(value), value === null, false);
@@ -1613,7 +1613,11 @@ function showNarration(text, warning){
 	var box = document.getElementById('narration');
 	if(!box) return;
 	var shown = codeLangInfo();
-	var code = function(t){ return escapeHTML(t).replace(/`([^`]+)`/g, function(m, c){ return '<code>' + (shown ? shown.display(c) : c) + '</code>'; }); };
+	var code = function(t){ // the pieces in `...` are code, shown in the chosen code language
+		return String(t).split('`').map(function(part, i){
+			return i % 2 ? '<code>' + escapeHTML(shown ? shown.display(part) : part) + '</code>' : escapeHTML(part);
+		}).join('');
+	};
 	box.innerHTML = (text ? '<span>' + code(text) + '</span>' : '') +
 	                (warning ? '<span class="narration-warning">⚠ ' + code(warning) + '</span>' : '');
 }
@@ -1644,8 +1648,9 @@ function describe(line, res, removed){
 	case 'object property left':
 	case 'object property left-right':
 		if(res.prop == '.data') return t('nData', {node: '[' + res.oldData + ']', value: formatValue(res.value)});
-		if(!VISUAL_FIELD[res.prop]) return t('nField', {node: nodeLabel(res.target), field: res.prop.slice(1), value: formatValue(res.value)}); // t.height = 2
-		var link = {node: nodeLabel(res.target), field: res.prop.slice(1)};
+		var field = '`' + fieldName(res.prop.slice(1)) + '`'; // the field as the chosen code language names it (sonraki in Turkish code)
+		if(!VISUAL_FIELD[res.prop]) return t('nField', {node: nodeLabel(res.target), field: field, value: formatValue(res.value)}); // t.height = 2
+		var link = {node: nodeLabel(res.target), field: field};
 		if(res.newNode) { link['new'] = nodeLabel(res.newNode); return t('nLinkNew', link); }
 		if(res.value === null) return t('nLinkNull', link);
 		link.target = nodeLabel(res.value);
@@ -2058,7 +2063,7 @@ function processOneItem(item){
 	{
 		var resu = '';
 		for(var i=0; i < item.list.length; i++)
-			resu += item.list[i].subtype == 'var' ? formatValue(evalExpr(item.list[i].text)) : item.list[i].text;
+			resu += item.list[i].subtype == 'var' ? printedValue(evalExpr(item.list[i].text)) : item.list[i].text;
 
 		drawGraphics(item, resu);
 	}
@@ -2233,10 +2238,20 @@ function callUser(def, args){
 	return result;
 }
 
+// a field name as the chosen code language writes it
+function fieldName(name){ return codeLangInfo() && codeLangInfo().field ? codeLangInfo().field(name) : name; }
+
+// what print writes: the plain value (null, true), whatever the code language
+function printedValue(value){ return value === null || value === true || value === false ? String(value) : formatValue(value); }
+
+// null / true / false as the chosen code language writes them (boş, doğru in Turkish code; nullptr in C++)
+function codeWord(word){ return codeLangInfo() ? codeLangInfo().display(word) : word; }
+
 function formatValue(value){
 	if(isNode(value)) return t('nodeValue', {data: value.data});
 	if(isArray(value)) return t('arrayValue', {n: value.length});
-	if(value === null) return 'null';
+	if(value === null) return codeWord('null');
+	if(value === true || value === false) return codeWord(String(value));
 	if(value === undefined) return t('undefinedValue');
 	return String(value);
 }
@@ -2594,6 +2609,8 @@ function openSharedCode(){
 function setEditors(items){
 
 	// every textarea with the class "deneme" becomes a CodeMirror editor with a run button
+	if(window.dsvCode && window.dsvCode.defineModes)
+		window.dsvCode.defineModes(CodeMirror); // the colours of Düğüm with Turkish words
 	items.forEach(function (editorEl) {
 
 		var editor = CodeMirror.fromTextArea(editorEl, {

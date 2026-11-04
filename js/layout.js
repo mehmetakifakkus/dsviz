@@ -111,12 +111,21 @@
 
 	// ---------- the page's own content in the chosen language ----------
 	var contentLang = lesson.querySelector('[data-lang="' + lang + '"]') ? lang : 'tr';
+	// ---------- the code language: Düğüm, Düğüm with Turkish words, C++ or Java ----------
+	var codeLangs = window.dsvCode ? window.dsvCode.langs : {};
+	var codeLang = codeLangs[dsv.settings.codeLang] ? dsv.settings.codeLang : 'dugum';
+	var linkLang = /(?:^#|&)c=(turkce|cpp|java|dugum)(?:&|$)/.exec(location.hash);  // a shared link keeps its language
+	if(linkLang) codeLang = linkLang[1];
+	else if(/(?:^#|&)b\d+=/.test(location.hash)) codeLang = 'dugum';
+	if(page === 'language.html') codeLang = 'dugum'; // the guide is about Düğüm itself
+	window.dsvCodeLang = codeLang;
+	var turkishCode = codeLang === 'turkce'; // keeps the Turkish comments of the examples, whatever the interface language
 	Array.prototype.forEach.call(lesson.querySelectorAll('[data-lang]:not(script)'), function(e){
 		if(e.getAttribute('data-lang') !== contentLang)
 			e.parentNode.removeChild(e);
 	});
 	Array.prototype.forEach.call(lesson.querySelectorAll('script.code-variant'), function(s){
-		if(s.getAttribute('data-lang') === contentLang){
+		if(s.getAttribute('data-lang') === contentLang && !turkishCode){
 			var block = document.getElementById(s.getAttribute('data-for'));
 			if(block) block.value = s.textContent.replace(/^\r?\n/, '');
 		}
@@ -125,14 +134,7 @@
 	Array.prototype.forEach.call(lesson.querySelectorAll('[data-i18n]'), function(e){
 		e.textContent = t(e.getAttribute('data-i18n'));
 	});
-	// ---------- the code language: Düğüm, or C++ translated from it ----------
-	var codeLangs = window.dsvCode ? window.dsvCode.langs : {};
-	var codeLang = codeLangs[dsv.settings.codeLang] ? dsv.settings.codeLang : 'dugum';
-	var linkLang = /(?:^#|&)c=(cpp|java|dugum)(?:&|$)/.exec(location.hash);  // a shared link keeps its language
-	if(linkLang) codeLang = linkLang[1];
-	else if(/(?:^#|&)b\d+=/.test(location.hash)) codeLang = 'dugum';
-	if(page === 'language.html') codeLang = 'dugum'; // the guide is about Düğüm itself
-	window.dsvCodeLang = codeLang;
+	// the examples are written in Düğüm: translated to the chosen code language
 	if(codeLangs[codeLang]){
 		var areas = lesson.querySelectorAll('textarea.deneme');
 		var translated = codeLangs[codeLang].to(Array.prototype.map.call(areas, function(a){ return a.value; }));
@@ -216,7 +218,7 @@
 			options(dsv.LANGS, dsv.LANGS.map(function(l){ return dsv.LANG_NAMES[l]; }), s.lang) + '</select></label>' +
 		'<div class="setting-note">' + esc(t('languageNote')) + '</div>' +
 		'<label class="setting"><span>' + esc(t('codeLang')) + '</span><select name="codeLang">' +
-			options(['dugum', 'cpp', 'java'], ['Düğüm', 'C++', 'Java'], s.codeLang) + '</select></label>' +
+			options(['dugum', 'turkce', 'cpp', 'java'], ['Düğüm', 'Düğüm (Türkçe)', 'C++', 'Java'], s.codeLang) + '</select></label>' +
 		'<div class="setting-note">' + esc(t('codeLangNote')) + '</div>' +
 		'<div class="setting"><span>' + esc(t('theme')) + '</span>' +
 			segmented('theme', ['system', 'light', 'dark'], [t('themeSystem'), t('themeLight'), t('themeDark')], s.theme) + '</div>' +

@@ -1,5 +1,6 @@
 /*
- * Code languages: the pages can show and run their code in C++ or Java instead of Düğüm.
+ * Code languages: the pages can show and run their code in C++ or Java instead of Düğüm, or in
+ * Düğüm with Turkish keywords (see "Düğüm with Turkish words" below).
  *
  * The engine only knows Düğüm. C++ code is turned into Düğüm line by line before it is
  * parsed (fromCpp), so the drawing, the narration and the error messages work the same and
@@ -822,11 +823,99 @@
 	function displayCpp(text){ return exprCpp(showDivision(text)).replace(/^var\s+/, ''); }
 	function displayJava(text){ return exprIn(showDivision(text), 'java').replace(/^var\s+/, ''); }
 
+	// ---------- Düğüm with Turkish words ----------
+	//
+	// The same language with Turkish keywords and field names: değişken (var), eğer (if),
+	// değilse (else), yinele (while), için (for), fonksiyon, döndür (return), kır (break),
+	// devam (continue), yaz (print), boş (null), doğru / yanlış, yeni Düğüm(...) (new Node),
+	// yeni Dizi(n) (new Array), sil (delete), ve / veya / değil (and / or / not), and the fields
+	// .veri, .sonraki, .önceki, .sol, .sağ, .yükseklik. It is translated word by word in both
+	// directions (outside strings and comments), so every line keeps its number.
+
+	var TR_WORDS = {'var': 'değişken', 'if': 'eğer', 'else': 'değilse', 'while': 'yinele', 'for': 'için',
+	                'function': 'fonksiyon', 'return': 'döndür', 'break': 'kır', 'continue': 'devam',
+	                'print': 'yaz', 'null': 'boş', 'true': 'doğru', 'false': 'yanlış', 'new': 'yeni',
+	                'Node': 'Düğüm', 'Array': 'Dizi', 'delete': 'sil', 'free': 'sil',
+	                'and': 've', 'or': 'veya', 'not': 'değil'};
+	var TR_FIELDS = {'data': 'veri', 'next': 'sonraki', 'prev': 'önceki', 'left': 'sol', 'right': 'sağ', 'height': 'yükseklik'};
+	function inverse(map){
+		var out = {};
+		Object.keys(map).forEach(function(k){ if(!(map[k] in out)) out[map[k]] = k; });
+		return out;
+	}
+	var TR_WORDS_BACK = inverse(TR_WORDS), TR_FIELDS_BACK = inverse(TR_FIELDS);
+	TR_WORDS_BACK['sil'] = 'delete';
+	var hasOwn = Object.prototype.hasOwnProperty;
+
+	// the words of a piece of code (no strings) through the maps; numbers like 2.5 stay as they are
+	function mapWords(part, words, fields){
+		return part.replace(new RegExp('\\d+(?:\\.\\d+)?|(\\.?)(' + NAME + ')', 'g'), function(m, dot, word){
+			if(word === undefined) return m;
+			if(dot) return hasOwn.call(fields, word) ? '.' + fields[word] : m;
+			return hasOwn.call(words, word) ? words[word] : m;
+		});
+	}
+
+	function lineTr(line, toTurkish){
+		var parts = splitComment(line);
+		var code = outsideStrings(parts[0], function(part){
+			if(toTurkish)
+				part = part.replace(/\s*&&\s*/g, ' ve ').replace(/\s*\|\|\s*/g, ' veya ');
+			return toTurkish ? mapWords(part, TR_WORDS, TR_FIELDS) : mapWords(part, TR_WORDS_BACK, TR_FIELDS_BACK);
+		});
+		return code + parts[1];
+	}
+
+	function toTurkish(blocks){
+		return blocks.map(function(block){
+			return block.split('\n').map(function(line){ return lineTr(line, true); }).join('\n');
+		});
+	}
+	function fromTurkish(text){
+		return text.split('\n').map(function(line){ return lineTr(line, false); }).join('\n');
+	}
+	function displayTurkish(text){ return lineTr(text, true); }
+	function fieldTurkish(name){ return hasOwn.call(TR_FIELDS, name) ? TR_FIELDS[name] : name; }
+
+	// a CodeMirror mode for it: the Turkish keywords coloured as keywords
+	var TR_KEYWORDS = ['değişken', 'eğer', 'değilse', 'yinele', 'için', 'fonksiyon', 'döndür', 'kır', 'devam', 'yaz', 'yeni', 'sil', 've', 'veya', 'değil'];
+	var TR_ATOMS = ['boş', 'doğru', 'yanlış'];
+	function defineModes(CM){
+		if(!CM || CM.modes['dugum-tr'])
+			return;
+		var word = new RegExp('^' + NAME);
+		CM.defineMode('dugum-tr', function(){
+			return {
+				startState: function(){ return {afterDot: false}; },
+				token: function(stream, state){
+					if(stream.eatSpace()) return null;
+					var afterDot = state.afterDot;
+					state.afterDot = false;
+					if(stream.match('//')){ stream.skipToEnd(); return 'comment'; }
+					if(stream.match(/^"(?:[^"\\]|\\.)*"?/)) return 'string';
+					if(stream.match(/^\d+(?:\.\d+)?/)) return 'number';
+					var w = stream.match(word);
+					if(w){
+						if(afterDot) return 'property';
+						if(TR_KEYWORDS.indexOf(w[0]) >= 0) return 'keyword';
+						if(TR_ATOMS.indexOf(w[0]) >= 0) return 'atom';
+						if(w[0] === 'Düğüm' || w[0] === 'Dizi') return 'variable-3';
+						return 'variable';
+					}
+					var ch = stream.next();
+					if(ch === '.') state.afterDot = true;
+					return /[+\-*\/%=<>!&|]/.test(ch) ? 'operator' : null;
+				}
+			};
+		});
+	}
+
 	var LANGS = {
+		turkce: {name: 'Türkçe', to: toTurkish, from: fromTurkish, display: displayTurkish, field: fieldTurkish, mode: 'dugum-tr'},
 		cpp: {name: 'C++', to: toCpp, from: fromCpp, display: displayCpp, mode: 'text/x-c++src'},
 		java: {name: 'Java', to: toJava, from: fromJava, display: displayJava, mode: 'text/x-java'}
 	};
 
-	window.dsvCode = {toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, toJava: toJava, fromJava: fromJava,
+	window.dsvCode = {toTurkish: toTurkish, fromTurkish: fromTurkish, defineModes: defineModes, toCpp: toCpp, fromCpp: fromCpp, displayCpp: displayCpp, toJava: toJava, fromJava: fromJava,
 	                  displayJava: displayJava, inferTypes: inferTypes, langs: LANGS, integerDivision: integerDivision, collectTypes: collectTypes};
 })();

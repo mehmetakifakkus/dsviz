@@ -4,7 +4,7 @@
 
 ## Dil
 
-- [ ] İsteğe bağlı Türkçe anahtar kelimeler: gramer `eğer`, `değilse`, `yinele` kelimelerini tanıyor; örneklerde bir "Türkçe kod" seçeneği sunulabilir.
+- [ ] Türkçe kodda hata mesajları hâlâ Düğüm'ün İngilizce kelimeleriyle örnek veriyor (ör. `p != null`, `var p = …`); seçilen kod dilinin kelimeleriyle yazılabilir (C++ ve Java için de).
 
 
 ## Görselleştirme ve arayüz
@@ -41,7 +41,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 305 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 343 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -69,3 +69,4 @@
 - [x] Dairesel çift yönlü liste: baştan sona dönen `prev` satırın altından dolaşan bir okla çizilir (sondan başa dönen `next`'in aynası); yeni sayfa: halka, geriye dolaşma, yalnızca `head` ile O(1) sona ekleme.
 - [x] Ters çevrilen listede komşuya giden ters oklar büyük yaylar yerine kısa kancalar: `next` kendi düğümünün üstünden kıvrılıp soldaki düğümün sağ kenarına, `prev` altından sağdakinin sol kenarına girer; kancalar birbirini kesmez. Son adımda liste yeni başından soldan sağa yeniden dizilir (tek ve çift yönlü).
 - [x] Heap ve öncelik kuyruğu: kod heap'in indis formüllerini (`2 * i + 1`, `taban((i - 1) / 2)`) kullanınca sayı dizisi satırın altında ağaç olarak da çizilir (hücre numaraları, yer değiştirilen hücreler vurgulu, çalışan çağrının yerel indisleri `i`, `j` hem satırda hem ağaçta); ağaç ilk boş hücreye ya da `h[n] = v`'deki boyut değişkenine kadar sürer. Yeni sayfa: ekleme (sift up), en küçüğü çıkarma (sift down), öncelik sırasıyla boşaltma. C++/Java'da `taban((i - 1) / 2)` `(i - 1) / 2` olarak gösterilir.
+- [x] Türkçe kod: ayarlarda kod dili "Düğüm (Türkçe)" seçilince örnekler Türkçe kelimelerle gösterilir ve çalışır (`değişken`, `eğer`/`değilse`, `yinele`, `için`, `fonksiyon`, `döndür`, `kır`, `devam`, `yaz`, `boş`, `doğru`/`yanlış`, `yeni Düğüm(…)`, `yeni Dizi(n)`, `sil`, `ve`/`veya`/`değil`; alanlar `.veri`, `.sonraki`, `.önceki`, `.sol`, `.sağ`, `.yükseklik`). Kelime kelime iki yönde çevrilir, satır numaraları korunur; kod renklendirmesi, Türkçe yorumlar, anlatım, değişkenler paneli ve paylaşılan bağlantı aynı dili kullanır. Anlatımda `null` ve alan adları seçilen kod dilinde (C++'ta `nullptr`); bağ anlatımı "next bağı" olarak sadeleşti.

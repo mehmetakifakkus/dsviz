@@ -9,7 +9,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 ## Neler var?
 
 - Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
-- Kod dili seçilebilir: ayarlarda **C++** ya da **Java** seçilince örnekler otomatik olarak o dile çevrilip gösterilir ve çalışır (C++: `Node*`, `->`, `new`/`delete`, `nullptr`, `cout`; Java: `Node p`, `Node[]`, `System.out.println`, `static` metotlar, `delete` yerine çöp toplayıcı). Kod çalıştırılmadan önce satır satır Düğüm'e çevrilir (`js/codelang.js`), böylece çizim ve anlatım aynen çalışır.
+- Kod dili seçilebilir: ayarlarda **Düğüm (Türkçe)** seçilince örnekler Türkçe kelimelerle gösterilir ve çalışır (`değişken`, `eğer`, `yinele`, `için`, `yaz`, `boş`, `yeni Düğüm(1)`, `p.sonraki`, `p.veri`; kelime kelime çevrilir). **C++** ya da **Java** seçilince örnekler otomatik olarak o dile çevrilip gösterilir ve çalışır (C++: `Node*`, `->`, `new`/`delete`, `nullptr`, `cout`; Java: `Node p`, `Node[]`, `System.out.println`, `static` metotlar, `delete` yerine çöp toplayıcı). Kod çalıştırılmadan önce satır satır Düğüm'e çevrilir (`js/codelang.js`), böylece çizim ve anlatım aynen çalışır.
 - Soldaki editöre JavaScript benzeri kısa kodlar yazılır (`var x = new Node(1)`, `x.next = y`, `while`, `for`, `if`, `function`). Her satır çalışırken düğümler, `next` okları ve pointer'lar tuvalde çizilir.
 - Fonksiyonlar ve özyineleme: her çağrı, yerel değişkenleriyle birlikte "Çağrı yığını" panelinde görünür.
 - Tuvalin üstündeki düğmelerle ya da adım çubuğuyla animasyon oynatılır, duraklatılır, adım adım ileri ve geri alınır, hızı ayarlanır (kısayollar: ← → boşluk).

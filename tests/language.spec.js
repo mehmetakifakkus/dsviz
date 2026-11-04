@@ -1,7 +1,7 @@
 // The language: code runs on the main page (like the command prompt does) and the result
 // is checked in the page. Error cases check the Turkish message in the Çıktı panel.
 const { test } = require('@playwright/test');
-const { expect, openPage, runCode, valueOf, outputText } = require('./helpers');
+const { expect, openPage, runCode, runBlock, valueOf, outputText } = require('./helpers');
 
 const LIST = 'var x = new Node(1)\nvar y = new Node(2)\nvar z = new Node(3)\nx.next = y\ny.next = z\n';
 
@@ -133,7 +133,7 @@ test('Node(value, next) links the new node, also in a field and an array cell', 
 	await runCode(page, 'var x = new Node(3)\nvar y = new Node(2, x)\ny = new Node(1, y)\nx.next = new Node(4, null)\n');
 	expect(await valueOf(page, 'walk(y)')).toBe('1>2>3>4');
 	expect((await page.evaluate(() => window.dsvState())).rows).toEqual([[1, 2, 3, 4]]);
-	await expect(page.locator('#narration')).toHaveText("Yeni bir düğüm [4] oluşturuldu ve [3] düğümünün next'i ona bağlandı.");
+	await expect(page.locator('#narration')).toHaveText('Yeni bir düğüm [4] oluşturuldu ve [3] düğümünün next bağı ona bağlandı.');
 
 	await runCode(page, 'var t = new Array(2)\nt[1] = new Node(7, y)\n');
 	expect(await valueOf(page, 'walk(t[1])')).toBe('7>1>2>3>4');
@@ -298,5 +298,39 @@ test('writing to a field of a call\'s result is an explained error (left out on 
 	const problems = await openPage(page, 'index.html');
 	await runCode(page, 'var x = new Node(1)\nfunction first()\n{\n  return x\n}\nfirst().next = new Node(2)\n');
 	await expect(page.locator('#output')).toHaveText("Satır 6: Bir çağrının sonucunun alanına doğrudan yazılamaz (first().next = …). Önce sonucu bir değişkene alın, sonra alanına yazın: var p = first(), ardından p.next = …");
+	expect(problems).toEqual([]);
+});
+
+test('Düğüm with Turkish words: chosen in the settings, examples shown and run, narration and panels in the same words', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const problems = await openPage(page, 'reverseALinkedList.html', { lang: 'en' });
+	const code = i => page.evaluate(i => document.querySelectorAll('.CodeMirror')[i].CodeMirror.getValue(), i);
+	await page.locator('.topbar .settings-btn').click();
+	await Promise.all([page.waitForEvent('load'), page.locator('#settings-panel select[name=codeLang]').selectOption('turkce')]);
+	await page.waitForFunction(() => window.dsvReady === true);
+
+	await expect(page.locator('.code-label').first()).toHaveText('Block 1 · Türkçe');
+	expect(await code(0)).toMatch(/^değişken x = yeni Düğüm\(1\)$/m);
+	expect(await code(1)).toContain('yinele(curr != boş)');
+	expect(await code(1)).toContain('// listenin kalanını hatırla'); // the Turkish comments, though the interface is English
+	await expect(page.locator('.CodeMirror .cm-keyword').first()).toHaveText('değişken');
+	await expect(page.locator('main.lesson p code', { hasText: 'boş' }).first()).toBeVisible(); // code in the text too
+
+	await runBlock(page, 1);
+	expect(await valueOf(page, 'walk(prev)')).toBe('4>3>2>1');
+	await page.locator('.dsv-player button[title="Step back"]').click();
+	await page.locator('.dsv-player button[title="Step back"]').click();
+	await page.locator('.dsv-player button[title="Step back"]').click();
+	await expect(page.locator('#narration')).toHaveText('sonraki of [4] now points to [3].');
+	await expect(page.locator('#variables li').filter({ hasText: 'nxt' })).toHaveText('nxt =boş');
+
+	// hand-written Turkish code: an error names the line as it was written
+	await runCode(page, 'değişken a = yeni Düğüm(1)\nyaz a.veri\ndeğişken b = boş\nyaz b.veri\n');
+	await expect(page.locator('#output')).toContainText('1');
+	await expect(page.locator('#output')).toContainText('Line 4');
+
+	// a shared link keeps the language
+	await page.locator('.dsv-share').first().click();
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/#c=turkce/);
 	expect(problems).toEqual([]);
 });
