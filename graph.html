@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graflar: komşuluk listesi, BFS ve DFS | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Graflar: komşuluk listesi, BFS ve DFS</h1>
+<h1 data-lang="en">Graphs: adjacency lists, BFS and DFS</h1>
+<h1 data-lang="de">Graphen: Adjazenzlisten, BFS und DFS</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Graf, köşelerden (vertex) ve onları birleştiren kenarlardan (edge) oluşur: şehirler ve yollar, kişiler ve arkadaşlıklar, sayfalar ve bağlantılar gibi. Köşeleri 0'dan <em>n</em>-1'e numaralarsak bir grafı <em>komşuluk listesiyle</em> tutabiliriz: her köşe için komşularını tutan bir bağlı liste, listelerin başları da bir dizide. <code>adj[u]</code> listesinde <code>v</code> varsa u'dan v'ye bir kenar vardır. Yönsüz bir kenar iki listeye de eklenir.</p>
+<p data-lang="en">A graph is made of vertices and the edges that join them: cities and roads, people and friendships, pages and links. If the vertices are numbered from 0 to <em>n</em>-1, a graph can be kept as <em>adjacency lists</em>: for every vertex a linked list of its neighbours, with the heads of the lists in an array. If <code>v</code> is in the list <code>adj[u]</code>, there is an edge from u to v. An undirected edge is added to both lists.</p>
+<p data-lang="de">Ein Graph besteht aus Knoten und den Kanten, die sie verbinden: Städte und Straßen, Menschen und Freundschaften, Seiten und Links. Sind die Knoten von 0 bis <em>n</em>-1 nummeriert, lässt sich ein Graph als <em>Adjazenzlisten</em> speichern: für jeden Knoten eine verkettete Liste seiner Nachbarn, die Köpfe der Listen in einem Array. Steht <code>v</code> in der Liste <code>adj[u]</code>, gibt es eine Kante von u nach v. Eine ungerichtete Kante wird in beide Listen eingetragen.</p>
+
+<p data-lang="tr">Adı <code>adj</code> olan bir düğüm dizisi, solda kovalar ve listeler olarak, sağda da temsil ettiği graf olarak çizilir. Yeni komşu listenin başına eklenir (O(1)), bu yüzden listelerde komşular eklenme sırasının tersindedir.</p>
+<p data-lang="en">An array of nodes named <code>adj</code> is drawn on the left as buckets and lists and on the right as the graph it stands for. A new neighbour goes to the head of the list (O(1)), so the neighbours in a list are in the reverse order of adding.</p>
+<p data-lang="de">Ein Array von Knoten namens <code>adj</code> wird links als Buckets und Listen und rechts als der Graph gezeichnet, für den es steht. Ein neuer Nachbar kommt an den Kopf der Liste (O(1)), deshalb stehen die Nachbarn in umgekehrter Reihenfolge des Einfügens.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(6)      // her köşenin komşu listesi
+function addEdge(u, v)      // yönsüz kenar: iki listeye de eklenir
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(0, 5)
+addEdge(1, 2)
+addEdge(1, 4)
+addEdge(2, 3)
+addEdge(3, 4)
+addEdge(4, 5)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(6)      // the neighbour list of every vertex
+function addEdge(u, v)      // an undirected edge: added to both lists
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(0, 5)
+addEdge(1, 2)
+addEdge(1, 4)
+addEdge(2, 3)
+addEdge(3, 4)
+addEdge(4, 5)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(6)      // die Nachbarliste jedes Knotens
+function addEdge(u, v)      // eine ungerichtete Kante: in beide Listen eingetragen
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(0, 5)
+addEdge(1, 2)
+addEdge(1, 4)
+addEdge(2, 3)
+addEdge(3, 4)
+addEdge(4, 5)
+</script>
+
+<p data-lang="tr">Genişlik öncelikli arama (BFS) bir köşeden başlar, önce bütün komşularını, sonra komşularının komşularını ziyaret eder: başlangıca 1 kenar uzaktakiler, sonra 2 kenar uzaktakiler… Sırayı bir kuyruk tutar. Bir köşe kuyruğa girerken <code>visited</code> dizisinde işaretlenir, böylece iki kez girmez; ziyaret edilen köşeler grafta renklenir. Her köşe ve her kenar bir kez işlendiği için BFS O(<em>n</em> + <em>m</em>) sürer (<em>m</em>: kenar sayısı). Çıktı: 0, 5, 1, 4, 2, 3: önce 0, sonra 1 kenar uzaktaki 5 ve 1, sonra 2 kenar uzaktaki 4 ve 2, en son 3.</p>
+<p data-lang="en">Breadth-first search (BFS) starts at a vertex and visits all its neighbours first, then the neighbours of the neighbours: the vertices 1 edge away from the start, then those 2 edges away… A queue keeps the order. When a vertex joins the queue it is marked in the array <code>visited</code>, so it never joins twice; visited vertices are coloured in the graph. Every vertex and every edge is handled once, so BFS takes O(<em>n</em> + <em>m</em>) (<em>m</em>: the number of edges). Output: 0, 5, 1, 4, 2, 3: first 0, then 5 and 1 one edge away, then 4 and 2 two edges away, last 3.</p>
+<p data-lang="de">Die Breitensuche (BFS) beginnt bei einem Knoten und besucht zuerst alle seine Nachbarn, dann die Nachbarn der Nachbarn: die Knoten 1 Kante vom Start entfernt, dann die 2 Kanten entfernten… Eine Warteschlange hält die Reihenfolge. Wenn ein Knoten in die Warteschlange kommt, wird er im Array <code>visited</code> markiert, so kommt er nie zweimal hinein; besuchte Knoten werden im Graphen eingefärbt. Jeder Knoten und jede Kante wird einmal behandelt, BFS dauert also O(<em>n</em> + <em>m</em>) (<em>m</em>: die Anzahl der Kanten). Ausgabe: 0, 5, 1, 4, 2, 3: zuerst 0, dann 5 und 1 eine Kante entfernt, dann 4 und 2 zwei Kanten entfernt, zuletzt 3.</p>
+
+<textarea id="text2" class="deneme">
+var visited = new Array(6)  // ziyaret edilen köşeler
+var q = new Array(6)        // BFS kuyruğu
+var front = 0, rear = 0
+visited[0] = true           // 0. köşeden başla
+q[rear] = 0
+rear++
+while(front &lt; rear)
+{
+  var u = q[front]          // kuyruğun başındaki köşeyi al
+  front++
+  print u
+  var p = adj[u]            // komşularını dolaş
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v])         // ilk kez görülen komşu kuyruğa girer
+    {
+      visited[v] = true
+      q[rear] = v
+      rear++
+    }
+    p = p.next
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var visited = new Array(6)  // the vertices visited
+var q = new Array(6)        // the BFS queue
+var front = 0, rear = 0
+visited[0] = true           // start at vertex 0
+q[rear] = 0
+rear++
+while(front < rear)
+{
+  var u = q[front]          // take the vertex at the front of the queue
+  front++
+  print u
+  var p = adj[u]            // walk its neighbours
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v])         // a neighbour seen for the first time joins the queue
+    {
+      visited[v] = true
+      q[rear] = v
+      rear++
+    }
+    p = p.next
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var visited = new Array(6)  // die besuchten Knoten
+var q = new Array(6)        // die BFS-Warteschlange
+var front = 0, rear = 0
+visited[0] = true           // bei Knoten 0 beginnen
+q[rear] = 0
+rear++
+while(front < rear)
+{
+  var u = q[front]          // den Knoten vorn in der Warteschlange nehmen
+  front++
+  print u
+  var p = adj[u]            // seine Nachbarn durchlaufen
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v])         // ein zum ersten Mal gesehener Nachbar kommt in die Warteschlange
+    {
+      visited[v] = true
+      q[rear] = v
+      rear++
+    }
+    p = p.next
+  }
+}
+</script>
+
+<p data-lang="tr">Derinlik öncelikli arama (DFS) ise bir komşuya iner ve oradan gidebildiği kadar derine gider; çıkmaza gelince geri dönüp sıradaki komşuyu dener. Bunu özyineleme kendiliğinden yapar: geri dönüş yolunu çağrı yığını tutar. Önce ziyaretleri sıfırlıyoruz. Çıktı: 0, 5, 4, 3, 2, 1: DFS halkanın etrafında gidebildiği kadar derine iner; 4'ten 1'e giden çapraz kenarı kullanmadan 1'e halkanın öbür ucundan varır.</p>
+<p data-lang="en">Depth-first search (DFS) goes down into a neighbour and from there as deep as it can; at a dead end it goes back and tries the next neighbour. Recursion does this by itself: the call stack keeps the way back. First we clear the visits. Output: 0, 5, 4, 3, 2, 1: DFS goes round the ring as deep as it can and reaches 1 from the other end of the ring, without the cross edge from 4 to 1.</p>
+<p data-lang="de">Die Tiefensuche (DFS) steigt in einen Nachbarn hinab und von dort so tief wie möglich; in einer Sackgasse geht sie zurück und versucht den nächsten Nachbarn. Rekursion erledigt das von selbst: der Aufrufstapel hält den Rückweg. Zuerst setzen wir die Besuche zurück. Ausgabe: 0, 5, 4, 3, 2, 1: DFS läuft so tief wie möglich um den Ring und erreicht 1 vom anderen Ende des Rings, ohne die Querkante von 4 nach 1.</p>
+
+<textarea id="text3" class="deneme">
+for(var i = 0; i &lt; 6; i++)  // ziyaretleri sıfırla
+  visited[i] = false
+function dfs(u)
+{
+  visited[u] = true
+  print u
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])    // ziyaret edilmemiş komşuya hemen in
+      dfs(p.data)
+    p = p.next
+  }
+}
+dfs(0)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+for(var i = 0; i < 6; i++)  // clear the visits
+  visited[i] = false
+function dfs(u)
+{
+  visited[u] = true
+  print u
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])    // go down into an unvisited neighbour at once
+      dfs(p.data)
+    p = p.next
+  }
+}
+dfs(0)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+for(var i = 0; i < 6; i++)  // die Besuche zurücksetzen
+  visited[i] = false
+function dfs(u)
+{
+  visited[u] = true
+  print u
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])    // sofort in einen unbesuchten Nachbarn hinabsteigen
+      dfs(p.data)
+    p = p.next
+  }
+}
+dfs(0)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

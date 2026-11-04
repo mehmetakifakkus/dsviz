@@ -362,8 +362,10 @@ function drawRowArrays(){
 					items.push(new Path.Circle({ radius: 4, fillColor: PAL.stroke, center: start }));
 				}
 			}
-			else
-				items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + 18], justification: 'center', fontSize: 15+'px', fillColor: PAL.text, content: '' + cell }));
+			else {
+				var text = cell === true || cell === false ? codeWord(String(cell)) : '' + cell; // doğru in Turkish code
+				items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + 18], justification: 'center', fontSize: (text.length > 4 ? 11 : 15)+'px', fillColor: PAL.text, content: text }));
+			}
 		}
 		// index markers: s[size] = v marks "size" under the cell it names
 		var at = {};
@@ -435,6 +437,92 @@ function drawTable(){
 }
 
 // one table: a column of cells at its own column (visual.col0, see hashCells)
+// A graph as adjacency lists: an array of node chains named adj (or graph, graf, komşu,
+// komşular) whose values are all vertex numbers (0 ... n-1) is also drawn as the graph it
+// stands for, right of its chains: the vertices on a circle, an edge for every value in a
+// chain (one plain line when both directions are there, an arrow when only one is).
+// Vertices whose cell is filled (not null, 0 or false) in an array of the same size named
+// visited (or seen, marked, ziyaret, görüldü) are coloured; the index markers of the graph and
+// of those arrays stand at the vertices.
+var GRAPH_NAMES = /^(adj|graph|graf|komşu|komşular|komsu|komsular)$/i;
+var VISITED_NAMES = /^(visited|seen|marked|ziyaret|görüldü|goruldu|işaretli|isaretli)$/i;
+function graphEdges(table){
+	var cells = table.visual.cells, n = cells.length, edges = [], seen = {};
+	for(var i = 0; i < n; i = i + 1)
+		for(var p = cells[i], steps = 0; isNode(p) && p.shown && steps < 60; p = p.visualNext, steps = steps + 1){
+			var j = p.shownData;
+			if(typeof j !== 'number' || j % 1 !== 0 || j < 0 || j >= n)
+				return null;                                  // not a vertex number: not a graph
+			if(!seen[i + ',' + j]){ seen[i + ',' + j] = true; edges.push({from: i, to: j, first: p === cells[i]}); }
+		}
+	return edges;
+}
+function isGraph(table){ return GRAPH_NAMES.test(table.visual.name || '') && !!graphEdges(table); }
+function graphRadius(table){ return Math.max(70, Math.min(150, table.visual.cells.length * 17)); }
+function GRAPH_COLS(table){ return Math.ceil((2 * graphRadius(table) + 90) / 75); } // the columns kept free for it
+
+function drawGraph(table, items){
+	var v = table.visual, n = v.cells.length, r = graphRadius(table), VR = 16;
+	var cx = COL_X0 + v.graphCol * colWidth + r + 30, cy = ROW_Y0 + topOffset() + r + 14;
+	var at = [], i;
+	for(i = 0; i < n; i = i + 1){
+		var angle = (-90 + 360 * i / n) * Math.PI / 180;
+		at.push(new Point(cx + r * Math.cos(angle), cy + r * Math.sin(angle)));
+	}
+	var edges = graphEdges(table), has = {};
+	edges.forEach(function(e){ has[e.from + ',' + e.to] = true; });
+	edges.forEach(function(e){
+		if(e.from === e.to) return;
+		var both = has[e.to + ',' + e.from];
+		if(both && e.from > e.to) return;                   // one line for the two directions
+		var focused = (isFocusedEdge(v, 'cell' + e.from) && e.first) || (both && isFocusedEdge(v, 'cell' + e.to) && edges.some(function(f){ return f.from === e.to && f.to === e.from && f.first; }));
+		var color = focused ? PAL.changed : PAL.stroke;
+		var dir = (at[e.to] - at[e.from]).normalize(VR + 2);
+		var start = at[e.from] + dir, end = at[e.to] - dir;
+		items.push(new Path.Line({ from: start, to: end, strokeColor: color, strokeWidth: focused ? 3 : 2 }));
+		if(!both) items.push(arrowTip(end, (end - start).angle, color));
+	});
+	// the visited arrays of the same size: filled cells colour their vertex
+	var same = rowArrays().filter(function(a){ return a.length === n && VISITED_NAMES.test(a.visual.name || ''); });
+	var markers = {};
+	[table].concat(same).forEach(function(a){
+		Object.keys(a.visual.indexVars || {}).forEach(function(name){
+			var k = markerValue(name);
+			if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k < n && (markers[k] = markers[k] || []).indexOf(name) < 0)
+				markers[k].push(name);
+		});
+	});
+	for(i = 0; i < n; i = i + 1){
+		var filled = same.some(function(a){ var c = a.visual.cells[i]; return c !== null && c !== undefined && c !== 0 && c !== false; });
+		var ring = isFocusedEdge(v, 'cell' + i) ? PAL.changed : filled ? PAL.named : PAL.stroke;
+		items.push(new Path.Circle({ center: at[i], radius: VR, strokeColor: ring, strokeWidth: ring !== PAL.stroke ? 3 : 2, fillColor: PAL.node }));
+		if(filled)
+			items.push(new Path.Circle({ center: at[i], radius: VR - 3, fillColor: PAL.named, opacity: 0.22 }));
+		items.push(new PointText({ point: at[i] + [0, 5], justification: 'center', fontSize: 14+'px', fillColor: PAL.text, content: '' + i }));
+		if(markers[i]){
+			var out = (at[i] - new Point(cx, cy)).normalize(VR + 16);
+			items.push(new PointText({ point: at[i] + out + [0, 5], justification: 'center', fontSize: 14+'px', fillColor: PAL.pointer, content: markers[i].join(', ') }));
+		}
+	}
+}
+
+// for the tests: the drawn graph as edges ("0-1" for both directions, "0>1" for one) and coloured vertices
+function graphState(table){
+	var edges = graphEdges(table) || [], has = {}, out = [];
+	edges.forEach(function(e){ has[e.from + ',' + e.to] = true; });
+	edges.forEach(function(e){
+		if(has[e.to + ',' + e.from]){ if(e.from < e.to) out.push(e.from + '-' + e.to); }
+		else out.push(e.from + '>' + e.to);
+	});
+	var n = table.visual.cells.length;
+	var same = rowArrays().filter(function(a){ return a.length === n && VISITED_NAMES.test(a.visual.name || ''); });
+	var coloured = [];
+	for(var i = 0; i < n; i = i + 1)
+		if(same.some(function(a){ var c = a.visual.cells[i]; return c !== null && c !== undefined && c !== 0 && c !== false; }))
+			coloured.push(i);
+	return {edges: out.sort(), visited: coloured};
+}
+
 function drawBuckets(table, items){
 	var v = table.visual, x = COL_X0 + (v.col0 || 0) * colWidth;
 	var y0 = ROW_Y0 + topOffset();
@@ -455,6 +543,8 @@ function drawBuckets(table, items){
 		else                                     // a plain value
 			items.push(new PointText({ point: [x + TABLE_W / 2, y + 18], justification: 'center', fontSize: 15+'px', fillColor: PAL.text, content: '' + cell }));
 	}
+	if(v.graphCol !== undefined)
+		drawGraph(table, items);
 }
 
 // The bucket rows of the drawn tables: cell i's chain on row i, right of its table. The
@@ -476,6 +566,11 @@ function hashCells(shown, tables){
 		}
 		rows = Math.max(rows, cells.length);
 		col0 = col0 + 1 + longest + 1; // the table, its longest chain and a free column
+		table.visual.graphCol = undefined;
+		if(isGraph(table)){            // and its graph, right of the chains
+			table.visual.graphCol = col0;
+			col0 = col0 + GRAPH_COLS(table);
+		}
 	});
 	var row = rows;
 	var rest = shown.filter(function(m){ return !visited[m.id]; }).sort(function(a, b){ return a.id - b.id; });
@@ -934,7 +1029,8 @@ function layout(tidy){
 	if(table){ // the first table is column 0 and its first cell row 0
 		minCol = 0;
 		minRow = 0;
-		maxCol = Math.max(maxCol, tables[tables.length - 1].visual.col0 + 1);
+		var lastTable = tables[tables.length - 1].visual;
+		maxCol = Math.max(maxCol, lastTable.graphCol !== undefined ? lastTable.graphCol + GRAPH_COLS(tables[tables.length - 1]) : lastTable.col0 + 1);
 	}
 
 	var visibleWidth = Math.max(300, canvasHolderWidth() - COL_X0 - geometry().width - 30);
@@ -960,7 +1056,8 @@ function layout(tidy){
 		var lastRow = Math.max.apply(null, tables.map(function(t){ return t.visual.cells.length; })) - 1;
 		for(i=0; i < shown.length; i++)
 			lastRow = Math.max(lastRow, shown[i].cell.row);
-		extent = {width: Math.max(extent ? extent.width : 0, COL_X0 + maxCol * colWidth + geometry().width + 40), height: ROW_Y0 + topOffset() + lastRow * rowH() + NODE_H + 40};
+		var graphHeight = Math.max.apply(null, tables.map(function(t){ return t.visual.graphCol !== undefined ? 2 * graphRadius(t) + 70 : 0; }));
+		extent = {width: Math.max(extent ? extent.width : 0, COL_X0 + maxCol * colWidth + geometry().width + 40), height: ROW_Y0 + topOffset() + Math.max(lastRow * rowH() + NODE_H + 40, graphHeight)};
 	}
 
 	var moves = [], fades = [];
@@ -1962,8 +2059,29 @@ window['tamBöl'] = function(a, b){
 };
 
 // an error of our own: "Line 3: ..." in the chosen language, shown as it is
+// The pieces of code in a message (between backticks in the texts) in the chosen code
+// language: `p != null` is p != boş in Turkish code and p != nullptr in C++. A declaration
+// (`var x = ...`) becomes auto x = ... in C++; an array has its own form in C++ and Java.
+var CODE_EXAMPLES = {'var t = new Array(n)': {cpp: 'int t[n]', java: 'int[] t = new int[n]'}};
+function codePieces(text){
+	var lang = codeLangInfo(), id = window.dsvCodeLang;
+	return String(text).replace(/`([^`\n]*)`/g, function(m, piece){
+		if(!lang)
+			return piece;
+		if(CODE_EXAMPLES[piece] && CODE_EXAMPLES[piece][id])
+			return CODE_EXAMPLES[piece][id];
+		if(id === 'cpp' && /^\.\w/.test(piece))
+			return '->' + piece.slice(1);                         // the field of a pointer
+		var shown = lang.display(piece);
+		if(/^var\s/.test(piece) && (id === 'cpp' || id === 'java'))
+			shown = (id === 'cpp' ? 'auto ' : 'var ') + shown;    // display leaves the var out
+		return shown;
+	});
+}
+function te(key, vars){ return codePieces(t(key, vars)); } // a message with its code in the code language
+
 function ownError(line, key, vars){
-	var e = new Error((line ? t('eLine', {n: line}) : '') + t(key, vars));
+	var e = new Error((line ? t('eLine', {n: line}) : '') + te(key, vars));
 	e.dsvOwn = true;
 	return e;
 }
@@ -2287,13 +2405,13 @@ function explainError(err, source){
 	var lineOf = function(n){ return n ? t('eLine', {n: n}) : ''; };
 
 	if(err && err.loopSignal) // break / continue that is not inside a loop
-		return lineOf(err.lineNumber) + t('eLoopOnly', {kw: err.loopSignal});
+		return lineOf(err.lineNumber) + te('eLoopOnly', {kw: err.loopSignal});
 
 	if(err && err.returnSignal) // return that is not inside a function
-		return lineOf(err.lineNumber) + t('eReturnOnly');
+		return lineOf(err.lineNumber) + te('eReturnOnly');
 
 	if(err instanceof RangeError && /call stack/i.test(err.message))
-		return t('eStack');
+		return te('eStack');
 
 	var m, msg = (err && err.message) || String(err);
 
@@ -2304,7 +2422,7 @@ function explainError(err, source){
 		// find(3).next = x: writing to a field of a call's result is left out on purpose
 		var callField = /^\s*([A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*)\s*\(([^()]*)\)\s*(\.|->)\s*([A-Za-z_]\w*)[^=]*=(?!=)/.exec(line);
 		if(callField)
-			return t('eLine', {n: loc.line}) + t('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
+			return t('eLine', {n: loc.line}) + te('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
 		return t('eSyntax', {line: loc.line, col: loc.column, found: found}) + '\n\n' +
 		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
 	}
@@ -2316,18 +2434,18 @@ function explainError(err, source){
 
 	if((m = /Cannot read propert(?:y|ies) of (?:null|undefined) \(reading '([^']+)'\)/.exec(msg)) ||
 	   (m = /can't access property "([^"]+)", .* is (?:null|undefined)/.exec(msg)))
-		return where + t('eNullRead', {field: m[1]});
+		return where + te('eNullRead', {field: m[1]});
 
 	if((m = /Cannot set propert(?:y|ies) of (?:null|undefined) \(setting '([^']+)'\)/.exec(msg)))
-		return where + t('eNullWrite', {field: m[1]});
+		return where + te('eNullWrite', {field: m[1]});
 
 	if((m = /^(\S+) is not defined/.exec(msg)))
-		return where + t('eUndefined', {name: m[1]});
+		return where + te('eUndefined', {name: m[1]});
 
 	if((m = /^(\S+) is not a function/.exec(msg)))
-		return where + t('eNotFunction', {name: m[1]});
+		return where + te('eNotFunction', {name: m[1]});
 
-	return where + t('eGeneric', {msg: msg});
+	return where + t('eGeneric', {msg: msg}); // the message may quote anything
 }
 
 window.explainError = explainError;
@@ -2478,7 +2596,8 @@ window.dsvState = function(){
 			Object.keys(a.visual.indexVars || {}).forEach(function(n){ markers[n] = markerValue(n); });
 			return {name: a.visual.name, kind: a.visual.kind === 'buckets' ? 'buckets' : 'row', markers: markers,
 			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; }),
-			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null}; // the cells drawn as a tree
+			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null, // the cells drawn as a tree
+			        graph: a.visual.graphCol !== undefined ? graphState(a) : null};    // the graph drawn beside the chains
 		}),
 		heights: allNodes.filter(function(n){ return n.shown && n.shownHeight !== undefined; }).map(function(n){ return [n.shownData, n.shownHeight]; }),
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
