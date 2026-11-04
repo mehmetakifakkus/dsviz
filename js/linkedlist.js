@@ -311,7 +311,27 @@ function rowArrays(){
 }
 
 var ROW_BAND = 120, ROW_CELL_W = 40, ROW_TOP = 40; // height of one row array with its labels
-function topOffset(){ return rowArrays().length * ROW_BAND; }
+
+// A heap kept in an array: once the code uses the index formulas of one (the children of i
+// at 2 * i + 1 and 2 * i + 2, its parent at (i - 1) / 2), arrays of numbers are also drawn as
+// the tree they stand for, under their row: cell 0 is the root, cell i's children are cells
+// 2i+1 and 2i+2. The tree holds the cells up to the first empty one, and not those from the
+// global index variable of the array on (its size n in h[n] = v).
+var HEAP_FORMULA = /\b2\s*\*\s*[A-Za-z_]\w*\s*\+\s*[12]\b|\(\s*[A-Za-z_]\w*\s*-\s*1\s*\)\s*\/\s*2\b|tamBöl\(\s*[A-Za-z_]\w*\s*-\s*1\s*,\s*2\s*\)/;
+var heapRequested = false; // program state: some code on this page used those formulas
+var HEAP_LEVEL_H = 58, HEAP_R = 15, HEAP_TOP = 112; // a level of the tree, a node's radius, the tree's top under its row
+function heapLevels(a){ return heapRequested && a.visual.kind !== 'buckets' ? Math.floor(Math.log(a.length) / Math.LN2) + 1 : 0; }
+function heapWidth(a){ return Math.max(a.length * ROW_CELL_W, Math.pow(2, heapLevels(a) - 1) * 44); }
+function rowBand(a){ var l = heapLevels(a); return l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND; }
+function topOffset(){ return rowArrays().reduce(function(sum, a){ return sum + rowBand(a); }, 0); }
+
+// the value of an index variable for the markers: a local of the running call, else a global
+function markerValue(name){
+	var frame = visualFrames[visualFrames.length - 1];
+	if(frame && frame.vars[name])
+		return frame.vars[name].isNull || frame.vars[name].isPointer ? undefined : Number(frame.vars[name].text);
+	return shownNumbers[name];
+}
 
 // numbers as the variables panel shows them (the step's values), for the index markers
 var shownNumbers = {};
@@ -322,9 +342,10 @@ function drawRowArrays(){
 		rowArraysDraw.remove();
 		rowArraysDraw = null;
 	}
-	var items = [];
-	rowArrays().forEach(function(a, j){
-		var v = a.visual, x0 = COL_X0, y = ROW_TOP + j * ROW_BAND;
+	var items = [], bandTop = 0;
+	rowArrays().forEach(function(a){
+		var v = a.visual, x0 = COL_X0, y = ROW_TOP + bandTop;
+		bandTop = bandTop + rowBand(a);
 		items.push(new PointText({ point: [x0, y - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
 		for(var i = 0; i < v.cells.length; i = i + 1){
 			var x = x0 + i * ROW_CELL_W, cell = v.cells[i];
@@ -347,7 +368,7 @@ function drawRowArrays(){
 		// index markers: s[size] = v marks "size" under the cell it names
 		var at = {};
 		Object.keys(v.indexVars || {}).forEach(function(name){
-			var k = shownNumbers[name];
+			var k = markerValue(name);
 			if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k <= v.cells.length)
 				(at[k] = at[k] || []).push(name);
 		});
@@ -357,9 +378,47 @@ function drawRowArrays(){
 			items.push(arrowTip(new Point(cx, top), -90, PAL.pointer));
 			items.push(new PointText({ point: [cx, top + 40], justification: 'center', fontSize: 16+'px', fillColor: PAL.pointer, content: at[k].join(', ') }));
 		});
+		if(heapLevels(a))
+			drawHeapTree(a, x0, y + HEAP_TOP, at, items);
 	});
 	if(items.length)
 		rowArraysDraw = new Group(items);
+}
+
+// the cells of a heap array as a tree: level d holds cells 2^d - 1 ... 2^(d+1) - 2, spread
+// evenly over the tree's width; the index markers stand under their nodes
+// how many cells (from 0) the tree of a heap array holds
+function heapUsed(a){
+	var v = a.visual, used = 0;
+	while(used < v.cells.length && v.cells[used] !== null && v.cells[used] !== undefined && !isNode(v.cells[used]))
+		used = used + 1;
+	Object.keys(v.indexVars || {}).forEach(function(name){ // h[n] = v with a global n: the heap's size,
+		var size = shownNumbers[name];                      // so cells from n on are not in it (in C++ and
+		if(typeof size === 'number' && size >= 0 && size % 1 === 0) // Java an emptied cell holds 0, not null)
+			used = Math.min(used, size);
+	});
+	return used;
+}
+
+function drawHeapTree(a, x0, top, at, items){
+	var v = a.visual, width = heapWidth(a), used = heapUsed(a);
+	function center(i){
+		var d = Math.floor(Math.log(i + 1) / Math.LN2), k = i + 1 - Math.pow(2, d);
+		return new Point(x0 + width * (k + 0.5) / Math.pow(2, d), top + HEAP_R + d * HEAP_LEVEL_H);
+	}
+	var i;
+	for(i = 1; i < used; i = i + 1){ // the links first, under the nodes
+		var from = center(Math.floor((i - 1) / 2)), to = center(i), dir = (to - from).normalize(HEAP_R);
+		items.push(new Path.Line({ from: from + dir, to: to - dir, strokeColor: PAL.stroke, strokeWidth: 2 }));
+	}
+	for(i = 0; i < used; i = i + 1){
+		var c = center(i), focused = isFocusedEdge(v, 'cell' + i);
+		items.push(new Path.Circle({ center: c, radius: HEAP_R, strokeColor: focused ? PAL.changed : PAL.stroke, strokeWidth: focused ? 3 : 2, fillColor: PAL.node }));
+		items.push(new PointText({ point: c + [0, 5], justification: 'center', fontSize: 14+'px', fillColor: PAL.text, content: '' + v.cells[i] }));
+		items.push(new PointText({ point: c + [-HEAP_R - 4, 4], justification: 'right', fontSize: 11+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + i }));
+		if(at[i])
+			items.push(new PointText({ point: c + [0, HEAP_R + 15], justification: 'center', fontSize: 14+'px', fillColor: PAL.pointer, content: at[i].join(', ') }));
+	}
 }
 
 var TABLE_W = 34; // width of an array cell
@@ -892,9 +951,9 @@ function layout(tidy){
 
 	var rows = rowArrays();
 	if(rows.length){ // the row arrays sit over everything else
-		var arrayWidth = COL_X0 + Math.max.apply(null, rows.map(function(a){ return a.length; })) * ROW_CELL_W + 40;
+		var arrayWidth = COL_X0 + Math.max.apply(null, rows.map(heapWidth)) + 40;
 		extent = extent ? {width: Math.max(extent.width, arrayWidth), height: extent.height + topOffset()}
-		                : {width: arrayWidth, height: ROW_TOP + rows.length * ROW_BAND};
+		                : {width: arrayWidth, height: ROW_TOP + topOffset()};
 	}
 
 	if(table){
@@ -1224,6 +1283,8 @@ function showValue(name, value, scope){
 }
 
 function renderCallStack(){
+	if(rowArrays().length) // index markers can be locals of the running call
+		drawRowArrays();
 	var box = document.getElementById('callstack');
 	if(!box)
 		return;
@@ -2284,6 +2345,8 @@ window.parse = function(text) {
 			doublyRequested = true;
 		if(/\.(left|right)\b/.test(text))
 			treeRequested = true;
+		if(HEAP_FORMULA.test(text))
+			heapRequested = true;
 
 		frames = []; // a previous run may have stopped inside a call
 		if(unfinishedCalls.length){ // ... and left its frames in the panel: remove them first
@@ -2379,6 +2442,7 @@ function resetProgram(){
 	unfinishedCalls = [];
 	doublyRequested = false;
 	treeRequested = false;
+	heapRequested = false;
 	currentLine = null;
 
 	player.steps = [];
@@ -2396,9 +2460,10 @@ window.dsvState = function(){
 		tree: treeMode,
 		arrays: allArrays.filter(function(a){ return a.visual.shown; }).map(function(a){
 			var markers = {};
-			Object.keys(a.visual.indexVars || {}).forEach(function(n){ markers[n] = shownNumbers[n]; });
+			Object.keys(a.visual.indexVars || {}).forEach(function(n){ markers[n] = markerValue(n); });
 			return {name: a.visual.name, kind: a.visual.kind === 'buckets' ? 'buckets' : 'row', markers: markers,
-			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; })};
+			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; }),
+			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null}; // the cells drawn as a tree
 		}),
 		heights: allNodes.filter(function(n){ return n.shown && n.shownHeight !== undefined; }).map(function(n){ return [n.shownData, n.shownHeight]; }),
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),

@@ -295,7 +295,7 @@ test('examples menu opens, marks the page and closes', async ({ page }) => {
 	await expect(groups).toHaveCount(await page.evaluate(() => window.dsvExamples.length));
 	await expect(page.locator('.drawer-group.open')).toHaveCount(1);
 	const trees = groups.filter({ hasText: 'Ağaçlar' });
-	await expect(trees.locator('.drawer-count')).toHaveText('4');
+	await expect(trees.locator('.drawer-count')).toHaveText('5');
 	await expect(trees.locator('a').first()).toBeHidden();
 	await trees.locator('.drawer-group-btn').click();
 	await expect(trees.locator('a').first()).toBeVisible();
@@ -581,12 +581,12 @@ test.describe('learning aids', () => {
 	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
 		const problems = await openPage(page, 'arrayStackQueue.html');
 		await runBlock(page, 0);
-		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 } }]);
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, heap: null }]); // no heap formulas: no tree
 		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
 		await runBlock(page, 1);
 		const both = (await state(page)).arrays;
 		expect(both.map(a => a.name)).toEqual(['s', 'q']);
-		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 } });
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, heap: null });
 
 		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
 		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
@@ -595,6 +595,33 @@ test.describe('learning aids', () => {
 		await page.waitForFunction(() => window.dsvReady === true);
 		await runBlock(page, 1);
 		expect((await state(page)).arrays[0]).toMatchObject({ name: 'table', kind: 'buckets' });
+		expect(problems).toEqual([]);
+	});
+
+	test('a heap in an array is also drawn as its tree, with the index markers of the running call', async ({ page }) => {
+		const problems = await openPage(page, 'heap.html');
+		await runBlock(page, 0);
+		let h = (await state(page)).arrays[0];
+		expect(h.cells).toEqual([1, 3, 2, 5, 9, 8, null, null, null, null]);
+		expect(h.heap).toEqual([1, 3, 2, 5, 9, 8]);
+		expect(h.markers).toEqual({ n: 6 });
+
+		for (let k = 0; k < 9; k++) // inside swap(5, 2) of insert(2): its i and j mark the two cells
+			await page.locator('.dsv-player button[title="Geri adım"]').click();
+		h = (await state(page)).arrays[0];
+		expect(h.markers).toEqual({ n: 6, i: 5, j: 2 });
+		expect(h.heap).toEqual([1, 3, 8, 5, 9, 2]);
+
+		await runBlock(page, 1); // two pops: the tree shrinks with n
+		h = (await state(page)).arrays[0];
+		expect(h.heap).toEqual([3, 5, 8, 9]);
+
+		await openPage(page, 'heap.html', { codeLang: 'cpp' }); // in C++ an emptied cell holds 0: the tree stops at n
+		await expect(page.locator('.CodeMirror').first()).toContainText('int p = (i - 1) / 2;');
+		await runBlock(page, 1);
+		h = (await state(page)).arrays[0];
+		expect(h.cells.slice(0, 6)).toEqual([3, 5, 8, 9, 0, 0]);
+		expect(h.heap).toEqual([3, 5, 8, 9]);
 		expect(problems).toEqual([]);
 	});
 

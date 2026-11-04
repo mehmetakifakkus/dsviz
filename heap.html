@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heap ve öncelik kuyruğu | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Heap ve öncelik kuyruğu</h1>
+<h1 data-lang="en">Heap and priority queue</h1>
+<h1 data-lang="de">Heap und Prioritätswarteschlange</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Öncelik kuyruğunda (priority queue) sıraya giren değil, önceliği en yüksek olan önce çıkar: acil servisteki hastalar ya da işletim sistemindeki işler gibi. Bunu verimli yapmanın yolu <em>ikili heap</em>'tir: her düğümün değeri çocuklarınınkinden küçük ya da eşit olan, tam dolu bir ikili ağaç (min-heap). Böylece en küçük değer hep köktedir.</p>
+<p data-lang="en">In a priority queue the value with the highest priority leaves first, not the one that came first: think of patients in an emergency room or tasks in an operating system. The efficient way to do this is a <em>binary heap</em>: a complete binary tree in which every node is smaller than or equal to its children (a min-heap). So the smallest value is always at the root.</p>
+<p data-lang="de">In einer Prioritätswarteschlange kommt der Wert mit der höchsten Priorität zuerst heraus, nicht der, der zuerst kam: wie Patienten in der Notaufnahme oder Aufgaben im Betriebssystem. Effizient geht das mit einem <em>binären Heap</em>: einem vollständigen Binärbaum, in dem jeder Knoten kleiner oder gleich seinen Kindern ist (Min-Heap). So steht der kleinste Wert immer in der Wurzel.</p>
+
+<p data-lang="tr">Ağaç tam dolu olduğu için düğümlere ve bağlara gerek yoktur; bir dizi yeter. Kök 0. hücrededir; <code>i</code>. hücrenin çocukları <code>2 * i + 1</code> ve <code>2 * i + 2</code>'de, ebeveyni <code>taban((i - 1) / 2)</code>'dedir. Kod bu formülleri kullanınca dizi üstte satır olarak, altında da temsil ettiği ağaç olarak çizilir. Ekleme yeni değeri ilk boş hücreye yazar ve ebeveyninden küçük oldukça onunla yer değiştirerek yukarı çıkarır (sift up). Ağacın yüksekliği log₂ <em>n</em> olduğu için ekleme O(log <em>n</em>) sürer.</p>
+<p data-lang="en">Because the tree is complete, it needs no nodes or links: an array is enough. The root is in cell 0; the children of cell <code>i</code> are in <code>2 * i + 1</code> and <code>2 * i + 2</code>, its parent in <code>taban((i - 1) / 2)</code>. When the code uses these formulas, the array is drawn as a row at the top and, below it, as the tree it stands for. Inserting writes the new value into the first free cell and moves it up, swapping it with its parent while it is smaller (sift up). The tree is log₂ <em>n</em> high, so inserting takes O(log <em>n</em>).</p>
+<p data-lang="de">Da der Baum vollständig ist, braucht er weder Knoten noch Verbindungen: ein Array genügt. Die Wurzel steht in Zelle 0; die Kinder von Zelle <code>i</code> stehen in <code>2 * i + 1</code> und <code>2 * i + 2</code>, ihr Elternknoten in <code>taban((i - 1) / 2)</code>. Wenn der Code diese Formeln benutzt, wird das Array oben als Zeile und darunter als der Baum gezeichnet, für den es steht. Einfügen schreibt den neuen Wert in die erste freie Zelle und schiebt ihn nach oben, indem er mit seinem Elternknoten getauscht wird, solange er kleiner ist (Sift-up). Der Baum ist log₂ <em>n</em> hoch, Einfügen dauert also O(log <em>n</em>).</p>
+
+<textarea id="text1" class="deneme">
+var h = new Array(10)        // en küçük değer kökte (min-heap)
+var n = 0                    // heap'teki eleman sayısı
+function swap(i, j)          // iki hücrenin değerini değiştir
+{
+  var t = h[i]
+  h[i] = h[j]
+  h[j] = t
+}
+function insert(v)
+{
+  h[n] = v                   // en sona, ilk boş hücreye ekle
+  var i = n
+  n++
+  var p = taban((i - 1) / 2)
+  while(i &gt; 0 &amp;&amp; h[p] &gt; h[i])   // ebeveyninden küçük oldukça yukarı çık
+  {
+    swap(i, p)
+    i = p
+    p = taban((i - 1) / 2)
+  }
+}
+insert(5)
+insert(3)
+insert(8)
+insert(1)
+insert(9)
+insert(2)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var h = new Array(10)        // the smallest value at the root (min-heap)
+var n = 0                    // the number of values in the heap
+function swap(i, j)          // swap the values of two cells
+{
+  var t = h[i]
+  h[i] = h[j]
+  h[j] = t
+}
+function insert(v)
+{
+  h[n] = v                   // append at the end, in the first free cell
+  var i = n
+  n++
+  var p = taban((i - 1) / 2)
+  while(i > 0 && h[p] > h[i])   // move up while smaller than its parent
+  {
+    swap(i, p)
+    i = p
+    p = taban((i - 1) / 2)
+  }
+}
+insert(5)
+insert(3)
+insert(8)
+insert(1)
+insert(9)
+insert(2)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var h = new Array(10)        // der kleinste Wert in der Wurzel (Min-Heap)
+var n = 0                    // die Anzahl der Werte im Heap
+function swap(i, j)          // die Werte zweier Zellen tauschen
+{
+  var t = h[i]
+  h[i] = h[j]
+  h[j] = t
+}
+function insert(v)
+{
+  h[n] = v                   // hinten anfügen, in die erste freie Zelle
+  var i = n
+  n++
+  var p = taban((i - 1) / 2)
+  while(i > 0 && h[p] > h[i])   // nach oben, solange kleiner als der Elternknoten
+  {
+    swap(i, p)
+    i = p
+    p = taban((i - 1) / 2)
+  }
+}
+insert(5)
+insert(3)
+insert(8)
+insert(1)
+insert(9)
+insert(2)
+</script>
+
+<p data-lang="tr">En küçük değeri çıkarmak (pop) için kökteki değer alınır, son eleman köke taşınır ve son hücre boşaltılır. Kökteki değer çocuklarından büyük oldukça küçük olan çocuğuyla yer değiştirerek aşağı iner (sift down). Bu da O(log <em>n</em>) sürer. İlk pop 1'i, ikincisi 2'yi verir.</p>
+<p data-lang="en">To take out the smallest value (pop) we take the value at the root, move the last value to the root and empty the last cell. While the value at the root is bigger than its children, it swaps places with the smaller child and moves down (sift down). This also takes O(log <em>n</em>). The first pop gives 1, the second 2.</p>
+<p data-lang="de">Um den kleinsten Wert herauszunehmen (pop), nehmen wir den Wert in der Wurzel, setzen den letzten Wert in die Wurzel und leeren die letzte Zelle. Solange der Wert in der Wurzel größer als seine Kinder ist, tauscht er mit dem kleineren Kind und wandert nach unten (Sift-down). Auch das dauert O(log <em>n</em>). Der erste pop liefert 1, der zweite 2.</p>
+
+<textarea id="text2" class="deneme">
+function pop()
+{
+  var min = h[0]             // en küçük değer kökte
+  n--
+  h[0] = h[n]                // son elemanı köke taşı
+  h[n] = null
+  var i = 0
+  while(2 * i + 1 &lt; n)       // en az bir çocuğu varsa
+  {
+    var c = 2 * i + 1        // sol çocuk
+    if(c + 1 &lt; n &amp;&amp; h[c + 1] &lt; h[c])
+    {
+      c = c + 1              // sağ çocuk daha küçükse onu seç
+    }
+    if(h[i] &lt;= h[c])
+    {
+      break                  // çocuğundan küçük ya da eşitse yerinde
+    }
+    swap(i, c)
+    i = c
+  }
+  return min
+}
+var a = pop()
+var b = pop()
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function pop()
+{
+  var min = h[0]             // the smallest value is at the root
+  n--
+  h[0] = h[n]                // move the last value to the root
+  h[n] = null
+  var i = 0
+  while(2 * i + 1 < n)       // while it has at least one child
+  {
+    var c = 2 * i + 1        // the left child
+    if(c + 1 < n && h[c + 1] < h[c])
+    {
+      c = c + 1              // take the right child if it is smaller
+    }
+    if(h[i] <= h[c])
+    {
+      break                  // not bigger than its child: in place
+    }
+    swap(i, c)
+    i = c
+  }
+  return min
+}
+var a = pop()
+var b = pop()
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function pop()
+{
+  var min = h[0]             // der kleinste Wert steht in der Wurzel
+  n--
+  h[0] = h[n]                // den letzten Wert in die Wurzel setzen
+  h[n] = null
+  var i = 0
+  while(2 * i + 1 < n)       // solange er mindestens ein Kind hat
+  {
+    var c = 2 * i + 1        // das linke Kind
+    if(c + 1 < n && h[c + 1] < h[c])
+    {
+      c = c + 1              // das rechte Kind nehmen, wenn es kleiner ist
+    }
+    if(h[i] <= h[c])
+    {
+      break                  // nicht größer als sein Kind: an seinem Platz
+    }
+    swap(i, c)
+    i = c
+  }
+  return min
+}
+var a = pop()
+var b = pop()
+</script>
+
+<p data-lang="tr">Öncelik kuyruğu olarak kullanınca değerler hangi sırayla girerse girsin küçükten büyüğe çıkar. Önce 4'ü ekleyip sonra heap boşalana kadar çıkaralım: çıktı sıralıdır. <em>n</em> değeri ekleyip hepsini çıkarmak O(<em>n</em> log <em>n</em>) sürer; heap sort da bu fikre dayanır.</p>
+<p data-lang="en">Used as a priority queue, the values come out from the smallest to the biggest, in whatever order they went in. We insert 4 and then take values out until the heap is empty: the output is sorted. Inserting <em>n</em> values and taking them all out takes O(<em>n</em> log <em>n</em>); heap sort is based on this idea.</p>
+<p data-lang="de">Als Prioritätswarteschlange benutzt, kommen die Werte vom kleinsten zum größten heraus, egal in welcher Reihenfolge sie hineinkamen. Wir fügen 4 ein und nehmen dann Werte heraus, bis der Heap leer ist: die Ausgabe ist sortiert. <em>n</em> Werte einzufügen und alle herauszunehmen dauert O(<em>n</em> log <em>n</em>); Heapsort beruht auf dieser Idee.</p>
+
+<textarea id="text3" class="deneme">
+insert(4)
+while(n &gt; 0)                 // kalanları öncelik sırasıyla çıkar
+{
+  print pop()
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+insert(4)
+while(n > 0)                 // take out the rest in order of priority
+{
+  print pop()
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+insert(4)
+while(n > 0)                 // den Rest nach Priorität herausnehmen
+{
+  print pop()
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
