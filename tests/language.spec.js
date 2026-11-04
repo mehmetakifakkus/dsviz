@@ -139,7 +139,7 @@ test('Node(value, next) links the new node, also in a field and an array cell', 
 	expect(await valueOf(page, 'walk(t[1])')).toBe('7>1>2>3>4');
 
 	await runCode(page, 'var bad = new Node(1, 5)\n');
-	await expect(page.locator('#output')).toContainText("Node'un ikinci değeri yeni düğümün next'idir; bir düğüm ya da null olmalı (5 verildi).");
+	await expect(page.locator('#output')).toContainText('Yeni düğümün ikinci değeri (new Node(1, x) içindeki x) onun .next bağı olur; bir düğüm ya da null olmalı (5 verildi).');
 	expect(problems).toEqual([]);
 });
 
@@ -231,7 +231,32 @@ int main() {
 test('C++: an error points at the line as it was written', async ({ page }) => {
 	const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
 	await runCode(page, 'Node* p = nullptr;\nint v = p->data;\n');
-	await expect(page.locator('#output')).toContainText("Satır 2: null olan bir pointer'ın .data alanı okunmaya çalışıldı");
+	await expect(page.locator('#output')).toContainText("Satır 2: nullptr olan bir pointer'ın ->data alanı okunmaya çalışıldı");
+	await expect(page.locator('#output')).toContainText('(ör. p != nullptr ya da kısaca p)'); // the advice in C++ too
+	await runCode(page, 'int a = b + 1;\n');
+	await expect(page.locator('#output')).toContainText('"b" tanımlı değil. Önce tanımlayın (ör. auto b = ...).');
+	expect(problems).toEqual([]);
+});
+
+test('Turkish code and Java: the code in error messages is in the chosen language', async ({ page }) => {
+	const problems = await openPage(page, 'index.html', { codeLang: 'turkce' });
+	await runCode(page, 'değişken p = boş\ndeğişken v = p.veri\n');
+	await expect(page.locator('#output')).toContainText("Satır 2: boş olan bir pointer'ın .veri alanı okunmaya çalışıldı");
+	await expect(page.locator('#output')).toContainText('(ör. p != boş ya da kısaca p)');
+	await runCode(page, 'değişken k = 1\nkır\n');
+	await expect(page.locator('#output')).toContainText('Satır 2: kır yalnızca bir döngünün (yinele ya da için) içinde kullanılabilir.');
+	await runCode(page, 'değişken a = b + 1\n');
+	await expect(page.locator('#output')).toContainText('Önce tanımlayın (ör. değişken b = ...)');
+	await runCode(page, 'değişken w = 3\nw[0] = 1\n');
+	await expect(page.locator('#output')).toContainText('(ör. değişken t = yeni Dizi(n))');
+	await runCode(page, 'değişken bad = yeni Düğüm(1, 5)\n');
+	await expect(page.locator('#output')).toContainText('(yeni Düğüm(1, x) içindeki x) onun .sonraki bağı olur; bir düğüm ya da boş olmalı');
+
+	await page.evaluate(() => localStorage.setItem('dsv-settings', JSON.stringify({ codeLang: 'java' })));
+	await page.reload();
+	await page.waitForFunction(() => window.dsvReady === true);
+	await runCode(page, 'int w = 3;\nw[0] = 1;\n');
+	await expect(page.locator('#output')).toContainText('(ör. int[] t = new int[n])');
 	expect(problems).toEqual([]);
 });
 

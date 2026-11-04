@@ -4,7 +4,6 @@
 
 ## Dil
 
-- [ ] Türkçe kodda hata mesajları hâlâ Düğüm'ün İngilizce kelimeleriyle örnek veriyor (ör. `p != null`, `var p = …`); seçilen kod dilinin kelimeleriyle yazılabilir (C++ ve Java için de).
 
 
 ## Görselleştirme ve arayüz
@@ -41,7 +40,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 344 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 345 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -71,3 +70,4 @@
 - [x] Heap ve öncelik kuyruğu: kod heap'in indis formüllerini (`2 * i + 1`, `taban((i - 1) / 2)`) kullanınca sayı dizisi satırın altında ağaç olarak da çizilir (hücre numaraları, yer değiştirilen hücreler vurgulu, çalışan çağrının yerel indisleri `i`, `j` hem satırda hem ağaçta); ağaç ilk boş hücreye ya da `h[n] = v`'deki boyut değişkenine kadar sürer. Yeni sayfa: ekleme (sift up), en küçüğü çıkarma (sift down), öncelik sırasıyla boşaltma. C++/Java'da `taban((i - 1) / 2)` `(i - 1) / 2` olarak gösterilir.
 - [x] Türkçe kod: ayarlarda kod dili "Düğüm (Türkçe)" seçilince örnekler Türkçe kelimelerle gösterilir ve çalışır (`değişken`, `eğer`/`değilse`, `yinele`, `için`, `fonksiyon`, `döndür`, `kır`, `devam`, `yaz`, `boş`, `doğru`/`yanlış`, `yeni Düğüm(…)`, `yeni Dizi(n)`, `sil`, `ve`/`veya`/`değil`; alanlar `.veri`, `.sonraki`, `.önceki`, `.sol`, `.sağ`, `.yükseklik`). Kelime kelime iki yönde çevrilir, satır numaraları korunur; kod renklendirmesi, Türkçe yorumlar, anlatım, değişkenler paneli ve paylaşılan bağlantı aynı dili kullanır. Anlatımda `null` ve alan adları seçilen kod dilinde (C++'ta `nullptr`); bağ anlatımı "next bağı" olarak sadeleşti.
 - [x] İlk ziyarette tanıtım turu: sayfanın bölümleri (kod blokları, Çalıştır, çizim, oynatıcı, anlatım, değişkenler ve çıktı, ders modu, kod dili ayarı, örnekler menüsü) sırayla aydınlatılır, sayfanın geri kalanı kararır; Sonraki/Geri (ya da ← →) ile ilerlenir, Atla ya da Esc ile çıkılır. Kod dili adımında ayarlar paneli açılır: site Düğüm ile açılır, C++, Java ya da Türkçe Düğüm seçilebilir. Bir kez gösterilir (localStorage), ayarlardan yeniden başlatılır; telefonda yapışkan çizim alanının altına kaydırır.
+- [x] Hata mesajlarındaki kod örnekleri seçilen kod dilinde: Türkçe kodda `p != boş`, `.veri`, `kır` / `yinele` / `için`, `değişken b = ...`, `yeni Dizi(n)`; C++'ta `nullptr`, `->data`, `auto b = ...`, `int t[n]`; Java'da `int[] t = new int[n]`. Mesajlarda belirli bir dilin anahtar kelimesine dayanan anlatımlar ("var ile tanımlayın", "function ile") sadeleşti.

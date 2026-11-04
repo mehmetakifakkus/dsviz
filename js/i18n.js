@@ -237,12 +237,12 @@
 			de: 'die Schleife lief mehr als 1000 Mal. Ist es eine Endlosschleife? Stelle sicher, dass die Schleifenbedingung irgendwann falsch wird.'
 		},
 		eDepth: {
-			tr: 'iç içe {max} fonksiyon çağrısı aşıldı. Özyinelemenin bir durma koşulu var mı? (ör. if(p == null) return 0)',
-			en: 'more than {max} nested function calls. Does the recursion have a stop condition? (e.g. if(p == null) return 0)',
-			de: 'mehr als {max} verschachtelte Funktionsaufrufe. Hat die Rekursion eine Abbruchbedingung? (z. B. if(p == null) return 0)'
+			tr: 'iç içe {max} fonksiyon çağrısı aşıldı. Özyinelemenin bir durma koşulu var mı? (ör. `if(p == null) return 0`)',
+			en: 'more than {max} nested function calls. Does the recursion have a stop condition? (e.g. `if(p == null) return 0`)',
+			de: 'mehr als {max} verschachtelte Funktionsaufrufe. Hat die Rekursion eine Abbruchbedingung? (z. B. `if(p == null) return 0`)'
 		},
-		eLoopOnly: {tr: '{kw} yalnızca bir döngünün (while ya da for) içinde kullanılabilir.', en: '{kw} can only be used inside a loop (while or for).', de: '{kw} kann nur innerhalb einer Schleife (while oder for) verwendet werden.'},
-		eReturnOnly: {tr: 'return yalnızca bir fonksiyonun içinde kullanılabilir.', en: 'return can only be used inside a function.', de: 'return kann nur innerhalb einer Funktion verwendet werden.'},
+		eLoopOnly: {tr: '`{kw}` yalnızca bir döngünün (`while` ya da `for`) içinde kullanılabilir.', en: '`{kw}` can only be used inside a loop (`while` or `for`).', de: '`{kw}` kann nur innerhalb einer Schleife (`while` oder `for`) verwendet werden.'},
+		eReturnOnly: {tr: '`return` yalnızca bir fonksiyonun içinde kullanılabilir.', en: '`return` can only be used inside a function.', de: '`return` kann nur innerhalb einer Funktion verwendet werden.'},
 		eStack: {tr: 'Çok fazla iç içe fonksiyon çağrısı. Özyinelemenin bir durma koşulu var mı?', en: 'Too many nested function calls. Does the recursion have a stop condition?', de: 'Zu viele verschachtelte Funktionsaufrufe. Hat die Rekursion eine Abbruchbedingung?'},
 		eSyntax: {
 			tr: 'Yazım hatası (satır {line}, sütun {col}): burada {found} beklenmiyordu.',
@@ -252,32 +252,32 @@
 		eEndOfCode: {tr: 'kodun sonu', en: 'the end of the code', de: 'das Ende des Codes'},
 		eEndOfLine: {tr: 'satır sonu', en: 'the end of the line', de: 'das Zeilenende'},
 		eNullRead: {
-			tr: 'null olan bir pointer\'ın .{field} alanı okunmaya çalışıldı. Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. p != null ya da kısaca p).',
-			en: 'the field .{field} of a null pointer was read. The pointer may have gone past the end of the list; check the loop condition (e.g. p != null, or just p).',
-			de: 'das Feld .{field} eines null-Zeigers wurde gelesen. Der Zeiger ist vielleicht über das Ende der Liste hinaus gelaufen; prüfen Sie die Schleifenbedingung (z. B. p != null oder kurz p).'
+			tr: '`null` olan bir pointer\'ın `.{field}` alanı okunmaya çalışıldı. Pointer listenin sonunu geçmiş olabilir; döngü koşulunu kontrol edin (ör. `p != null` ya da kısaca `p`).',
+			en: 'the field `.{field}` of a `null` pointer was read. The pointer may have gone past the end of the list; check the loop condition (e.g. `p != null`, or just `p`).',
+			de: 'das Feld `.{field}` eines Zeigers, der `null` ist, wurde gelesen. Der Zeiger ist vielleicht über das Ende der Liste hinaus gelaufen; prüfen Sie die Schleifenbedingung (z. B. `p != null` oder kurz `p`).'
 		},
 		eNullWrite: {
-			tr: 'null olan bir pointer\'ın .{field} alanı değiştirilmeye çalışıldı. Pointer bir düğümü göstermiyor.',
-			en: 'the field .{field} of a null pointer was changed. The pointer points to no node.',
-			de: 'das Feld .{field} eines null-Zeigers wurde geändert. Der Zeiger zeigt auf keinen Knoten.'
+			tr: '`null` olan bir pointer\'ın `.{field}` alanı değiştirilmeye çalışıldı. Pointer bir düğümü göstermiyor.',
+			en: 'the field `.{field}` of a `null` pointer was changed. The pointer points to no node.',
+			de: 'das Feld `.{field}` eines Zeigers, der `null` ist, wurde geändert. Der Zeiger zeigt auf keinen Knoten.'
 		},
 		eUndefined: {
-			tr: '"{name}" tanımlı değil. Önce var ile tanımlayın (ör. var {name} = ...).',
-			en: '"{name}" is not defined. Define it with var first (e.g. var {name} = ...).',
-			de: '"{name}" ist nicht definiert. Definiere es zuerst mit var (z. B. var {name} = ...).'
+			tr: '"{name}" tanımlı değil. Önce tanımlayın (ör. `var {name} = ...`).',
+			en: '"{name}" is not defined. Define it first (e.g. `var {name} = ...`).',
+			de: '"{name}" ist nicht definiert. Definieren Sie es zuerst (z. B. `var {name} = ...`).'
 		},
 		eNotFunction: {
-			tr: '"{name}" bir fonksiyon değil. Fonksiyonu çağırmadan önce function ile tanımlayın.',
-			en: '"{name}" is not a function. Define the function with function before calling it.',
-			de: '"{name}" ist keine Funktion. Definieren Sie die Funktion mit function, bevor Sie sie aufrufen.'
+			tr: '"{name}" bir fonksiyon değil. Fonksiyonu çağırmadan önce tanımlayın.',
+			en: '"{name}" is not a function. Define the function before calling it.',
+			de: '"{name}" ist keine Funktion. Definieren Sie die Funktion, bevor Sie sie aufrufen.'
 		},
-		eNodeNext: {tr: 'Node\'un ikinci değeri yeni düğümün next\'idir; bir düğüm ya da null olmalı ({value} verildi).', en: 'The second value of Node is the new node\'s next; it must be a node or null (got {value}).', de: 'Der zweite Wert von Node ist das next des neuen Knotens; er muss ein Knoten oder null sein ({value} angegeben).'},
+		eNodeNext: {tr: 'Yeni düğümün ikinci değeri (`new Node(1, x)` içindeki `x`) onun `.next` bağı olur; bir düğüm ya da `null` olmalı ({value} verildi).', en: 'The second value of a new node (the `x` in `new Node(1, x)`) becomes its `.next`; it must be a node or `null` (got {value}).', de: 'Der zweite Wert eines neuen Knotens (das `x` in `new Node(1, x)`) wird sein `.next`; er muss ein Knoten oder `null` sein ({value} angegeben).'},
 		eNestedFunction: {tr: '"{name}" bir fonksiyonun içinde tanımlanmış; Düğüm\'de fonksiyonlar yalnızca en dışta tanımlanır. Fonksiyonu dışarı taşıyın, gereken değerleri parametre olarak verin.', en: '"{name}" is defined inside a function; in Düğüm functions are defined at the top level only. Move the function out and pass the values it needs as parameters.', de: '"{name}" ist innerhalb einer Funktion definiert; in Düğüm werden Funktionen nur auf oberster Ebene definiert. Verschieben Sie die Funktion nach außen und übergeben Sie die nötigen Werte als Parameter.'},
 		eDivZero: {tr: 'Sıfıra bölme: bir tam sayı sıfıra bölünemez.', en: 'Division by zero: an integer cannot be divided by zero.', de: 'Division durch null: eine ganze Zahl kann nicht durch null geteilt werden.'},
-		eCallField: {tr: 'Bir çağrının sonucunun alanına doğrudan yazılamaz ({call}{dot}{field} = …). Önce sonucu bir değişkene alın, sonra alanına yazın: var p = {call}, ardından p{dot}{field} = …', en: 'A field of a call\'s result cannot be written directly ({call}{dot}{field} = …). Put the result in a variable first, then write its field: var p = {call}, then p{dot}{field} = …', de: 'Ein Feld eines Aufrufergebnisses kann nicht direkt beschrieben werden ({call}{dot}{field} = …). Speichern Sie das Ergebnis zuerst in einer Variable und schreiben Sie dann ihr Feld: var p = {call}, danach p{dot}{field} = …'},
+		eCallField: {tr: 'Bir çağrının sonucunun alanına doğrudan yazılamaz (`{call}{dot}{field} = …`). Önce sonucu bir değişkene alın, sonra alanına yazın: `var p = {call}`, ardından `p{dot}{field} = …`', en: 'A field of a call\'s result cannot be written directly (`{call}{dot}{field} = …`). Put the result in a variable first, then write its field: `var p = {call}`, then `p{dot}{field} = …`', de: 'Ein Feld eines Aufrufergebnisses kann nicht direkt beschrieben werden (`{call}{dot}{field} = …`). Speichern Sie das Ergebnis zuerst in einer Variable und schreiben Sie dann ihr Feld: `var p = {call}`, danach `p{dot}{field} = …`'},
 		eArraySize: {tr: 'Dizi boyutu 1 ile 50 arasında bir tam sayı olmalı ({n} verildi).', en: 'The size of an array must be a whole number from 1 to 50 (got {n}).', de: 'Die Größe eines Arrays muss eine ganze Zahl von 1 bis 50 sein ({n} angegeben).'},
 		eIndex: {tr: '{name}[{i}]: dizinin {n} hücresi var, geçerli indisler 0 ile {last} arası.', en: '{name}[{i}]: the array has {n} cells, valid indexes are 0 to {last}.', de: '{name}[{i}]: das Array hat {n} Zellen, gültige Indizes sind 0 bis {last}.'},
-		eNotArray: {tr: '"{name}" bir dizi değil; önce new Array(n) ile oluşturun.', en: '"{name}" is not an array; create it with new Array(n) first.', de: '"{name}" ist kein Array; erstellen Sie es zuerst mit new Array(n).'},
+		eNotArray: {tr: '"{name}" bir dizi değil; önce dizi olarak oluşturun (ör. `var t = new Array(n)`).', en: '"{name}" is not an array; create it as an array first (e.g. `var t = new Array(n)`).', de: '"{name}" ist kein Array; erstellen Sie es zuerst als Array (z. B. `var t = new Array(n)`).'},
 		eGeneric: {tr: 'Hata: {msg}', en: 'Error: {msg}', de: 'Fehler: {msg}'}
 	};
 

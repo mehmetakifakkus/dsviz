@@ -1962,8 +1962,29 @@ window['tamBöl'] = function(a, b){
 };
 
 // an error of our own: "Line 3: ..." in the chosen language, shown as it is
+// The pieces of code in a message (between backticks in the texts) in the chosen code
+// language: `p != null` is p != boş in Turkish code and p != nullptr in C++. A declaration
+// (`var x = ...`) becomes auto x = ... in C++; an array has its own form in C++ and Java.
+var CODE_EXAMPLES = {'var t = new Array(n)': {cpp: 'int t[n]', java: 'int[] t = new int[n]'}};
+function codePieces(text){
+	var lang = codeLangInfo(), id = window.dsvCodeLang;
+	return String(text).replace(/`([^`\n]*)`/g, function(m, piece){
+		if(!lang)
+			return piece;
+		if(CODE_EXAMPLES[piece] && CODE_EXAMPLES[piece][id])
+			return CODE_EXAMPLES[piece][id];
+		if(id === 'cpp' && /^\.\w/.test(piece))
+			return '->' + piece.slice(1);                         // the field of a pointer
+		var shown = lang.display(piece);
+		if(/^var\s/.test(piece) && (id === 'cpp' || id === 'java'))
+			shown = (id === 'cpp' ? 'auto ' : 'var ') + shown;    // display leaves the var out
+		return shown;
+	});
+}
+function te(key, vars){ return codePieces(t(key, vars)); } // a message with its code in the code language
+
 function ownError(line, key, vars){
-	var e = new Error((line ? t('eLine', {n: line}) : '') + t(key, vars));
+	var e = new Error((line ? t('eLine', {n: line}) : '') + te(key, vars));
 	e.dsvOwn = true;
 	return e;
 }
@@ -2287,13 +2308,13 @@ function explainError(err, source){
 	var lineOf = function(n){ return n ? t('eLine', {n: n}) : ''; };
 
 	if(err && err.loopSignal) // break / continue that is not inside a loop
-		return lineOf(err.lineNumber) + t('eLoopOnly', {kw: err.loopSignal});
+		return lineOf(err.lineNumber) + te('eLoopOnly', {kw: err.loopSignal});
 
 	if(err && err.returnSignal) // return that is not inside a function
-		return lineOf(err.lineNumber) + t('eReturnOnly');
+		return lineOf(err.lineNumber) + te('eReturnOnly');
 
 	if(err instanceof RangeError && /call stack/i.test(err.message))
-		return t('eStack');
+		return te('eStack');
 
 	var m, msg = (err && err.message) || String(err);
 
@@ -2304,7 +2325,7 @@ function explainError(err, source){
 		// find(3).next = x: writing to a field of a call's result is left out on purpose
 		var callField = /^\s*([A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*)\s*\(([^()]*)\)\s*(\.|->)\s*([A-Za-z_]\w*)[^=]*=(?!=)/.exec(line);
 		if(callField)
-			return t('eLine', {n: loc.line}) + t('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
+			return t('eLine', {n: loc.line}) + te('eCallField', {call: callField[1] + '(' + callField[2] + ')', field: callField[4], dot: callField[3]});
 		return t('eSyntax', {line: loc.line, col: loc.column, found: found}) + '\n\n' +
 		       '  ' + line + '\n  ' + new Array(loc.column).join(' ') + '^';
 	}
@@ -2316,18 +2337,18 @@ function explainError(err, source){
 
 	if((m = /Cannot read propert(?:y|ies) of (?:null|undefined) \(reading '([^']+)'\)/.exec(msg)) ||
 	   (m = /can't access property "([^"]+)", .* is (?:null|undefined)/.exec(msg)))
-		return where + t('eNullRead', {field: m[1]});
+		return where + te('eNullRead', {field: m[1]});
 
 	if((m = /Cannot set propert(?:y|ies) of (?:null|undefined) \(setting '([^']+)'\)/.exec(msg)))
-		return where + t('eNullWrite', {field: m[1]});
+		return where + te('eNullWrite', {field: m[1]});
 
 	if((m = /^(\S+) is not defined/.exec(msg)))
-		return where + t('eUndefined', {name: m[1]});
+		return where + te('eUndefined', {name: m[1]});
 
 	if((m = /^(\S+) is not a function/.exec(msg)))
-		return where + t('eNotFunction', {name: m[1]});
+		return where + te('eNotFunction', {name: m[1]});
 
-	return where + t('eGeneric', {msg: msg});
+	return where + t('eGeneric', {msg: msg}); // the message may quote anything
 }
 
 window.explainError = explainError;
