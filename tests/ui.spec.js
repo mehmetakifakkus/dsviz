@@ -581,12 +581,12 @@ test.describe('learning aids', () => {
 	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
 		const problems = await openPage(page, 'arrayStackQueue.html');
 		await runBlock(page, 0);
-		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, heap: null, graph: null }]); // no heap formulas: no tree
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, bars: false, reads: [], heap: null, graph: null }]); // no heap formulas: no tree; s is no array to sort: no bars
 		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
 		await runBlock(page, 1);
 		const both = (await state(page)).arrays;
 		expect(both.map(a => a.name)).toEqual(['s', 'q']);
-		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, heap: null, graph: null });
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, bars: false, reads: [], heap: null, graph: null });
 
 		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
 		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
@@ -721,6 +721,62 @@ test.describe('learning aids', () => {
 		await runCode(page, 'var a = new Array(3)\na[0] = 5\na[1] = 7\na[0] = 9\n');
 		await skipToEnd(page);
 		expect((await state(page)).ghosts.cells).toEqual(['a[0]:5']);
+		expect(problems).toEqual([]);
+	});
+
+	test('arrays: the cells a condition read are framed, an array to sort is drawn as bars, counters count per block', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		const arrays = async () => (await state(page)).arrays;
+		await runCode(page, 'var a = new Array(5)\nvar n = 5\na[0] = 3\na[1] = 9\na[2] = 5\na[3] = 1\na[4] = 7\nvar k = 2\nvar v = a[k]\nif(a[0] < a[1])\n  print 1\n');
+		await skipToEnd(page);
+		await page.locator('.dsv-player button[title="Geri adım"]').click(); // the condition: both cells it read
+		let s = await state(page);
+		expect(s.narration).toContain('a[0] < a[1]');
+		expect(s.arrays[0].reads).toEqual([0, 1]);
+		expect(s.arrays[0].bars).toBe(true);                       // named a, five numbers: bars over the cells
+		expect(s.arrays[0].markers).toEqual({ k: 2 });             // k was read as a[k]: marked, though it was never written
+		expect(s.stats).toEqual({ compare: 1, write: 5 });         // the condition is a comparison; five cells were written
+		await expect(page.locator('.dsv-stats')).toHaveText('Karşılaştırma 1 · Yazma 5');
+
+		await runCode(page, 'var q = new Array(5)\nq[0] = 4\nq[1] = 2\nq[2] = 8\nq[3] = 1\n');
+		await skipToEnd(page);
+		expect((await arrays()).find(x => x.name === 'q').bars).toBe(false);   // another name: plain cells only
+
+		await runCode(page, 'var nums = new Array(5)\nnums[0] = 4\nnums[1] = 0 - 3\nnums[2] = 8\nnums[3] = 1\n');
+		await skipToEnd(page);
+		expect((await arrays()).find(x => x.name === 'nums').bars).toBe(false); // a negative number: no bars
+		expect(problems).toEqual([]);
+	});
+
+	test('searching and sorting pages: comparisons are counted, each block from zero', async ({ page }) => {
+		const problems = await openPage(page, 'binarySearch.html');
+		await runBlock(page, 1); // linear search: 9 comparisons
+		expect((await state(page)).stats).toEqual({ compare: 9, write: 0 });
+		await runBlock(page, 2); // binary search: 3, though the block above ran again before it
+		expect((await state(page)).stats).toEqual({ compare: 3, write: 0 });
+		await page.locator('.dsv-timeline').evaluate(el => { el.value = Math.round(el.max * 0.9); el.dispatchEvent(new Event('input')); });
+		const markers = (await state(page)).arrays[0].markers; // inside binarySearch: low, mid and high mark the cells
+		expect(Object.keys(markers).sort()).toEqual(expect.arrayContaining(['high', 'low', 'mid']));
+
+		await openPage(page, 'countingSort.html');
+		await runBlock(page, 1);
+		expect((await state(page)).stats.compare).toBe(0);         // counting sort never compares two values
+
+		await openPage(page, 'selectionSort.html');
+		await runBlock(page, 1);
+		expect((await state(page)).stats.compare).toBe(28);        // n(n-1)/2 for eight values
+		expect(problems).toEqual([]);
+	});
+
+	test('heap sort: the tree shrinks with the global size, the sorted cells leave it', async ({ page }) => {
+		const problems = await openPage(page, 'heapSort.html');
+		await runBlock(page, 1);
+		const heap = async () => (await state(page)).arrays[0].heap;
+		expect((await state(page)).arrays[0].cells).toEqual([3, 7, 12, 19, 25, 28, 34, 41]);
+		expect(await heap()).toEqual([3]);                         // size is 1: only the root is left in the heap
+		await page.locator('.dsv-timeline').evaluate(el => { el.value = Math.round(el.max * 0.5); el.dispatchEvent(new Event('input')); });
+		expect((await heap()).length).toBeGreaterThan(1);
+		expect((await heap()).length).toBeLessThanOrEqual(8);
 		expect(problems).toEqual([]);
 	});
 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seçmeli sıralama (dizide) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Seçmeli sıralama (dizide)</h1>
+<h1 data-lang="en">Selection sort (in an array)</h1>
+<h1 data-lang="de">Sortieren durch Auswahl (im Array)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Seçmeli sıralama (selection sort) her turda sıralanmamış kısmın <em>en küçük</em> değerini bulur ve o kısmın başına koyar. Dizi tuvalde hem hücreler hem çubuklar olarak çizilir: çubuğun boyu değerdir, böylece dizinin sıralandığı gözle görülür. Önce sekiz sayılık bir dizi kuralım.</p>
+<p data-lang="en">Selection sort finds the <em>smallest</em> value of the unsorted part in every round and puts it at the start of that part. The array is drawn as cells and as bars: the height of a bar is its value, so you can see the array getting sorted. First we build an array of eight numbers.</p>
+<p data-lang="de">Sortieren durch Auswahl findet in jeder Runde den <em>kleinsten</em> Wert des unsortierten Teils und setzt ihn an dessen Anfang. Das Array wird als Zellen und als Balken gezeichnet: die Höhe eines Balkens ist sein Wert, so sieht man, wie das Array sortiert wird. Zuerst bauen wir ein Array aus acht Zahlen.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<p data-lang="tr"><code>i</code> sıralı kısmın sınırıdır; <code>j</code> geri kalan hücrelere bakar ve <code>m</code> o ana kadarki en küçüğün yerini tutar. <code>if(a[j] &lt; a[m])</code> karşılaştırılan iki hücre mavi çerçeveyle gösterilir; yazılan hücre turuncudur. Oynatıcının yanında <em>karşılaştırma</em> ve <em>yazma</em> sayıları yazar: dizide <em>n</em> eleman varken seçmeli sıralama her zaman <em>n</em>(<em>n</em>-1)/2 karşılaştırma yapar, yani O(<em>n</em>²); ama en çok <em>n</em>-1 takas yapar.</p>
+<p data-lang="en"><code>i</code> is the border of the sorted part; <code>j</code> looks at the remaining cells and <code>m</code> keeps the place of the smallest so far. In <code>if(a[j] &lt; a[m])</code> the two compared cells get a blue frame; the cell that is written is orange. Next to the player the number of <em>comparisons</em> and <em>writes</em> is shown: for <em>n</em> values selection sort always makes <em>n</em>(<em>n</em>-1)/2 comparisons, that is O(<em>n</em>²); but at most <em>n</em>-1 swaps.</p>
+<p data-lang="de"><code>i</code> ist die Grenze des sortierten Teils; <code>j</code> sieht sich die übrigen Zellen an und <code>m</code> merkt sich den Ort des bisher Kleinsten. Bei <code>if(a[j] &lt; a[m])</code> bekommen die beiden verglichenen Zellen einen blauen Rahmen; die geschriebene Zelle ist orange. Neben dem Player stehen die Anzahl der <em>Vergleiche</em> und der <em>Schreibvorgänge</em>: bei <em>n</em> Werten macht das Sortieren durch Auswahl immer <em>n</em>(<em>n</em>-1)/2 Vergleiche, also O(<em>n</em>²); aber höchstens <em>n</em>-1 Vertauschungen.</p>
+
+<textarea id="text2" class="deneme">
+function swap(i, j)         // iki hücrenin değerini değiştir
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i &lt; n - 1; i++)
+{
+  var m = i               // en küçüğün yeri: sıralanmamış kısmın ilk hücresiyle başla
+  for(var j = i + 1; j &lt; n; j++)   // kalanlara bak
+  {
+    if(a[j] &lt; a[m])       // daha küçük bir değer bulundu
+      m = j
+  }
+  if(m != i)
+    swap(i, m)            // en küçük değeri yerine koy
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function swap(i, j)         // swap the values of two cells
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i < n - 1; i++)
+{
+  var m = i               // the place of the smallest: start with the first cell of the unsorted part
+  for(var j = i + 1; j < n; j++)   // look at the rest
+  {
+    if(a[j] < a[m])       // a smaller value was found
+      m = j
+  }
+  if(m != i)
+    swap(i, m)            // put the smallest in its place
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function swap(i, j)         // die Werte zweier Zellen tauschen
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i < n - 1; i++)
+{
+  var m = i               // der Ort des Kleinsten: mit der ersten Zelle des unsortierten Teils beginnen
+  for(var j = i + 1; j < n; j++)   // den Rest ansehen
+  {
+    if(a[j] < a[m])       // ein kleinerer Wert wurde gefunden
+      m = j
+  }
+  if(m != i)
+    swap(i, m)            // den kleinsten Wert an seinen Platz setzen
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

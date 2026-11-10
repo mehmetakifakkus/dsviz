@@ -114,6 +114,8 @@
 		lessonOff: {tr: 'Tüm sayfayı göster', en: 'Show the whole page', de: 'Ganze Seite zeigen'},
 		lessonPart: {tr: 'Bölüm {i} / {n}', en: 'Part {i} of {n}', de: 'Teil {i} von {n}'},
 		narrationSetting: {tr: 'Adım anlatımı', en: 'Step narration', de: 'Schrittbeschreibung'},
+		statsCompare: {tr: 'Karşılaştırma', en: 'Comparisons', de: 'Vergleiche'},
+		statsWrite: {tr: 'Yazma', en: 'Writes', de: 'Schreibvorgänge'},
 		stepCompareSetting: {tr: 'Adım karşılaştırma: önceki hali soluk göster', en: 'Step comparison: show the previous state faded', de: 'Schrittvergleich: vorherigen Zustand blass zeigen'},
 		ghostLegend: {tr: 'soluk ve kesik: bir önceki adımdaki hal', en: 'faded and dashed: how it was before this step', de: 'blass und gestrichelt: der Zustand vor diesem Schritt'},
 		warningsSetting: {tr: 'Kopan düğüm uyarısı', en: 'Lost node warnings', de: 'Warnung bei verlorenen Knoten'},

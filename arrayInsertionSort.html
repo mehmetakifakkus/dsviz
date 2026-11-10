@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eklemeli sıralama (dizide) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Eklemeli sıralama (dizide)</h1>
+<h1 data-lang="en">Insertion sort (in an array)</h1>
+<h1 data-lang="de">Insertion Sort (im Array)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Eklemeli sıralama (insertion sort) elinizdeki iskambil kâğıtlarını sıralamaya benzer: dizinin solundaki kısım hep sıralıdır; sıradaki değer alınır, sıralı kısımda yerini bulana kadar büyük değerler birer hücre sağa kaydırılır ve değer boşalan yere konur.</p>
+<p data-lang="en">Insertion sort is like sorting the playing cards in your hand: the part on the left of the array is always sorted; the next value is taken, the bigger values are moved one cell to the right until it finds its place, and the value is put into the free place.</p>
+<p data-lang="de">Insertion Sort ist wie das Sortieren der Spielkarten in der Hand: der linke Teil des Arrays ist immer sortiert; der nächste Wert wird genommen, die größeren Werte werden um eine Zelle nach rechts geschoben, bis er seinen Platz findet, und er kommt in die freie Stelle.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<p data-lang="tr">Burada takas yok, kaydırma var: <code>a[j + 1] = a[j]</code> bir değeri sağa kopyalar. Çubuklarda sıralı kısmın büyüyüşünü izleyin. En kötü durumda (ters sıralı dizi) O(<em>n</em>²) karşılaştırma yapar; ama dizi neredeyse sıralıysa yalnızca yaklaşık <em>n</em> karşılaştırma yeter. Bu yüzden küçük ve neredeyse sıralı veride çok hızlıdır; birçok kütüphane küçük parçalarda bunu kullanır.</p>
+<p data-lang="en">There is no swapping, but shifting: <code>a[j + 1] = a[j]</code> copies a value to the right. Watch the sorted part grow in the bars. In the worst case (a reversed array) it makes O(<em>n</em>²) comparisons; but if the array is almost sorted, about <em>n</em> comparisons are enough. So it is very fast for small and almost sorted data; many libraries use it for small pieces.</p>
+<p data-lang="de">Hier wird nicht getauscht, sondern verschoben: <code>a[j + 1] = a[j]</code> kopiert einen Wert nach rechts. Beobachten Sie in den Balken, wie der sortierte Teil wächst. Im schlimmsten Fall (ein umgekehrt sortiertes Array) sind es O(<em>n</em>²) Vergleiche; ist das Array aber fast sortiert, genügen etwa <em>n</em> Vergleiche. Darum ist es für kleine und fast sortierte Daten sehr schnell; viele Bibliotheken benutzen es für kleine Teile.</p>
+
+<textarea id="text2" class="deneme">
+for(var i = 1; i &lt; n; i++)
+{
+  var key = a[i]          // sıradaki değeri al
+  var j = i - 1           // solundaki sıralı kısımda yerini ara
+  while(j &gt;= 0 &amp;&amp; a[j] &gt; key)
+  {
+    a[j + 1] = a[j]       // büyükleri bir hücre sağa kaydır
+    j--
+  }
+  a[j + 1] = key          // boşalan yere koy
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 1; i < n; i++)
+{
+  var key = a[i]          // take the next value
+  var j = i - 1           // look for its place in the sorted part on its left
+  while(j >= 0 && a[j] > key)
+  {
+    a[j + 1] = a[j]       // move the bigger values one cell to the right
+    j--
+  }
+  a[j + 1] = key          // put it in the free place
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 1; i < n; i++)
+{
+  var key = a[i]          // den nächsten Wert nehmen
+  var j = i - 1           // seinen Platz im sortierten Teil links davon suchen
+  while(j >= 0 && a[j] > key)
+  {
+    a[j + 1] = a[j]       // die größeren Werte eine Zelle nach rechts schieben
+    j--
+  }
+  a[j + 1] = key          // in die freie Stelle setzen
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

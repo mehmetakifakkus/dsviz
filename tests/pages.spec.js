@@ -47,6 +47,14 @@ const EXPECTED = {
 	'circularDoublyLinkedList.html': ['[head.prev.data, tail.data, head.prev.prev.data, tail.next.data, output()]', [5, 5, 4, 1, '']],
 	'heap.html': ['[n, a, b, output()]', [0, 1, 2, '3,4,5,8,9']],
 	'dijkstra.html': ['[Array.from(dist), Array.from(parent), output()]', [[0, 3, 1, 6, 9], [-1, 2, 0, 2, 3], '4,3,2,0']],
+	'binarySearch.html': ['[Array.from(a), output()]', [[2, 5, 8, 12, 16, 23, 38, 45, 56, 67, 78], '8']],
+	'selectionSort.html': ['Array.from(a)', [3, 7, 12, 19, 25, 28, 34, 41]],
+	'arrayBubbleSort.html': ['Array.from(a)', [3, 7, 12, 19, 25, 28, 34, 41]],
+	'arrayInsertionSort.html': ['Array.from(a)', [3, 7, 12, 19, 25, 28, 34, 41]],
+	'quickSort.html': ['Array.from(a)', [3, 7, 12, 19, 25, 28, 34, 41]],
+	'heapSort.html': ['[Array.from(a), size]', [[3, 7, 12, 19, 25, 28, 34, 41], 1]],
+	'countingSort.html': ['[Array.from(a), Array.from(count)]', [[0, 2, 2, 4, 4, 7, 7, 9], [1, 0, 2, 0, 2, 0, 0, 2, 0, 1]]],
+	'sortComparison.html': ['[Array.from(a), cmp, output()]', [[3, 8, 13, 18, 23, 28, 33, 38], 7, '7,28,7']],
 	'graph.html': ['[output(), Array.from(visited), Array.from(q)]', ['0,5,4,3,2,1', [true, true, true, true, true, true], [0, 5, 1, 4, 2, 3]]],
 	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
 };

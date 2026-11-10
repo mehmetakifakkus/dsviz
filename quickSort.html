@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hızlı sıralama (quick sort) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Hızlı sıralama (quick sort)</h1>
+<h1 data-lang="en">Quick sort</h1>
+<h1 data-lang="de">Quicksort</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Hızlı sıralama bir <em>böl ve fethet</em> algoritmasıdır: bir <em>pivot</em> seçilir (burada aralığın son elemanı), pivottan küçükler sola, büyükler sağa toplanır (<em>partition</em>), pivot aradaki yerine konur ve iki parça aynı yöntemle özyinelemeyle sıralanır. Pivottan sonra pivotun yeri kesinleşir; bir daha dokunulmaz.</p>
+<p data-lang="en">Quick sort is a <em>divide and conquer</em> algorithm: a <em>pivot</em> is chosen (here the last element of the range), the smaller values are collected on its left and the bigger ones on its right (<em>partition</em>), the pivot is put in between, and the two parts are sorted the same way by recursion. After the partition the pivot's place is final; it is never touched again.</p>
+<p data-lang="de">Quicksort ist ein <em>Teile-und-herrsche</em>-Verfahren: ein <em>Pivot</em> wird gewählt (hier das letzte Element des Bereichs), die kleineren Werte werden links, die größeren rechts gesammelt (<em>Partition</em>), der Pivot kommt dazwischen, und die beiden Teile werden auf dieselbe Weise rekursiv sortiert. Nach der Partition ist der Platz des Pivots endgültig; er wird nie wieder angefasst.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<p data-lang="tr"><code>partition</code> dizinin <code>low</code> ... <code>high</code> parçasını tek turda düzenler; <code>i</code> ve <code>j</code> işaretlerine bakın. Parçalar yaklaşık yarı yarıya bölünürse log₂ <em>n</em> düzey olur ve toplam O(<em>n</em> log <em>n</em>) işlem yapılır, bu yüzden pratikte çok hızlıdır. Pivot hep en küçük ya da en büyük değer çıkarsa (ör. zaten sıralı dizide son eleman pivot olunca) parçalar çok dengesiz olur ve O(<em>n</em>²) gerekir. Çağrı yığını panelinde özyinelemeyi izleyebilirsiniz.</p>
+<p data-lang="en"><code>partition</code> arranges the part <code>low</code> ... <code>high</code> of the array in one pass; watch the markers <code>i</code> and <code>j</code>. If the parts are about half the size each time, there are log₂ <em>n</em> levels and O(<em>n</em> log <em>n</em>) work in all, which is why it is so fast in practice. If the pivot keeps being the smallest or the biggest value (e.g. the last element of an already sorted array), the parts are very unbalanced and O(<em>n</em>²) is needed. You can follow the recursion in the call stack panel.</p>
+<p data-lang="de"><code>partition</code> ordnet den Teil <code>low</code> ... <code>high</code> des Arrays in einem Durchlauf; achten Sie auf die Markierungen <code>i</code> und <code>j</code>. Sind die Teile jedes Mal etwa halb so groß, gibt es log₂ <em>n</em> Ebenen und insgesamt O(<em>n</em> log <em>n</em>) Arbeit, darum ist es in der Praxis so schnell. Ist der Pivot immer der kleinste oder größte Wert (z. B. das letzte Element eines schon sortierten Arrays), sind die Teile sehr unausgewogen und es braucht O(<em>n</em>²). Die Rekursion lässt sich im Aufrufstapel-Bereich verfolgen.</p>
+
+<textarea id="text2" class="deneme">
+function swap(i, j)         // iki hücrenin değerini değiştir
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function partition(low, high)
+{
+  var pivot = a[high]     // pivot: aralığın son elemanı
+  var i = low - 1         // i: pivottan küçüklerin son hücresi
+  for(var j = low; j &lt; high; j++)
+  {
+    if(a[j] &lt;= pivot)     // pivottan küçük ya da eşit: sola topla
+    {
+      i++
+      swap(i, j)
+    }
+  }
+  swap(i + 1, high)       // pivotu iki grubun arasına koy
+  return i + 1            // ayırma yeri: pivot artık yerinde
+}
+function quickSort(low, high)
+{
+  if(low &lt; high)
+  {
+    var p = partition(low, high)
+    quickSort(low, p - 1)   // sol parçayı sırala
+    quickSort(p + 1, high)  // sağ parçayı sırala
+  }
+}
+quickSort(0, n - 1)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function swap(i, j)         // swap the values of two cells
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function partition(low, high)
+{
+  var pivot = a[high]     // pivot: the last element of the range
+  var i = low - 1         // i: the last cell of those smaller than the pivot
+  for(var j = low; j < high; j++)
+  {
+    if(a[j] <= pivot)     // smaller than or equal to the pivot: collect on the left
+    {
+      i++
+      swap(i, j)
+    }
+  }
+  swap(i + 1, high)       // put the pivot between the two groups
+  return i + 1            // the split place: the pivot is in its final place
+}
+function quickSort(low, high)
+{
+  if(low < high)
+  {
+    var p = partition(low, high)
+    quickSort(low, p - 1)   // sort the left part
+    quickSort(p + 1, high)  // sort the right part
+  }
+}
+quickSort(0, n - 1)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function swap(i, j)         // die Werte zweier Zellen tauschen
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function partition(low, high)
+{
+  var pivot = a[high]     // Pivot: das letzte Element des Bereichs
+  var i = low - 1         // i: die letzte Zelle der Werte, die kleiner als der Pivot sind
+  for(var j = low; j < high; j++)
+  {
+    if(a[j] <= pivot)     // kleiner oder gleich dem Pivot: links sammeln
+    {
+      i++
+      swap(i, j)
+    }
+  }
+  swap(i + 1, high)       // den Pivot zwischen die beiden Gruppen setzen
+  return i + 1            // die Trennstelle: der Pivot steht an seinem endgültigen Platz
+}
+function quickSort(low, high)
+{
+  if(low < high)
+  {
+    var p = partition(low, high)
+    quickSort(low, p - 1)   // den linken Teil sortieren
+    quickSort(p + 1, high)  // den rechten Teil sortieren
+  }
+}
+quickSort(0, n - 1)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
