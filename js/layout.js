@@ -69,6 +69,16 @@
 			['insertionSort.html', {tr: 'Eklemeli sıralama (bağları değiştirerek)', en: 'Insertion sort (relinking nodes)', de: 'Insertion Sort (Knoten umhängen)'}],
 			['mergeSort.html', {tr: 'Birleştirmeli sıralama (merge sort)', en: 'Merge sort', de: 'Mergesort'}]
 	]},
+		{ group: {tr: 'Dizilerde arama ve sıralama', en: 'Searching and sorting arrays', de: 'Suchen und Sortieren in Arrays'}, items: [
+			['binarySearch.html', {tr: 'Doğrusal ve ikili arama', en: 'Linear and binary search', de: 'Lineare und binäre Suche'}],
+			['selectionSort.html', {tr: 'Seçmeli sıralama', en: 'Selection sort', de: 'Sortieren durch Auswahl'}],
+			['arrayBubbleSort.html', {tr: 'Kabarcık sıralama (dizide)', en: 'Bubble sort (array)', de: 'Bubblesort (Array)'}],
+			['arrayInsertionSort.html', {tr: 'Eklemeli sıralama (dizide)', en: 'Insertion sort (array)', de: 'Insertion Sort (Array)'}],
+			['quickSort.html', {tr: 'Hızlı sıralama', en: 'Quick sort', de: 'Quicksort'}],
+			['heapSort.html', {tr: 'Heap sort', en: 'Heap sort', de: 'Heapsort'}],
+			['countingSort.html', {tr: 'Sayarak sıralama', en: 'Counting sort', de: 'Counting Sort'}],
+			['sortComparison.html', {tr: 'Sıralama karşılaştırması', en: 'Comparing sorts', de: 'Sortierverfahren im Vergleich'}]
+		]},
 		{ group: {tr: 'Ağaçlar', en: 'Trees', de: 'Bäume'}, items: [
 			['binarySearchTree.html', {tr: 'İkili arama ağacı: ekleme ve arama', en: 'Binary search tree: insert and search', de: 'Binärer Suchbaum: einfügen und suchen'}],
 			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}],

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sıralama karşılaştırması: kaç karşılaştırma? | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Sıralama karşılaştırması: kaç karşılaştırma?</h1>
+<h1 data-lang="en">Comparing sorts: how many comparisons?</h1>
+<h1 data-lang="de">Sortierverfahren im Vergleich: wie viele Vergleiche?</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Hangi sıralama daha iyi? Cevap veriye bağlı. Burada üç yöntem aynı diziyle yarışıyor ve her biri kaç karşılaştırma yaptığını bir değişkende sayıp yazdırıyor. Önce yöntemleri tanımlayalım (çalıştırınca bir şey çizilmez, yalnızca tanımlanırlar).</p>
+<p data-lang="en">Which sorting algorithm is better? It depends on the data. Here three methods race on the same array, and each counts the comparisons it makes in a variable and prints it. First we define the methods (running this block draws nothing yet, they are only defined).</p>
+<p data-lang="de">Welches Sortierverfahren ist besser? Es hängt von den Daten ab. Hier treten drei Verfahren mit demselben Array gegeneinander an, und jedes zählt seine Vergleiche in einer Variable und gibt sie aus. Zuerst definieren wir die Verfahren (dieser Block zeichnet noch nichts, sie werden nur definiert).</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+var cmp = 0               // karşılaştırma sayısı
+function fillMixed()          // karışık sayılar
+{
+  a[0] = 34
+  a[1] = 12
+  a[2] = 41
+  a[3] = 7
+  a[4] = 25
+  a[5] = 19
+  a[6] = 3
+  a[7] = 28
+}
+function fillSorted()         // zaten sıralı sayılar
+{
+  for(var i = 0; i &lt; n; i++)
+  {
+    a[i] = i * 5 + 3
+  }
+}
+function swap(i, j)         // iki hücrenin değerini değiştir
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function bubble()             // kabarcık sıralama
+{
+  for(var i = 0; i &lt; n - 1; i++)
+  {
+    var swapped = false
+    for(var j = 0; j &lt; n - 1 - i; j++)
+    {
+      cmp++
+      if(a[j] &gt; a[j + 1])
+      {
+        swap(j, j + 1)
+        swapped = true
+      }
+    }
+    if(!swapped)
+    {
+      break
+    }
+  }
+}
+function selection()          // seçmeli sıralama
+{
+  for(var i = 0; i &lt; n - 1; i++)
+  {
+    var m = i
+    for(var j = i + 1; j &lt; n; j++)
+    {
+      cmp++
+      if(a[j] &lt; a[m])
+      {
+        m = j
+      }
+    }
+    if(m != i)
+    {
+      swap(i, m)
+    }
+  }
+}
+function insertion()          // eklemeli sıralama
+{
+  for(var i = 1; i &lt; n; i++)
+  {
+    var key = a[i]
+    var j = i - 1
+    while(j &gt;= 0)
+    {
+      cmp++
+      if(a[j] &gt; key)
+      {
+        a[j + 1] = a[j]
+        j--
+      }
+      else
+      {
+        break
+      }
+    }
+    a[j + 1] = key
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+var cmp = 0               // the number of comparisons
+function fillMixed()          // mixed numbers
+{
+  a[0] = 34
+  a[1] = 12
+  a[2] = 41
+  a[3] = 7
+  a[4] = 25
+  a[5] = 19
+  a[6] = 3
+  a[7] = 28
+}
+function fillSorted()         // numbers that are already sorted
+{
+  for(var i = 0; i < n; i++)
+  {
+    a[i] = i * 5 + 3
+  }
+}
+function swap(i, j)         // swap the values of two cells
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function bubble()             // bubble sort
+{
+  for(var i = 0; i < n - 1; i++)
+  {
+    var swapped = false
+    for(var j = 0; j < n - 1 - i; j++)
+    {
+      cmp++
+      if(a[j] > a[j + 1])
+      {
+        swap(j, j + 1)
+        swapped = true
+      }
+    }
+    if(!swapped)
+    {
+      break
+    }
+  }
+}
+function selection()          // selection sort
+{
+  for(var i = 0; i < n - 1; i++)
+  {
+    var m = i
+    for(var j = i + 1; j < n; j++)
+    {
+      cmp++
+      if(a[j] < a[m])
+      {
+        m = j
+      }
+    }
+    if(m != i)
+    {
+      swap(i, m)
+    }
+  }
+}
+function insertion()          // insertion sort
+{
+  for(var i = 1; i < n; i++)
+  {
+    var key = a[i]
+    var j = i - 1
+    while(j >= 0)
+    {
+      cmp++
+      if(a[j] > key)
+      {
+        a[j + 1] = a[j]
+        j--
+      }
+      else
+      {
+        break
+      }
+    }
+    a[j + 1] = key
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+var cmp = 0               // die Anzahl der Vergleiche
+function fillMixed()          // gemischte Zahlen
+{
+  a[0] = 34
+  a[1] = 12
+  a[2] = 41
+  a[3] = 7
+  a[4] = 25
+  a[5] = 19
+  a[6] = 3
+  a[7] = 28
+}
+function fillSorted()         // schon sortierte Zahlen
+{
+  for(var i = 0; i < n; i++)
+  {
+    a[i] = i * 5 + 3
+  }
+}
+function swap(i, j)         // die Werte zweier Zellen tauschen
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+function bubble()             // Bubblesort
+{
+  for(var i = 0; i < n - 1; i++)
+  {
+    var swapped = false
+    for(var j = 0; j < n - 1 - i; j++)
+    {
+      cmp++
+      if(a[j] > a[j + 1])
+      {
+        swap(j, j + 1)
+        swapped = true
+      }
+    }
+    if(!swapped)
+    {
+      break
+    }
+  }
+}
+function selection()          // Sortieren durch Auswahl
+{
+  for(var i = 0; i < n - 1; i++)
+  {
+    var m = i
+    for(var j = i + 1; j < n; j++)
+    {
+      cmp++
+      if(a[j] < a[m])
+      {
+        m = j
+      }
+    }
+    if(m != i)
+    {
+      swap(i, m)
+    }
+  }
+}
+function insertion()          // Insertion Sort
+{
+  for(var i = 1; i < n; i++)
+  {
+    var key = a[i]
+    var j = i - 1
+    while(j >= 0)
+    {
+      cmp++
+      if(a[j] > key)
+      {
+        a[j + 1] = a[j]
+        j--
+      }
+      else
+      {
+        break
+      }
+    }
+    a[j + 1] = key
+  }
+}
+</script>
+
+<p data-lang="tr">Karışık dizide kabarcık 28, seçmeli 28, eklemeli 21 karşılaştırma yapar (seçmeli sıralama hep <em>n</em>(<em>n</em>-1)/2 = 28; kabarcık bu veride sonuna kadar tur atar). Hepsi O(<em>n</em>²) ama sabitler farklı. Oynatıcının yanındaki sayaç, o çalıştırmanın <em>toplam</em> karşılaştırma ve yazma sayısını gösterir.</p>
+<p data-lang="en">On the mixed array bubble sort makes 28, selection sort 28 and insertion sort 21 comparisons (selection sort always makes <em>n</em>(<em>n</em>-1)/2 = 28; bubble sort needs all its rounds on this data). All are O(<em>n</em>²) but the constants differ. The counter next to the player shows the <em>total</em> number of comparisons and writes of the run.</p>
+<p data-lang="de">Beim gemischten Array macht Bubblesort 28, Sortieren durch Auswahl 28 und Insertion Sort 21 Vergleiche (Auswahl macht immer <em>n</em>(<em>n</em>-1)/2 = 28; Bubblesort braucht bei diesen Daten alle Runden). Alle sind O(<em>n</em>²), aber die Konstanten unterscheiden sich. Der Zähler neben dem Player zeigt die <em>Gesamtzahl</em> der Vergleiche und Schreibvorgänge des Durchlaufs.</p>
+
+<textarea id="text2" class="deneme">
+// karışık sayılarda
+fillMixed()                   // her yöntemden önce diziyi yeniden doldur
+cmp = 0
+bubble()
+print cmp
+fillMixed()
+cmp = 0
+selection()
+print cmp
+fillMixed()
+cmp = 0
+insertion()
+print cmp
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+// on mixed numbers
+fillMixed()                   // fill the array again before every method
+cmp = 0
+bubble()
+print cmp
+fillMixed()
+cmp = 0
+selection()
+print cmp
+fillMixed()
+cmp = 0
+insertion()
+print cmp
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+// bei gemischten Zahlen
+fillMixed()                   // das Array vor jedem Verfahren neu füllen
+cmp = 0
+bubble()
+print cmp
+fillMixed()
+cmp = 0
+selection()
+print cmp
+fillMixed()
+cmp = 0
+insertion()
+print cmp
+</script>
+
+<p data-lang="tr">Zaten sıralı veride durum değişir: kabarcık sıralama tek turda biter (7 karşılaştırma), eklemeli sıralama da her değere bir kez bakar (7), seçmeli sıralama ise yine 28 yapar. Bu yüzden "en iyi" yoktur: neredeyse sıralı veride eklemeli, her durumda garanti isteyen yerde heap sort ya da birleştirmeli sıralama, ortalamada hızlı olanı isteyen yerde hızlı sıralama seçilir.</p>
+<p data-lang="en">On data that is already sorted things change: bubble sort ends in one round (7 comparisons), insertion sort also looks at every value once (7), selection sort still makes 28. So there is no "best": insertion sort for almost sorted data, heap sort or merge sort where a guarantee for every case is wanted, quick sort where the fastest on average is wanted.</p>
+<p data-lang="de">Bei schon sortierten Daten ändert sich das Bild: Bubblesort ist nach einer Runde fertig (7 Vergleiche), Insertion Sort sieht sich jeden Wert einmal an (7), das Sortieren durch Auswahl macht weiter 28. Ein „bestes“ gibt es also nicht: Insertion Sort für fast sortierte Daten, Heapsort oder Mergesort, wenn man eine Garantie für jeden Fall will, Quicksort, wenn das im Mittel Schnellste gefragt ist.</p>
+
+<textarea id="text3" class="deneme">
+// zaten sıralı sayılarda
+// sıralı veride kabarcık ve eklemeli sıralama çok az iş yapar, seçmeli sıralama yine de hepsine bakar
+fillSorted()
+cmp = 0
+bubble()
+print cmp
+fillSorted()
+cmp = 0
+selection()
+print cmp
+fillSorted()
+cmp = 0
+insertion()
+print cmp
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+// on numbers that are already sorted
+// on sorted data bubble and insertion sort do very little work, selection sort still looks at everything
+fillSorted()
+cmp = 0
+bubble()
+print cmp
+fillSorted()
+cmp = 0
+selection()
+print cmp
+fillSorted()
+cmp = 0
+insertion()
+print cmp
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+// bei schon sortierten Zahlen
+// bei sortierten Daten leisten Bubble und Insertion Sort sehr wenig, das Sortieren durch Auswahl sieht sich trotzdem alles an
+fillSorted()
+cmp = 0
+bubble()
+print cmp
+fillSorted()
+cmp = 0
+selection()
+print cmp
+fillSorted()
+cmp = 0
+insertion()
+print cmp
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

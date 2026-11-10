@@ -433,3 +433,6 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .tour-on .settings-panel { z-index: 59; }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
 .settings-panel .link-btn { display: block; }
+
+.dsv-stats { font-variant-numeric: tabular-nums; }
+.dsv-stats[hidden] { display: none; }

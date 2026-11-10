@@ -293,8 +293,16 @@ function makeArray(n){
 	a.dsvArray = true;
 	a.visual = {id: 'a' + (allArrays.length + 1), shown: false, name: '', cells: a.slice()};
 	allArrays.push(a);
-	return a;
+	// the program reads cells through this proxy: the cells a step read are the ones it compared
+	return window.Proxy ? new Proxy(a, {get: function(target, prop){
+		if(typeof prop === 'string' && prop.charCodeAt(0) >= 48 && prop.charCodeAt(0) <= 57)
+			cellReads.push({visual: target.visual, index: Number(prop)});
+		return target[prop];
+	}}) : a;
 }
+
+// the cells of arrays the statement being evaluated has read (see drawGraphics)
+var cellReads = [];
 
 // An array holding nodes is drawn as a column of buckets (a hash table); an array of
 // numbers (or still empty) as a row of cells over the drawing. Which one is decided by the
@@ -327,7 +335,26 @@ var heapRequested = false; // program state: some code on this page used those f
 var HEAP_LEVEL_H = 58, HEAP_R = 15, HEAP_TOP = 112; // a level of the tree, a node's radius, the tree's top under its row
 function heapLevels(a){ return heapRequested && a.visual.kind !== 'buckets' ? Math.floor(Math.log(a.length) / Math.LN2) + 1 : 0; }
 function heapWidth(a){ return Math.max(a.length * ROW_CELL_W, Math.pow(2, heapLevels(a) - 1) * 44); }
-function rowBand(a){ var l = heapLevels(a); return l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND; }
+function rowBand(a){ var l = heapLevels(a); return (l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND) + (barsOn(a) ? BAR_BAND : 0); }
+
+// An array of numbers that holds data to search or sort (named a, arr, dizi, nums...) is also drawn as bars over
+// its cells: the height of a bar is its value, so "sorted" and "in the wrong place" can be seen at a glance.
+var BAR_BAND = 76, BAR_MAX = 60;
+var BAR_NAMES = /^(a|arr|array|dizi|sayılar|sayilar|nums|numbers|veri|data|input|items|list|liste)$/i;
+function barsOn(a){
+	var v = a.visual, numbers = 0;
+	if(a.visual.kind === 'buckets' || !BAR_NAMES.test(v.name || '') || v.cells.length < 4 || v.cells.length > 24)
+		return false;
+	for(var i = 0; i < v.cells.length; i = i + 1){
+		var c = v.cells[i];
+		if(c === null || c === undefined)
+			continue;
+		if(typeof c !== 'number' || c < 0)
+			return false;
+		numbers = numbers + 1;
+	}
+	return numbers > 0;
+}
 function topOffset(){ return rowArrays().reduce(function(sum, a){ return sum + rowBand(a); }, 0); }
 
 // the value of an index variable for the markers: a local of the running call, else a global
@@ -341,6 +368,27 @@ function markerValue(name){
 // numbers as the variables panel shows them (the step's values), for the index markers
 var shownNumbers = {};
 
+// the variables a program uses as the index of an array, by array name (a[mid] -> indexUses.a.mid), and
+// the names of variables that bound a search or a sort (low, high, left, right...): they get a marker too
+var indexUses = {};
+var NAME_RE = '[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*';
+var BOUND_NAMES = ['low', 'high', 'mid', 'lo', 'hi', 'left', 'right', 'size', 'alt', 'üst', 'orta', 'sol', 'sağ'];
+
+// the markers to draw under array v: [name...] by cell index
+function markersOf(v){
+	var at = {}, names = {};
+	Object.keys(v.indexVars || {}).forEach(function(n){ names[n] = true; });        // written: a[size] = x
+	Object.keys(indexUses[v.name] || {}).forEach(function(n){ names[n] = true; }); // read: a[mid]
+	if(BAR_NAMES.test(v.name || '')) // an array of data to search or sort: its bounds (low, high, size...) are marked too
+		BOUND_NAMES.forEach(function(n){ names[n] = true; });
+	Object.keys(names).forEach(function(name){
+		var k = markerValue(name);
+		if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k <= v.cells.length)
+			(at[k] = at[k] || []).push(name);
+	});
+	return at;
+}
+
 var rowArraysDraw = null;
 function drawRowArrays(){
 	if(rowArraysDraw){
@@ -349,13 +397,19 @@ function drawRowArrays(){
 	}
 	var items = [], bandTop = 0;
 	rowArrays().forEach(function(a){
-		var v = a.visual, x0 = COL_X0, y = ROW_TOP + bandTop;
+		var v = a.visual, x0 = COL_X0, top0 = ROW_TOP + bandTop, bars = barsOn(a), y = top0 + (bars ? BAR_BAND : 0), maxValue = 1;
 		bandTop = bandTop + rowBand(a);
-		items.push(new PointText({ point: [x0, y - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
+		v.cells.forEach(function(c){ if(typeof c === 'number') maxValue = Math.max(maxValue, c); });
+		items.push(new PointText({ point: [x0, top0 - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
 		for(var i = 0; i < v.cells.length; i = i + 1){
 			var x = x0 + i * ROW_CELL_W, cell = v.cells[i];
-			var focused = isFocusedEdge(v, 'cell' + i);
-			items.push(new Path.Rectangle({ point: [x, y], size: [ROW_CELL_W, NODE_H], strokeColor: focused ? PAL.changed : PAL.stroke, strokeWidth: focused ? 3 : 2, fillColor: PAL.node }));
+			var focused = isFocusedEdge(v, 'cell' + i), read = isFocusedEdge(v, 'read' + i); // written / read (compared) by the step
+			if(bars && typeof cell === 'number'){
+				var barHeight = Math.max(3, Math.round(cell / maxValue * BAR_MAX));
+				items.push(new Path.Rectangle({ point: [x + 7, y - 4 - barHeight], size: [ROW_CELL_W - 14, barHeight], fillColor: focused ? PAL.changed : PAL.named,
+				                                strokeColor: focused ? PAL.changed : PAL.named, strokeWidth: 1.5, opacity: focused || read ? 0.9 : 0.35 }));
+			}
+			items.push(new Path.Rectangle({ point: [x, y], size: [ROW_CELL_W, NODE_H], strokeColor: focused ? PAL.changed : read ? PAL.named : PAL.stroke, strokeWidth: focused || read ? 3 : 2, fillColor: PAL.node }));
 			items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + NODE_H + 15], justification: 'center', fontSize: 12+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + i }));
 			if(cell === null || cell === undefined)
 				items.push(new Path.Line({ from: [x + 13, y + NODE_H - 5], to: [x + ROW_CELL_W - 13, y + 5], strokeColor: PAL.stroke, strokeWidth: 1.5, opacity: 0.6 }));
@@ -377,12 +431,7 @@ function drawRowArrays(){
 			});
 		}
 		// index markers: s[size] = v marks "size" under the cell it names
-		var at = {};
-		Object.keys(v.indexVars || {}).forEach(function(name){
-			var k = markerValue(name);
-			if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k <= v.cells.length)
-				(at[k] = at[k] || []).push(name);
-		});
+		var at = markersOf(v);
 		Object.keys(at).forEach(function(k){
 			var cx = x0 + Number(k) * ROW_CELL_W + ROW_CELL_W / 2, top = y + NODE_H + 22;
 			items.push(new Path.Line({ from: [cx, top + 22], to: [cx, top], strokeColor: PAL.pointer, strokeWidth: 2 }));
@@ -403,7 +452,7 @@ function heapUsed(a){
 	var v = a.visual, used = 0;
 	while(used < v.cells.length && v.cells[used] !== null && v.cells[used] !== undefined && !isNode(v.cells[used]))
 		used = used + 1;
-	Object.keys(v.indexVars || {}).forEach(function(name){ // h[n] = v with a global n: the heap's size,
+	Object.keys(v.indexVars || {}).concat(['size']).forEach(function(name){ // h[n] = v with a global n (or a global size): the heap's size,
 		var size = shownNumbers[name];                      // so cells from n on are not in it (in C++ and
 		if(typeof size === 'number' && size >= 0 && size % 1 === 0) // Java an emptied cell holds 0, not null)
 			used = Math.min(used, size);
@@ -1773,6 +1822,7 @@ var player = {
 		ui.play.setAttribute('aria-label', ui.play.title);
 		ui.play.disabled = !player.steps.length; // Step 0 / 0: nothing to play
 		ui.counter.textContent = t('stepCounter', {i: player.cursor, n: player.steps.length});
+		updateStats();
 		ui.back.disabled = player.cursor === 0;
 		ui.next.disabled = ui.end.disabled = player.cursor >= player.steps.length;
 		ui.timeline.max = player.steps.length;
@@ -1790,6 +1840,9 @@ var player = {
 var LOST_OPACITY = 0.45;
 var focus = {edges: [], pointers: []};
 var narration = '';
+
+// what the run did to arrays up to the step shown: comparisons (conditions that read cells) and writes
+var stats = {compare: 0, write: 0};
 
 // Step comparison: what the last step changed, as it was before, drawn faded and dashed behind the
 // new state: a link's old target, the place a pointer came from, an old value (see drawGhosts).
@@ -1839,7 +1892,16 @@ function lostText(key){ return window.dsvCodeLang === 'java' ? key + 'Java' : ke
 function settingOn(key){ return !window.dsv || window.dsv.settings[key] !== false; }
 var lastNarration = '', lastWarning = '';
 
+function updateStats(){
+	if(!player.ui || !player.ui.stats) return;
+	var shown = stats.compare + stats.write > 0;
+	player.ui.stats.hidden = !shown;
+	if(shown)
+		player.ui.stats.textContent = t('statsCompare') + ' ' + stats.compare + ' · ' + t('statsWrite') + ' ' + stats.write;
+}
+
 function finishStep(){
+	updateStats();
 	var lost = updateReachability();
 	redrawArrows();
 	redrawPointers();
@@ -1979,6 +2041,7 @@ function resetVisuals(){
 	clearHighlights(true);
 	focus = {edges: [], pointers: []};
 	clearGhosts();
+	stats = {compare: 0, write: 0};
 	showNarration('', '');
 
 	var output = document.getElementById("output");
@@ -2021,6 +2084,11 @@ function createPlayerUI(){
 	ui.speed = speedLabel.querySelector('input');
 	ui.speed.addEventListener('input', function(e){ player.speed = Number(e.target.value); });
 	bar.appendChild(speedLabel);
+
+	ui.stats = document.createElement('span'); // comparisons and writes of a run that works on arrays
+	ui.stats.className = 'dsv-stats';
+	ui.stats.hidden = true;
+	bar.appendChild(ui.stats);
 
 	ui.counter = document.createElement('span');
 	ui.counter.className = 'dsv-counter';
@@ -2075,6 +2143,10 @@ function drawGraphics(line, result){
 	var lhs_temp = line.type == 'free object' ? safeEval(line.text) : null;
 	var doubly = doublyRequested;
 	var tree = treeRequested;
+	var reads = cellReads.filter(function(r, i, all){ // each cell once
+		return all.findIndex(function(q){ return q.visual === r.visual && q.index === r.index; }) === i;
+	});
+	cellReads = [];
 	var scope = scopeOf(line.lhs);                  // null for a global variable
 	var sentence = describe(line, res, lhs_temp);   // what happened, with the values of now
 
@@ -2085,6 +2157,11 @@ function drawGraphics(line, result){
 		if(tree && !treeMode)
 			enableTreeMode();
 		narrate(sentence);
+		reads.forEach(function(r){ focusEdge(r.visual, 'read' + r.index); });
+		if(line.type == 'logical' && reads.length)   // a condition that looked at cells: a comparison
+			stats.compare = stats.compare + 1;
+		else if(line.type == 'array assignment')
+			stats.write = stats.write + 1;
 
 		if(line.type == 'declaration' || line.type == 'assignment')
 		{
@@ -2306,6 +2383,7 @@ function clearErrorLines(){
 
 function processOneItem(item){
 
+	cellReads = [];
 	currentLine = item.lineNumber;
 	currentDoc = window.activeEditor;
 
@@ -2674,6 +2752,10 @@ window.parse = function(text) {
 			treeRequested = true;
 		if(HEAP_FORMULA.test(text))
 			heapRequested = true;
+		text.replace(new RegExp('(' + NAME_RE + ')\\s*\\[\\s*(' + NAME_RE + ')', 'g'), function(m, array, index){
+			(indexUses[array] = indexUses[array] || {})[index] = true; // a[mid]: mid is marked under the cells of a
+			return m;
+		});
 
 		frames = []; // a previous run may have stopped inside a call
 		if(unfinishedCalls.length){ // ... and left its frames in the panel: remove them first
@@ -2693,6 +2775,13 @@ window.parse = function(text) {
 		player.play();
 		var firstStep = player.steps.length;
 		recursivelyProcess(result);
+
+		// the counters of comparisons and writes start from zero with every block (the blocks above run again
+		// before it, so that the drawing is the same, but what they did is not what this block did)
+		if(player.steps.length > firstStep){
+			var first = player.steps[firstStep];
+			player.steps[firstStep] = function(){ stats = {compare: 0, write: 0}; first(); };
+		}
 
 		// after the last step of a run, a list left drawn right to left is turned to read
 		// left to right (part of the step, so stepping back and forth gives the same picture)
@@ -2770,6 +2859,7 @@ function resetProgram(){
 	doublyRequested = false;
 	treeRequested = false;
 	heapRequested = false;
+	indexUses = {};
 	currentLine = null;
 
 	player.steps = [];
@@ -2787,9 +2877,12 @@ window.dsvState = function(){
 		tree: treeMode,
 		arrays: allArrays.filter(function(a){ return a.visual.shown; }).map(function(a){
 			var markers = {};
-			Object.keys(a.visual.indexVars || {}).forEach(function(n){ markers[n] = markerValue(n); });
+			var at = markersOf(a.visual);
+			Object.keys(at).forEach(function(k){ at[k].forEach(function(n){ markers[n] = Number(k); }); });
 			return {name: a.visual.name, kind: a.visual.kind === 'buckets' ? 'buckets' : 'row', markers: markers,
 			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; }),
+			        bars: barsOn(a),
+			        reads: a.visual.cells.map(function(c, i){ return isFocusedEdge(a.visual, 'read' + i) ? i : -1; }).filter(function(i){ return i >= 0; }),
 			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null, // the cells drawn as a tree
 			        graph: a.visual.graphCol !== undefined ? graphState(a) : null};    // the graph drawn beside the chains
 		}),
@@ -2797,6 +2890,7 @@ window.dsvState = function(){
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
 		narration: (document.getElementById('narration') || {}).textContent || '',
+		stats: {compare: stats.compare, write: stats.write},
 		// step comparison: what the last step changed, as it was before ("2>3 next": the next of [2] was [3];
 		// "curr:1>2": curr moved from [1] to [2]; "2<-4": the value 4 became 2; "a[0]:5": the cell held 5)
 		ghosts: {

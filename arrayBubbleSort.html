@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kabarcık sıralama (dizide) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Kabarcık sıralama (dizide)</h1>
+<h1 data-lang="en">Bubble sort (in an array)</h1>
+<h1 data-lang="de">Bubblesort (im Array)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Kabarcık sıralama (bubble sort) yan yana duran iki değeri karşılaştırır ve yanlış sıradaysa yer değiştirir. Bir turun sonunda en büyük değer kabarcık gibi sona çıkmış olur; tur sayısı kadar tekrarlanır. Dizide hücreler yer değiştirirken çubukların da yer değiştirdiğine bakın: karşılaştırılan iki hücre mavi, yazılan hücreler turuncudur.</p>
+<p data-lang="en">Bubble sort compares two neighbouring values and swaps them if they are in the wrong order. At the end of a round the biggest value has risen to the end like a bubble; this is repeated for as many rounds as needed. Watch the bars change places when cells are swapped: the two compared cells are blue, the written cells orange.</p>
+<p data-lang="de">Bubblesort vergleicht zwei benachbarte Werte und vertauscht sie, wenn sie in der falschen Reihenfolge stehen. Am Ende einer Runde ist der größte Wert wie eine Blase ans Ende gestiegen; das wiederholt sich Runde für Runde. Beobachten Sie, wie die Balken die Plätze tauschen: die beiden verglichenen Zellen sind blau, die geschriebenen orange.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<p data-lang="tr">Bir tur boyunca hiç takas olmadıysa dizi zaten sıralıdır ve erken durulur (<code>swapped</code>). Karşılaştırma sayısı <em>n</em>(<em>n</em>-1)/2'ye kadar çıkar: O(<em>n</em>²); sıralı bir dizide ise tek turda biter, <em>n</em>-1 karşılaştırma. Değerleri sayaçla karşılaştırmak için sıralama karşılaştırması sayfasına bakın.</p>
+<p data-lang="en">If there was no swap during a round, the array is already sorted and we stop early (<code>swapped</code>). The number of comparisons goes up to <em>n</em>(<em>n</em>-1)/2: O(<em>n</em>²); for a sorted array it ends in one round, <em>n</em>-1 comparisons. To compare the algorithms with the counter, see the sorting comparison page.</p>
+<p data-lang="de">Gab es während einer Runde keinen Tausch, ist das Array schon sortiert und wir hören früh auf (<code>swapped</code>). Die Zahl der Vergleiche steigt bis <em>n</em>(<em>n</em>-1)/2: O(<em>n</em>²); bei einem sortierten Array ist es nach einer Runde fertig, <em>n</em>-1 Vergleiche. Zum Vergleich der Verfahren mit dem Zähler siehe die Seite zum Vergleich der Sortierverfahren.</p>
+
+<textarea id="text2" class="deneme">
+function swap(i, j)         // iki hücrenin değerini değiştir
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i &lt; n - 1; i++)
+{
+  var swapped = false     // bu turda takas oldu mu?
+  for(var j = 0; j &lt; n - 1 - i; j++)   // sıralanmamış kısmın sonuna kadar
+  {
+    if(a[j] &gt; a[j + 1])   // sağdaki daha küçükse yer değiştir
+    {
+      swap(j, j + 1)
+      swapped = true
+    }
+  }
+  if(!swapped)
+  {
+    break                 // takas olmadıysa dizi sıralıdır: dur
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function swap(i, j)         // swap the values of two cells
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i < n - 1; i++)
+{
+  var swapped = false     // was there a swap in this round?
+  for(var j = 0; j < n - 1 - i; j++)   // up to the end of the unsorted part
+  {
+    if(a[j] > a[j + 1])   // swap if the right one is smaller
+    {
+      swap(j, j + 1)
+      swapped = true
+    }
+  }
+  if(!swapped)
+  {
+    break                 // no swap means the array is sorted: stop
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function swap(i, j)         // die Werte zweier Zellen tauschen
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+for(var i = 0; i < n - 1; i++)
+{
+  var swapped = false     // gab es in dieser Runde einen Tausch?
+  for(var j = 0; j < n - 1 - i; j++)   // bis zum Ende des unsortierten Teils
+  {
+    if(a[j] > a[j + 1])   // tauschen, wenn der rechte kleiner ist
+    {
+      swap(j, j + 1)
+      swapped = true
+    }
+  }
+  if(!swapped)
+  {
+    break                 // kein Tausch heißt: das Array ist sortiert, aufhören
+  }
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

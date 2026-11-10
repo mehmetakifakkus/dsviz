@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sayarak sıralama (counting sort) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Sayarak sıralama (counting sort)</h1>
+<h1 data-lang="en">Counting sort</h1>
+<h1 data-lang="de">Counting Sort (Zählsortierung)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Şimdiye kadarki bütün sıralamalar değerleri <em>birbiriyle karşılaştırıyordu</em> ve bunun bir alt sınırı vardır: O(<em>n</em> log <em>n</em>). Değerler küçük bir tam sayı aralığındaysa (burada 0 ile 9) karşılaştırmadan sıralamak mümkün: <em>sayarak sıralama</em> her değerden kaç tane olduğunu sayar, sonra değerleri küçükten büyüğe o kadar kez yazar.</p>
+<p data-lang="en">All the sorting algorithms so far <em>compared values with each other</em>, and that has a lower bound: O(<em>n</em> log <em>n</em>). If the values are in a small range of integers (here 0 to 9) it is possible to sort without comparing: <em>counting sort</em> counts how many there are of every value, then writes the values from the smallest to the biggest, that many times each.</p>
+<p data-lang="de">Alle bisherigen Sortierverfahren <em>verglichen Werte miteinander</em>, und das hat eine untere Schranke: O(<em>n</em> log <em>n</em>). Liegen die Werte in einem kleinen Bereich ganzer Zahlen (hier 0 bis 9), kann man ohne Vergleiche sortieren: <em>Counting Sort</em> zählt, wie oft jeder Wert vorkommt, und schreibt die Werte dann von klein nach groß so oft zurück.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi: değerler 0 ile 9 arasında
+var n = 8                 // eleman sayısı
+a[0] = 4
+a[1] = 2
+a[2] = 7
+a[3] = 2
+a[4] = 9
+a[5] = 4
+a[6] = 0
+a[7] = 7
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort: values from 0 to 9
+var n = 8                 // the number of values
+a[0] = 4
+a[1] = 2
+a[2] = 7
+a[3] = 2
+a[4] = 9
+a[5] = 4
+a[6] = 0
+a[7] = 7
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array: Werte von 0 bis 9
+var n = 8                 // die Anzahl der Werte
+a[0] = 4
+a[1] = 2
+a[2] = 7
+a[3] = 2
+a[4] = 9
+a[5] = 4
+a[6] = 0
+a[7] = 7
+</script>
+
+<p data-lang="tr">Oynatıcının yanındaki sayaca bakın: <em>karşılaştırma 0</em>! Algoritma yalnızca sayıyor ve yazıyor. <code>count</code> dizisi her değerin sayısını tutar. Süre O(<em>n</em> + <em>k</em>) (<em>k</em>: değer aralığı, burada 10): <em>k</em> küçükse hızlıdır; değerler çok büyük aralıktaysa (ör. 0 ile bir milyar) bellek ve zaman israf olur. Taban sıralaması (radix sort) bu fikri rakam rakam uygulayarak aralığı küçültür.</p>
+<p data-lang="en">Look at the counter next to the player: <em>comparisons 0</em>! The algorithm only counts and writes. The array <code>count</code> keeps the number of every value. It takes O(<em>n</em> + <em>k</em>) (<em>k</em>: the range of values, here 10): fast if <em>k</em> is small; if the values are in a huge range (e.g. 0 to a billion) it wastes memory and time. Radix sort applies this idea digit by digit to make the range small.</p>
+<p data-lang="de">Sehen Sie auf den Zähler neben dem Player: <em>Vergleiche 0</em>! Der Algorithmus zählt und schreibt nur. Das Array <code>count</code> hält die Anzahl jedes Werts. Es dauert O(<em>n</em> + <em>k</em>) (<em>k</em>: der Wertebereich, hier 10): schnell, wenn <em>k</em> klein ist; liegen die Werte in einem riesigen Bereich (z. B. 0 bis eine Milliarde), verschwendet es Speicher und Zeit. Radixsort wendet die Idee Ziffer für Ziffer an, um den Bereich klein zu machen.</p>
+
+<textarea id="text2" class="deneme">
+var count = new Array(10)      // count[v]: v değerinden kaç tane var
+for(var v = 0; v &lt; 10; v++)
+{
+  count[v] = 0
+}
+for(var i = 0; i &lt; n; i++)     // her değeri say
+{
+  count[a[i]] = count[a[i]] + 1
+}
+var k = 0                      // dizinin üstüne küçükten büyüğe yaz
+for(var v = 0; v &lt; 10; v++)
+{
+  var times = count[v]
+  for(var q = 0; q &lt; times; q++)   // v değerinden kaç tane varsa o kadar yaz
+  {
+    a[k] = v
+    k++
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var count = new Array(10)      // count[v]: how many values equal v
+for(var v = 0; v < 10; v++)
+{
+  count[v] = 0
+}
+for(var i = 0; i < n; i++)     // count every value
+{
+  count[a[i]] = count[a[i]] + 1
+}
+var k = 0                      // write them back over the array, from the smallest to the biggest
+for(var v = 0; v < 10; v++)
+{
+  var times = count[v]
+  for(var q = 0; q < times; q++)   // write v as many times as it was counted
+  {
+    a[k] = v
+    k++
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var count = new Array(10)      // count[v]: wie viele Werte gleich v sind
+for(var v = 0; v < 10; v++)
+{
+  count[v] = 0
+}
+for(var i = 0; i < n; i++)     // jeden Wert zählen
+{
+  count[a[i]] = count[a[i]] + 1
+}
+var k = 0                      // von klein nach groß zurück ins Array schreiben
+for(var v = 0; v < 10; v++)
+{
+  var times = count[v]
+  for(var q = 0; q < times; q++)   // v so oft schreiben, wie es gezählt wurde
+  {
+    a[k] = v
+    k++
+  }
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

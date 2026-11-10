@@ -9,6 +9,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 ## Neler var?
 
 - Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
+- Dizilerde arama ve sıralama (ikili arama, seçmeli, kabarcık, eklemeli, hızlı, heap ve sayarak sıralama): dizi çubuk olarak da çizilir, karşılaştırılan hücreler çerçevelenir, oynatıcının yanında karşılaştırma ve yazma sayacı çalışır.
 - Adım karşılaştırma: her adımda değişen şeyin önceki hali (eski bağ, pointer'ın eski yeri, eski değer) soluk ve kesik çizgiyle arkada görünür; ayarlardan kapatılabilir.
 - Siteye ilk gelen kullanıcıya kısa bir tanıtım turu sayfanın bölümlerini sırayla gösterir (ayarlardan yeniden başlatılabilir).
 - Kod dili seçilebilir: ayarlarda **Düğüm (Türkçe)** seçilince örnekler Türkçe kelimelerle gösterilir ve çalışır (`değişken`, `eğer`, `yinele`, `için`, `yaz`, `boş`, `yeni Düğüm(1)`, `p.sonraki`, `p.veri`; kelime kelime çevrilir). **C++** ya da **Java** seçilince örnekler otomatik olarak o dile çevrilip gösterilir ve çalışır (C++: `Node*`, `->`, `new`/`delete`, `nullptr`, `cout`; Java: `Node p`, `Node[]`, `System.out.println`, `static` metotlar, `delete` yerine çöp toplayıcı). Kod çalıştırılmadan önce satır satır Düğüm'e çevrilir (`js/codelang.js`), böylece çizim ve anlatım aynen çalışır.

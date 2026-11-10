@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heap sort (yığın sıralaması) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Heap sort (yığın sıralaması)</h1>
+<h1 data-lang="en">Heap sort</h1>
+<h1 data-lang="de">Heapsort</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Heap sort, heap sayfasındaki yapıyı sıralamak için kullanır. Dizi önce bir <em>en büyük heap</em>'e (her düğüm çocuklarından büyük) dönüştürülür; sonra kök, yani en büyük değer, dizinin sonuna atılır, heap bir küçültülür ve kök yeniden aşağı indirilerek heap onarılır. Bu tekrarlandıkça dizi sondan başa doğru sıralanır. Dizi altta temsil ettiği ağaçla birlikte çizilir.</p>
+<p data-lang="en">Heap sort uses the structure of the heap page to sort. First the array is turned into a <em>max-heap</em> (every node is bigger than its children); then the root, the biggest value, is moved to the end of the array, the heap is made one smaller and repaired by sifting the root down again. Repeating this sorts the array from the end towards the start. The array is drawn together with the tree it stands for.</p>
+<p data-lang="de">Heapsort benutzt die Struktur der Heap-Seite zum Sortieren. Zuerst wird das Array in einen <em>Max-Heap</em> verwandelt (jeder Knoten ist größer als seine Kinder); dann wird die Wurzel, der größte Wert, ans Ende des Arrays gesetzt, der Heap um eins verkleinert und durch erneutes Absenken der Wurzel repariert. Wiederholt man das, wird das Array vom Ende zum Anfang sortiert. Das Array wird zusammen mit dem Baum gezeichnet, für den es steht.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // sıralanacak dizi
+var n = 8                 // eleman sayısı
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // the array to sort
+var n = 8                 // the number of values
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // das zu sortierende Array
+var n = 8                 // die Anzahl der Werte
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<p data-lang="tr">Heap kurmak O(<em>n</em>), her değerin sona atılması O(log <em>n</em>) sürer; toplam O(<em>n</em> log <em>n</em>), üstelik en kötü durumda bile. <code>size</code> işareti heap'in bittiği yeri gösterir: sağındaki hücreler artık sıralı kısımdır ve ağaçtan çıkar. Hızlı sıralamanın aksine ekstra bellek kullanmaz ve en kötü durumu yoktur; bedeli, bellekte çok zıplamasıdır.</p>
+<p data-lang="en">Building the heap takes O(<em>n</em>), moving each value to the end takes O(log <em>n</em>); in all O(<em>n</em> log <em>n</em>), even in the worst case. The marker <code>size</code> shows where the heap ends: the cells to its right are the sorted part, and they leave the tree. Unlike quick sort it uses no extra memory and has no bad worst case; the price is that it jumps around in memory a lot.</p>
+<p data-lang="de">Den Heap zu bauen dauert O(<em>n</em>), jeden Wert ans Ende zu setzen O(log <em>n</em>); insgesamt O(<em>n</em> log <em>n</em>), sogar im schlimmsten Fall. Die Markierung <code>size</code> zeigt, wo der Heap endet: die Zellen rechts davon sind der sortierte Teil und verschwinden aus dem Baum. Anders als Quicksort braucht es keinen zusätzlichen Speicher und hat keinen schlechten Worst Case; der Preis ist, dass es viel im Speicher springt.</p>
+
+<textarea id="text2" class="deneme">
+function swap(i, j)         // iki hücrenin değerini değiştir
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+var size = n                   // heap'in büyüklüğü: sağındaki hücreler sıralı kısım
+function siftDown(i)          // i'nin çocukları 2i+1 ve 2i+2: aşağı indir
+{
+  while(2 * i + 1 &lt; size)
+  {
+    var c = 2 * i + 1
+    if(c + 1 &lt; size &amp;&amp; a[c + 1] &gt; a[c])
+    {
+      c = c + 1               // büyük olan çocuğu seç
+    }
+    if(a[i] &gt;= a[c])
+    {
+      break                   // ebeveyn zaten büyükse dur
+    }
+    swap(i, c)
+    i = c
+  }
+}
+for(var s = taban((n - 2) / 2); s &gt;= 0; s--)   // ilk önce büyük yığını kur: sondaki ebeveynden köke
+{
+  siftDown(s)
+}
+while(size &gt; 1)               // kök en büyüktür: sona at, heap'i küçült, kalanı onar
+{
+  size--
+  swap(0, size)
+  siftDown(0)
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function swap(i, j)         // swap the values of two cells
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+var size = n                   // the size of the heap: the cells to its right are the sorted part
+function siftDown(i)          // the children of i are 2i+1 and 2i+2: sift down
+{
+  while(2 * i + 1 < size)
+  {
+    var c = 2 * i + 1
+    if(c + 1 < size && a[c + 1] > a[c])
+    {
+      c = c + 1               // pick the bigger child
+    }
+    if(a[i] >= a[c])
+    {
+      break                   // the parent is already bigger: stop
+    }
+    swap(i, c)
+    i = c
+  }
+}
+for(var s = taban((n - 2) / 2); s >= 0; s--)   // first build the max-heap: from the last parent up to the root
+{
+  siftDown(s)
+}
+while(size > 1)               // the root is the biggest: move it to the end, make the heap smaller, repair it
+{
+  size--
+  swap(0, size)
+  siftDown(0)
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function swap(i, j)         // die Werte zweier Zellen tauschen
+{
+  var t = a[i]
+  a[i] = a[j]
+  a[j] = t
+}
+var size = n                   // die Größe des Heaps: die Zellen rechts davon sind der sortierte Teil
+function siftDown(i)          // die Kinder von i sind 2i+1 und 2i+2: absenken
+{
+  while(2 * i + 1 < size)
+  {
+    var c = 2 * i + 1
+    if(c + 1 < size && a[c + 1] > a[c])
+    {
+      c = c + 1               // das größere Kind wählen
+    }
+    if(a[i] >= a[c])
+    {
+      break                   // der Elternknoten ist schon größer: aufhören
+    }
+    swap(i, c)
+    i = c
+  }
+}
+for(var s = taban((n - 2) / 2); s >= 0; s--)   // zuerst den Max-Heap bauen: vom letzten Elternknoten zur Wurzel
+{
+  siftDown(s)
+}
+while(size > 1)               // die Wurzel ist die größte: ans Ende setzen, den Heap verkleinern, reparieren
+{
+  size--
+  swap(0, size)
+  siftDown(0)
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

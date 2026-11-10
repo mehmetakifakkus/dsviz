@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arama: doğrusal ve ikili arama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Arama: doğrusal ve ikili arama</h1>
+<h1 data-lang="en">Searching: linear and binary search</h1>
+<h1 data-lang="de">Suchen: lineare und binäre Suche</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir dizide değer aramanın iki temel yolu var. <em>Doğrusal arama</em> hücrelere baştan sona tek tek bakar; sıralı olmayan bir dizide tek çare budur. Dizi <em>sıralıysa</em> çok daha akıllı bir yol var: <em>ikili arama</em> (binary search) her adımda aranan değeri ortadaki değerle karşılaştırır ve dizinin yarısını eler. Önce 11 elemanlı sıralı bir dizi kuralım; aradığımız değer 56. Çubukların boyu değeri gösterir.</p>
+<p data-lang="en">There are two basic ways to look for a value in an array. <em>Linear search</em> looks at the cells one by one from the start; for an unsorted array it is the only way. If the array is <em>sorted</em>, there is a much smarter way: <em>binary search</em> compares the value we look for with the middle value in every step and drops half of the array. First we build a sorted array of 11 values; we look for 56. The height of a bar is the value.</p>
+<p data-lang="de">Es gibt zwei grundlegende Wege, in einem Array einen Wert zu suchen. Die <em>lineare Suche</em> sieht sich die Zellen von vorn einzeln an; bei einem unsortierten Array ist das der einzige Weg. Ist das Array <em>sortiert</em>, gibt es einen viel klügeren: die <em>binäre Suche</em> vergleicht in jedem Schritt den gesuchten Wert mit dem mittleren Wert und verwirft die Hälfte des Arrays. Zuerst bauen wir ein sortiertes Array aus 11 Werten; wir suchen 56. Die Höhe eines Balkens ist der Wert.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(11)      // sıralı dizi
+var n = 11                 // eleman sayısı
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(11)      // a sorted array
+var n = 11                 // the number of values
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(11)      // ein sortiertes Array
+var n = 11                 // die Anzahl der Werte
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</script>
+
+<p data-lang="tr">Doğrusal aramada <code>i</code> hücre hücre ilerler; bakılan hücre mavi çerçevelenir (<code>i</code> işareti yalnızca fonksiyon çalışırken görünür). Aradığımız değer dokuzuncu hücrede olduğu için <em>9 karşılaştırma</em> gerekir (oynatıcının yanındaki sayaç). En kötü durumda, değer sonda ya da hiç yoksa, <em>n</em> karşılaştırma: O(<em>n</em>).</p>
+<p data-lang="en">In linear search <code>i</code> moves cell by cell; the cell being looked at gets a blue frame. The value is in the ninth cell, so we need <em>9 comparisons</em> (the counter next to the player). In the worst case, when the value is last or not there at all, <em>n</em> comparisons: O(<em>n</em>).</p>
+<p data-lang="de">Bei der linearen Suche rückt <code>i</code> Zelle für Zelle vor; die angesehene Zelle bekommt einen blauen Rahmen. Der Wert steht in der neunten Zelle, wir brauchen also <em>9 Vergleiche</em> (der Zähler neben dem Player). Im schlimmsten Fall, wenn der Wert zuletzt steht oder gar nicht vorkommt, <em>n</em> Vergleiche: O(<em>n</em>).</p>
+
+<textarea id="text2" class="deneme">
+function linearSearch(x)
+{
+  var i = 0
+  while(i &lt; n &amp;&amp; a[i] != x)   // bulana ya da diziyi bitirene kadar
+  {
+    i++
+  }
+  if(i &lt; n)
+  {
+    return i                  // bulunduğu yer
+  }
+  return -1                   // bulunamadı
+}
+print linearSearch(56)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function linearSearch(x)
+{
+  var i = 0
+  while(i < n && a[i] != x)   // until we find it or the array ends
+  {
+    i++
+  }
+  if(i < n)
+  {
+    return i                  // the place where it is
+  }
+  return -1                   // not found
+}
+print linearSearch(56)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function linearSearch(x)
+{
+  var i = 0
+  while(i < n && a[i] != x)   // bis wir ihn finden oder das Array endet
+  {
+    i++
+  }
+  if(i < n)
+  {
+    return i                  // der Ort, an dem er steht
+  }
+  return -1                   // nicht gefunden
+}
+print linearSearch(56)
+</script>
+
+<p data-lang="tr">İkili aramada <code>low</code> ve <code>high</code> hâlâ aranabilecek aralığın sınırları, <code>mid</code> ortasıdır. <code>a[mid]</code> aranandan küçükse sol yarı elenir (<code>low = mid + 1</code>), büyükse sağ yarı (<code>high = mid - 1</code>). Burada yalnızca <em>3 karşılaştırma</em> yeter. Her adım aralığı yarıya indirdiği için en kötü durumda log₂ <em>n</em> adım gerekir: O(log <em>n</em>). Bir milyon elemanda bile en çok 20 karşılaştırma! Bedeli şu: dizinin sıralı olması gerekir.</p>
+<p data-lang="en">In binary search <code>low</code> and <code>high</code> are the borders of the range that can still hold the value, and <code>mid</code> is its middle. If <code>a[mid]</code> is smaller than the value, the left half is dropped (<code>low = mid + 1</code>), if it is bigger, the right half (<code>high = mid - 1</code>). Here only <em>3 comparisons</em> are enough. Every step halves the range, so in the worst case log₂ <em>n</em> steps are needed: O(log <em>n</em>). Even for a million values at most 20 comparisons! The price: the array has to be sorted.</p>
+<p data-lang="de">Bei der binären Suche sind <code>low</code> und <code>high</code> die Grenzen des Bereichs, der den Wert noch enthalten kann, und <code>mid</code> seine Mitte. Ist <code>a[mid]</code> kleiner als der Wert, wird die linke Hälfte verworfen (<code>low = mid + 1</code>), ist es größer, die rechte (<code>high = mid - 1</code>). Hier genügen nur <em>3 Vergleiche</em>. Jeder Schritt halbiert den Bereich, im schlimmsten Fall braucht man also log₂ <em>n</em> Schritte: O(log <em>n</em>). Selbst bei einer Million Werten höchstens 20 Vergleiche! Der Preis: das Array muss sortiert sein.</p>
+
+<textarea id="text3" class="deneme">
+function binarySearch(x)
+{
+  var low = 0
+  var high = n - 1
+  while(low &lt;= high)        // hâlâ aranabilecek aralık: low ... high
+  {
+    var mid = taban((low + high) / 2)   // aralığın ortası
+    if(a[mid] == x)
+    {
+      return mid            // bulundu
+    }
+    else if(a[mid] &lt; x)
+    {
+      low = mid + 1         // ortadaki küçük: sol yarıyı ele
+    }
+    else
+    {
+      high = mid - 1        // ortadaki büyük: sağ yarıyı ele
+    }
+  }
+  return -1                 // bulunamadı
+}
+print binarySearch(56)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function binarySearch(x)
+{
+  var low = 0
+  var high = n - 1
+  while(low <= high)        // the range that can still hold it: low ... high
+  {
+    var mid = taban((low + high) / 2)   // the middle of the range
+    if(a[mid] == x)
+    {
+      return mid            // found
+    }
+    else if(a[mid] < x)
+    {
+      low = mid + 1         // the middle is smaller: drop the left half
+    }
+    else
+    {
+      high = mid - 1        // the middle is bigger: drop the right half
+    }
+  }
+  return -1                 // not found
+}
+print binarySearch(56)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function binarySearch(x)
+{
+  var low = 0
+  var high = n - 1
+  while(low <= high)        // der Bereich, der ihn noch enthalten kann: low ... high
+  {
+    var mid = taban((low + high) / 2)   // die Mitte des Bereichs
+    if(a[mid] == x)
+    {
+      return mid            // gefunden
+    }
+    else if(a[mid] < x)
+    {
+      low = mid + 1         // die Mitte ist kleiner: linke Hälfte verwerfen
+    }
+    else
+    {
+      high = mid - 1        // die Mitte ist größer: rechte Hälfte verwerfen
+    }
+  }
+  return -1                 // nicht gefunden
+}
+print binarySearch(56)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
