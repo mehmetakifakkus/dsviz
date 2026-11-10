@@ -348,3 +348,23 @@ test('matrices: new Array(r, c) and g[i][j] = v', () => {
 	expect(parse('a[i] = 3\n')[0].type).toBe('array assignment'); // one subscript is still a plain array
 	expect(parse('if(g[i][j] == 0)\n  print g[i][j]\n')[0]).toMatchObject({ type: 'logical' }); // read inside conditions and prints
 });
+
+test('matrices are shown in C++, Java and Türkçe and translate back', () => {
+	const w = loadCodeLang();
+	const dugum = 'var g = new Array(3, 4)\ng[1][2] = 5\nvar b = new Array(2, 2)\nb[0][0] = true\ng[0][0] = null\nprint g[1][2]\n';
+	const [cpp] = w.dsvCode.toCpp([dugum]);
+	expect(cpp).toBe('int g[3][4];\ng[1][2] = 5;\nbool b[2][2];\nb[0][0] = true;\ng[0][0] = 0;\ncout << g[1][2] << endl;\n');
+	const [java] = w.dsvCode.toJava([dugum]);
+	expect(java).toContain('int[][] g = new int[3][4];\n');
+	expect(java).toContain('boolean[][] b = new boolean[2][2];\n');
+	expect(java).toContain('System.out.println(g[1][2]);');
+	for (const text of [cpp, java]) {
+		const lang = text === cpp ? w.dsvCode.langs.cpp : w.dsvCode.langs.java;
+		const back = lang.from(text);
+		expect(back).toContain('var g = new Array(3, 4)');
+		expect(back).toContain('var b = new Array(2, 2)');
+		expect(() => w.dsvParser.parse(back)).not.toThrow();
+	}
+	expect(w.dsvCode.toTurkish([dugum])[0]).toContain('değişken g = yeni Dizi(3, 4)');
+	expect(w.dsvCode.fromTurkish(w.dsvCode.toTurkish([dugum])[0])).toBe(dugum);
+});

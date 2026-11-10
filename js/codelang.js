@@ -351,8 +351,10 @@
 				var arr = /^new\s+(Array|Dizi)\s*\(([\s\S]*)\)\s*$/.exec(d.expr);
 				if(arr){
 					var elem = t && t.indexOf('arr:') === 0 && t !== 'arr:?' ? t.slice(4) : 'int';
-					if(java) return {type: cppType(elem) + '[]', text: d.name + ' = new ' + cppType(elem) + '[' + arr[2].trim() + ']'};
-					return {type: cppType(elem), text: d.name + '[' + arr[2].trim() + ']'};
+					var sizes = splitTop(arr[2], ',').map(function(x){ return '[' + x.trim() + ']'; }).join(''); // [3] or, for a matrix, [3][4]
+					var dims = sizes.split('][').length > 1 ? '[][]' : '[]';
+					if(java) return {type: cppType(elem) + dims, text: d.name + ' = new ' + cppType(elem) + sizes};
+					return {type: cppType(elem), text: d.name + sizes};
 				}
 				if(t === undefined) t = typeOf(d.expr, lookup, types.funcs);
 				return {type: cppType(t), text: d.name + (d.expr !== '' ? ' = ' + exprCpp(d.expr) : '')};
@@ -714,8 +716,8 @@
 				var pointer = m[2] === 'Node' || m[3].length > 0;
 				var decls = splitTop(m[4], ',').map(function(d){
 					d = d.trim().replace(/^\*+\s*/, '');
-					var arr = new RegExp('^(' + NAME + ')\\s*\\[([^\\]]*)\\]\\s*$').exec(d);
-					if(arr) return arr[1] + ' = new Array(' + arr[2].trim() + ')';
+					var arr = new RegExp('^(' + NAME + ')\\s*\\[([^\\]]*)\\](?:\\s*\\[([^\\]]*)\\])?\\s*$').exec(d);
+					if(arr) return arr[1] + ' = new Array(' + arr[2].trim() + (arr[3] !== undefined ? ', ' + arr[3].trim() : '') + ')';   // int g[3][4]: a matrix
 					if(/=/.test(d)) return d;
 					return d + (pointer ? ' = null' : ' = 0');
 				});
@@ -729,7 +731,7 @@
 
 	var JTYPE = '(?:void|int|long|short|double|float|boolean|char|Node)';
 	var JMOD = '(?:(?:public|private|protected|static|final)\\s+)*';
-	var JDECL = new RegExp('^(\\s*)' + JMOD + '(' + JTYPE + ')\\s*((?:\\[\\s*\\])?)\\s*(' + NAME + '[\\s\\S]*)$');
+	var JDECL = new RegExp('^(\\s*)' + JMOD + '(' + JTYPE + ')\\s*((?:\\[\\s*\\]){0,2})\\s*(' + NAME + '[\\s\\S]*)$');
 	var JFUNC = new RegExp('^(\\s*)' + JMOD + '(' + JTYPE + ')\\s*(?:\\[\\s*\\])?\\s*(' + NAME + ')\\s*\\(([^()]*)\\)\\s*([\\s\\S]*)$');
 
 	function fromJava(text){
@@ -770,6 +772,7 @@
 			code = outsideStrings(code, function(part){
 				return part.replace(/\bMath\.floor\s*\(/g, 'taban(').replace(/\bMath\.ceil\s*\(/g, 'tavan(')
 				           .replace(/\bMath\.sqrt\s*\(/g, 'karekök(').replace(/\bMath\.abs\s*\(/g, 'mutlak(')
+				           .replace(/\bnew\s+(?:Node|int|long|double|boolean)\s*\[([^\]]*)\]\s*\[([^\]]*)\]/g, 'new Array($1, $2)')   // new int[3][4]: a matrix
 				           .replace(/\bnew\s+(?:Node|int|long|double|boolean)\s*\[([^\]]*)\]/g, 'new Array($1)');
 			});
 			code = trimRight(code).replace(/;\s*$/, '');
@@ -806,7 +809,7 @@
 			}
 			else if((m = /^(\s*(?:\}\s*)?(?:else\s+)?for\s*\(\s*)(?:final\s+)?(?:int|long|double|float|boolean|Node)\s*/.exec(code)))
 				code = m[1] + 'var ' + code.slice(m[0].length);
-			else if((m = JDECL.exec(code)) && /^[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*\s*(\[\s*\]\s*)?([=,]|$)/.test(m[4])){
+			else if((m = JDECL.exec(code)) && /^[A-Za-z_şğçöüıŞĞÇÖÜİ][A-Za-z0-9_şğçöüıŞĞÇÖÜİ]*\s*(?:\[\s*\]\s*){0,2}([=,]|$)/.test(m[4])){
 				var reference = m[2] === 'Node' || m[3].length > 0;
 				var decls = splitTop(m[4], ',').map(function(d){
 					d = d.trim().replace(new RegExp('^(' + NAME + ')\\s*\\[\\s*\\]'), '$1'); // int s[] = ...
