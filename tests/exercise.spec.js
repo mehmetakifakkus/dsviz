@@ -90,6 +90,45 @@ test('a student function that fails only in the hidden test is a failed attempt 
 	expect(problems).toEqual([]);
 });
 
+test('hints and the solution open even when the browser will not store anything', async ({ page }) => {
+	await page.addInitScript(() => {
+		const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+		Storage.prototype.getItem = function(k){ if (k === 'dsv-exercises') throw new Error('blocked'); return get.call(this, k); };
+		Storage.prototype.setItem = function(k, v){ if (k === 'dsv-exercises') throw new Error('quota'); return set.call(this, k, v); };
+	});
+	const problems = await openPage(page, 'exReverse.html');
+	await check(page);
+	await expect(page.locator('.ex-hint-btn')).toBeEnabled();
+	await check(page);
+	await expect(page.locator('.ex-solution-btn')).toBeVisible();
+	await expect(page.locator('.ex-attempts')).toHaveText('2 deneme');
+	await setStudent(page, solutionOf('exReverse.html'));
+	await check(page);
+	await expect(page.locator('.ex-status')).toHaveText('Yapıldı ✓');
+	expect(problems).toEqual([]);
+});
+
+test('in lesson mode the check belongs to the student\'s block and shows only with it', async ({ page }) => {
+	const problems = await openPage(page, 'exReverse.html', { lessonMode: true });
+	await expect(page.locator('.exercise-panel')).toBeHidden();         // the first part: the given list
+	await page.locator('.lesson-next').click();
+	await expect(page.locator('.exercise-panel')).toBeVisible();        // the second part: the student's block and its check
+	await expect(page.locator('.ex-check')).toBeVisible();
+	await page.locator('.lesson-prev').click();
+	await expect(page.locator('.exercise-panel')).toBeHidden();
+	expect(problems).toEqual([]);
+});
+
+test('a misnamed function is explained without a line number of the hidden test', async ({ page }) => {
+	const problems = await openPage(page, 'exMiddle.html');
+	await setStudent(page, 'function mid(head)\n{\n  return head\n}\n');
+	await check(page);
+	const text = await page.locator('.ex-result').textContent();
+	expect(text).toContain('"middle" tanımlı değil');
+	expect(text).not.toMatch(/Satır \d+: "middle"/);
+	expect(problems).toEqual([]);
+});
+
 test('broken saved progress does not break the page', async ({ page }) => {
 	await page.addInitScript(() => localStorage.setItem('dsv-exercises', '{{{'));
 	const problems = await openPage(page, 'exLength.html');

@@ -1175,4 +1175,22 @@ test.describe('quiet runs', () => {
 		expect(await stepCounter(page)).toEqual(counter);
 		expect(problems).toEqual([]);
 	});
+	test('what the student printed is available after a run (for output() checks)', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await setBlock(page, 0, 'print 42\nprint 7\n');
+		await page.evaluate(() => window.dsvRunBlock(0));
+		expect(await page.evaluate(() => window.dsvPrintedText())).toBe('42,7');   // before any animation step has played
+		await page.evaluate(() => window.dsvRunQuiet('print 1\n'));                   // a later run replaces it: exercise.js reads it right after the student's run
+		expect(await page.evaluate(() => window.dsvPrintedText())).toBe('1');
+		expect(problems).toEqual([]);
+	});
+
+	test('hidden code is Düğüm in every code language: it is not translated back from C++', async ({ page }) => {
+		const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
+		const wrong = await page.evaluate(() => window.dsvRunQuiet('int q = 5\n'));    // C++, not Düğüm: a syntax error here
+		expect(wrong.ok).toBe(false);
+		const right = await page.evaluate(() => window.dsvRunQuiet('var q = 5\n'));
+		expect(right).toEqual({ ok: true, error: '' });
+		expect(problems).toEqual([]);
+	});
 });

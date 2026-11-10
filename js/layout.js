@@ -412,6 +412,15 @@
 		card.appendChild(ta);
 	});
 
+	// an exercise page: a place under the student's block for its check (js/exercise.js fills it); lesson mode keeps it with the block
+	var exerciseData = lesson.querySelector('script#exercise');
+	if(exerciseData){
+		var studentBlock = 1;
+		try { studentBlock = JSON.parse(exerciseData.textContent).block || 1; } catch(e) {}
+		var studentCard = lesson.querySelectorAll('.code-card')[studentBlock - 1];
+		if(studentCard) studentCard.parentNode.insertBefore(el('div', {'class': 'exercise-slot'}), studentCard.nextSibling);
+	}
+
 	// ---------- example list on the main page ----------
 	var list = document.getElementById('example-list');
 	if(list){
@@ -482,6 +491,7 @@
 		Array.prototype.forEach.call(lesson.children, function(e){
 			if(e.tagName === 'H1' || e.classList.contains('plan-keep')) return;
 			if(e.tagName === 'FOOTER' || e.classList.contains('pager')){ tail.push(e); return; }
+			if(e.classList.contains('exercise-slot') && parts.length){ parts[parts.length - 1].push(e); return; } // the check goes with its block
 			partNow.push(e);
 			if(e.classList.contains('code-card')){ parts.push(partNow); partNow = []; }
 		});

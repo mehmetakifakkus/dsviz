@@ -28,13 +28,17 @@
 			return;
 
 		function read(){
-			try { var all = JSON.parse(localStorage.getItem(KEY) || '{}'); return all && typeof all === 'object' ? all : {}; }
+			try { var all = JSON.parse(localStorage.getItem(KEY) || '{}'); return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
 			catch(e) { return {}; }
 		}
-		function mine(){ var r = read()[file]; return r && typeof r === 'object' ? {done: r.done === true, attempts: Number(r.attempts) || 0} : {done: false, attempts: 0}; }
+		// what the student did: loaded from the browser's storage once, kept here, written back after every check
+		// (a browser that will not store anything still gets its hints and solution)
+		var record = (function(){ var r = read()[file]; return r && typeof r === 'object' ? {done: r.done === true, attempts: Number(r.attempts) || 0} : {done: false, attempts: 0}; })();
+		function mine(){ return {done: record.done, attempts: record.attempts}; }
 		function save(rec){
+			record = {done: rec.done, attempts: rec.attempts};
 			var all = read();
-			all[file] = rec;
+			all[file] = record;
 			try { localStorage.setItem(KEY, JSON.stringify(all)); } catch(e) {}
 		}
 
@@ -65,7 +69,9 @@
 		var solutionCode = mk('pre');
 		solution.appendChild(solutionCode);
 		[bar, result, actions, hintList, solution].forEach(function(e){ panel.appendChild(e); });
-		card.parentNode.insertBefore(panel, card.nextSibling);   // under the card: its buttons are placed over the card's bottom edge
+		var slot = document.querySelector('.exercise-slot'); // made by layout.js: a part of lesson mode with the block
+		if(slot) slot.appendChild(panel);
+		else card.parentNode.insertBefore(panel, card.nextSibling);   // under the card: its buttons are placed over the card's bottom edge
 
 		var hints = [].map.call(document.querySelectorAll('.ex-hints li'), function(li){ return li.textContent; });
 		var shown = 0;
@@ -129,8 +135,7 @@
 				show(false, t('exRunError'));
 				return;
 			}
-			var out = document.getElementById('output');
-			var typed = out ? out.textContent.trim().split('\n').filter(Boolean).join(',') : '';
+			var typed = window.dsvPrintedText();      // what the student's run printed (the output panel fills only while it is animated)
 			var failures = [];
 			var ran = spec.test ? window.dsvRunQuiet(spec.test) : {ok: true, error: ''};
 			if(!ran.ok)

@@ -45,7 +45,7 @@ matrisGezme, pascal, gridPaths, lcs, knapsack, nQueens (4×4). Menü grubu "2B d
 - Çalıştır: setup + öğrenci kodu, animasyonla.
 - Kontrol et: setup + öğrenci kodu + test; sonra `expect` ifadeleri program değişkenlerinde değerlendirilir.
 - Hepsi tutarsa "Doğru!". Tutmayanlar için "beklenen / senin sonucun"; gizli test gösterilmez.
-- Çalışma hatası mevcut öğrenci diliyle mesaj olur, başarısız deneme sayılmaz.
+- Öğrencinin kendi bloğundaki çalışma hatası mevcut öğrenci diliyle mesaj olur, başarısız deneme sayılmaz. Hata yalnızca gizli testte çıkarsa (ör. fonksiyonu boş listede çöküyor) yanlış cevap sayılır: deneme artar, hata mesajı gösterilir.
 - Sonraki ipucu her denemeden sonra açılır; "Çözümü göster" 2 başarısız denemeden sonra çıkar ve editörü değiştirmez (ayrı, katlanır blok).
 
 ### İlerleme
