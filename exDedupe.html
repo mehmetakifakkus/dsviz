@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: yinelenenleri sil | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: yinelenenleri sil</h1>
+<h1 data-lang="en">Exercise: remove duplicates</h1>
+<h1 data-lang="de">Übung: Duplikate entfernen</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>dedupe(head)</code> fonksiyonunu yaz: <em>sıralı</em> bir listede arka arkaya gelen aynı değerli düğümlerden yalnızca birini bıraksın ve listenin başını döndürsün. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>dedupe(head)</code>: in a <em>sorted</em> list it keeps only one of any nodes with the same value that follow each other, and returns the head of the list. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>dedupe(head)</code>: in einer <em>sortierten</em> Liste behält sie von aufeinanderfolgenden Knoten mit demselben Wert nur einen und gibt den Kopf der Liste zurück. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(1, new Node(2, new Node(3, new Node(3)))))   // sıralı liste: 1, 1, 2, 3, 3
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(1, new Node(2, new Node(3, new Node(3)))))   // a sorted list: 1, 1, 2, 3, 3
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(1, new Node(2, new Node(3, new Node(3)))))   // eine sortierte Liste: 1, 1, 2, 3, 3
+</script>
+
+<textarea id="text2" class="deneme">
+function dedupe(head)
+{
+  // buraya yaz
+  return head
+}
+var y = dedupe(x)      // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function dedupe(head)
+{
+  // write here
+  return head
+}
+var y = dedupe(x)      // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function dedupe(head)
+{
+  // hier schreiben
+  return head
+}
+var y = dedupe(x)      // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Liste sıralı olduğu için aynı değerler yan yana durur: bir düğümü <code>next</code> ile karşılaştır.</li><li>Aynıysa bir sonrakini atla: <code>p.next = p.next.next</code>; ve bu durumda <code>p</code>'yi ilerletme.</li><li>Farklıysa <code>p = p.next</code> ile ilerle.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>The list is sorted, so equal values sit next to each other: compare a node with its <code>next</code>.</li><li>If they are equal skip the next one: <code>p.next = p.next.next</code>; and do not move <code>p</code> then.</li><li>If they differ move on with <code>p = p.next</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Die Liste ist sortiert, gleiche Werte stehen also nebeneinander: vergleiche einen Knoten mit seinem <code>next</code>.</li><li>Sind sie gleich, überspringe den nächsten: <code>p.next = p.next.next</code>; <code>p</code> bleibt dann stehen.</li><li>Sind sie verschieden, gehe mit <code>p = p.next</code> weiter.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "var d1 = new Node(1, new Node(1, new Node(2, new Node(2, new Node(3)))))\nvar d2 = new Node(7, new Node(7))\nvar d3 = new Node(4, new Node(5))\n",
+ "expect": [
+  [
+   "walk(dedupe(d1))",
+   "1>2>3",
+   "1, 1, 2, 2, 3 listesi",
+   "The list 1, 1, 2, 2, 3",
+   "Die Liste 1, 1, 2, 2, 3"
+  ],
+  [
+   "walk(dedupe(d2))",
+   "7",
+   "7, 7 listesi",
+   "The list 7, 7",
+   "Die Liste 7, 7"
+  ],
+  [
+   "walk(dedupe(d3))",
+   "4>5",
+   "Yinelenen yok: 4, 5",
+   "No duplicates: 4, 5",
+   "Keine Duplikate: 4, 5"
+  ],
+  [
+   "walk(dedupe(null))",
+   "",
+   "Boş liste",
+   "An empty list",
+   "Eine leere Liste"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function dedupe(head)
+{
+  var p = head
+  while(p != null && p.next != null)
+  {
+    if(p.data == p.next.data)
+    {
+      p.next = p.next.next
+    }
+    else
+    {
+      p = p.next
+    }
+  }
+  return head
+}
+var y = dedupe(x)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

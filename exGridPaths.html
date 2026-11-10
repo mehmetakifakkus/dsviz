@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: ızgarada yol sayısı | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: ızgarada yol sayısı</h1>
+<h1 data-lang="en">Exercise: paths in a grid</h1>
+<h1 data-lang="de">Übung: Wege im Gitter</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> Bir robot 5×5'lik ızgaranın sol üstünden yalnızca sağa ya da aşağı giderek her hücreye kaç farklı yolla varır? <code>dp</code> matrisini doldur: <code>dp[i][j]</code>, (i, j) hücresine varan yol sayısı. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> A robot goes through a 5×5 grid from the top left, stepping only right or down. In how many different ways does it reach every cell? Fill the matrix <code>dp</code>: <code>dp[i][j]</code> is the number of paths that reach cell (i, j). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Ein Roboter geht in einem 5×5-Gitter von links oben und darf nur nach rechts oder unten gehen. Auf wie vielen verschiedenen Wegen erreicht er jede Zelle? Fülle die Matrix <code>dp</code>: <code>dp[i][j]</code> ist die Anzahl der Wege zur Zelle (i, j). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var dp = new Array(5, 5)   // 5 satır, 5 sütun
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var dp = new Array(5, 5)   // 5 rows, 5 columns
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var dp = new Array(5, 5)   // 5 Zeilen, 5 Spalten
+</script>
+
+<textarea id="text2" class="deneme">
+for(var i = 0; i &lt; 5; i++)
+{
+  // ilk satır ve ilk sütun: tek yol
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 0; i < 5; i++)
+{
+  // first row and column: one path
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 0; i < 5; i++)
+{
+  // erste Zeile und Spalte: ein Weg
+}
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>İlk satırdaki ve ilk sütundaki her hücreye tek yolla varılır: 1 yaz.</li><li>Diğer hücrelere üstten ya da soldan gelinir: <code>dp[i - 1][j] + dp[i][j - 1]</code>.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Every cell in the first row and the first column is reached in one way: write 1.</li><li>Every other cell is reached from above or from the left: <code>dp[i - 1][j] + dp[i][j - 1]</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Jede Zelle der ersten Zeile und der ersten Spalte erreicht man auf einem Weg: schreibe 1.</li><li>Jede andere Zelle erreicht man von oben oder von links: <code>dp[i - 1][j] + dp[i][j - 1]</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "",
+ "expect": [
+  [
+   "dp[2][3]",
+   10,
+   "dp[2][3]",
+   "dp[2][3]",
+   "dp[2][3]"
+  ],
+  [
+   "dp[4][4]",
+   70,
+   "sağ alt hücre",
+   "the bottom right cell",
+   "die Zelle unten rechts"
+  ],
+  [
+   "dp[1][1]",
+   2,
+   "dp[1][1]",
+   "dp[1][1]",
+   "dp[1][1]"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+for(var i = 0; i < 5; i++)
+{
+  dp[i][0] = 1
+  dp[0][i] = 1
+}
+for(var i = 1; i < 5; i++)
+{
+  for(var j = 1; j < 5; j++)
+  {
+    dp[i][j] = dp[i - 1][j] + dp[i][j - 1]
+  }
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

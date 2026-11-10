@@ -65,7 +65,7 @@
 		var solutionCode = mk('pre');
 		solution.appendChild(solutionCode);
 		[bar, result, actions, hintList, solution].forEach(function(e){ panel.appendChild(e); });
-		card.appendChild(panel);
+		card.parentNode.insertBefore(panel, card.nextSibling);   // under the card: its buttons are placed over the card's bottom edge
 
 		var hints = [].map.call(document.querySelectorAll('.ex-hints li'), function(li){ return li.textContent; });
 		var shown = 0;

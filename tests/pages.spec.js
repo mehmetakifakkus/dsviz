@@ -7,7 +7,9 @@ const { expect, openPage, runAllBlocks, valueOf, stepCounter } = require('./help
 
 const ROOT = path.resolve(__dirname, '..');
 // the lesson plan pages (teacher.html, plan.html) hold no code: they are not examples (see tests/plan.spec.js)
-const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && !['teacher.html', 'plan.html'].includes(f)).sort();
+const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && !['teacher.html', 'plan.html'].includes(f) && !/^ex[A-Z]/.test(f)).sort();
+// the exercise pages (ex*.html) end in whatever state the student's code leaves: see tests/exercise.spec.js
+const EXERCISES = fs.readdirSync(ROOT).filter(f => /^ex[A-Z].*\.html$/.test(f)).sort();
 
 // The state a page must end in: [expression evaluated in the page, expected value].
 // walk(h) lists a list forwards, back(t) backwards (prev), output() the Çıktı lines.
@@ -98,7 +100,7 @@ test('pages load the compiled parser, not PEG.js and the grammar', async ({ page
 test('the examples menu lists every page', async ({ page }) => {
 	const problems = await openPage(page, 'index.html');
 	const listed = await page.evaluate(() => window.dsvExamples.flatMap(g => g.items.map(it => it[0])));
-	expect([...listed, 'index.html'].sort()).toEqual(PAGES);
+	expect([...listed, 'index.html'].sort()).toEqual([...PAGES, ...EXERCISES].sort());
 	expect(problems).toEqual([]);
 });
 

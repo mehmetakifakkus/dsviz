@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: listenin sonuna ekle | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: listenin sonuna ekle</h1>
+<h1 data-lang="en">Exercise: append to a list</h1>
+<h1 data-lang="de">Übung: an eine Liste anhängen</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>append(head, v)</code> fonksiyonunu yaz: <code>v</code> değerli yeni bir düğümü listenin sonuna eklesin ve listenin başını döndürsün. Liste boşsa yeni düğüm baş olur. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>append(head, v)</code>: it adds a new node with the value <code>v</code> to the end of the list and returns the head of the list. If the list is empty the new node becomes the head. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>append(head, v)</code>: sie hängt einen neuen Knoten mit dem Wert <code>v</code> ans Ende der Liste und gibt den Kopf der Liste zurück. Ist die Liste leer, wird der neue Knoten zum Kopf. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // örnek liste: 1, 2, 3, 4
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // a sample list: 1, 2, 3, 4
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // eine Beispielliste: 1, 2, 3, 4
+</script>
+
+<textarea id="text2" class="deneme">
+function append(head, v)
+{
+  // buraya yaz
+  return head
+}
+var y = append(x, 9)   // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function append(head, v)
+{
+  // write here
+  return head
+}
+var y = append(x, 9)   // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function append(head, v)
+{
+  // hier schreiben
+  return head
+}
+var y = append(x, 9)   // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Önce yeni düğümü yap: <code>new Node(v)</code>. Boş liste ayrı bir durum.</li><li>Son düğüme kadar ilerle: <code>p.next != null</code> olduğu sürece <code>p = p.next</code>.</li><li>Son düğümün <code>next</code>'ine yeni düğümü bağla ve başı döndür.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>First make the new node: <code>new Node(v)</code>. An empty list is a case of its own.</li><li>Walk to the last node: <code>p = p.next</code> as long as <code>p.next != null</code>.</li><li>Link the new node to the <code>next</code> of the last node and return the head.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Erzeuge zuerst den neuen Knoten: <code>new Node(v)</code>. Eine leere Liste ist ein Sonderfall.</li><li>Gehe bis zum letzten Knoten: <code>p = p.next</code>, solange <code>p.next != null</code>.</li><li>Hänge den neuen Knoten an das <code>next</code> des letzten Knotens und gib den Kopf zurück.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function build(n)\n{\n  var h = null\n  for(var i = n; i >= 1; i--)\n  {\n    h = new Node(i, h)\n  }\n  return h\n}\n",
+ "expect": [
+  [
+   "walk(append(build(3), 9))",
+   "1>2>3>9",
+   "Üç düğümlü listeye 9 eklenince",
+   "Appending 9 to a list of three nodes",
+   "9 an eine Liste mit drei Knoten anhängen"
+  ],
+  [
+   "walk(append(null, 5))",
+   "5",
+   "Boş listeye 5 eklenince",
+   "Appending 5 to an empty list",
+   "5 an eine leere Liste anhängen"
+  ],
+  [
+   "walk(append(build(1), 2))",
+   "1>2",
+   "Tek düğümlü listeye 2 eklenince",
+   "Appending 2 to a list of one node",
+   "2 an eine Liste mit einem Knoten anhängen"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function append(head, v)
+{
+  var node = new Node(v)
+  if(head == null)
+  {
+    return node
+  }
+  var p = head
+  while(p.next != null)
+  {
+    p = p.next
+  }
+  p.next = node
+  return head
+}
+var y = append(x, 9)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

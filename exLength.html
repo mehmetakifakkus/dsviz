@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: listenin uzunluğu | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: listenin uzunluğu</h1>
+<h1 data-lang="en">Exercise: the length of a list</h1>
+<h1 data-lang="de">Übung: die Länge einer Liste</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>listLength(head)</code> fonksiyonunu yaz: listedeki düğüm sayısını döndürsün (boş liste için 0). Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>listLength(head)</code>: it returns the number of nodes in the list (0 for an empty list). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>listLength(head)</code>: sie gibt die Anzahl der Knoten der Liste zurück (0 bei einer leeren Liste). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // örnek liste: 1, 2, 3, 4
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // a sample list: 1, 2, 3, 4
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // eine Beispielliste: 1, 2, 3, 4
+</script>
+
+<textarea id="text2" class="deneme">
+function listLength(head)
+{
+  // buraya yaz
+  return 0
+}
+print listLength(x)    // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function listLength(head)
+{
+  // write here
+  return 0
+}
+print listLength(x)    // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function listLength(head)
+{
+  // hier schreiben
+  return 0
+}
+print listLength(x)    // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Bir sayaç tut ve listeyi baştan sona dolaş; her düğümde sayacı artır.</li><li><code>p != null</code> olduğu sürece <code>p = p.next</code> ile ilerle.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Keep a counter and walk the list from start to end; add one at every node.</li><li>Move on with <code>p = p.next</code> as long as <code>p != null</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Halte einen Zähler und laufe die Liste von vorn bis hinten durch; erhöhe ihn bei jedem Knoten.</li><li>Gehe mit <code>p = p.next</code> weiter, solange <code>p != null</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function build(n)\n{\n  var h = null\n  for(var i = n; i >= 1; i--)\n  {\n    h = new Node(i, h)\n  }\n  return h\n}\n",
+ "expect": [
+  [
+   "listLength(build(5))",
+   5,
+   "Beş düğümlü liste",
+   "A list of five nodes",
+   "Eine Liste mit fünf Knoten"
+  ],
+  [
+   "listLength(build(1))",
+   1,
+   "Tek düğümlü liste",
+   "A list of one node",
+   "Eine Liste mit einem Knoten"
+  ],
+  [
+   "listLength(null)",
+   0,
+   "Boş liste",
+   "An empty list",
+   "Eine leere Liste"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function listLength(head)
+{
+  var n = 0
+  var p = head
+  while(p != null)
+  {
+    n++
+    p = p.next
+  }
+  return n
+}
+print listLength(x)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

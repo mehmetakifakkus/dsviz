@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: listenin ortadaki düğümü | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: listenin ortadaki düğümü</h1>
+<h1 data-lang="en">Exercise: the middle node of a list</h1>
+<h1 data-lang="de">Übung: der mittlere Knoten einer Liste</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>middle(head)</code> fonksiyonunu yaz: listenin ortadaki düğümünü döndürsün (çift uzunlukta ikinci ortadaki). Listeyi bir kez dolaşman yeter. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>middle(head)</code>: it returns the middle node of the list (the second of the two middle nodes for an even length). One walk over the list is enough. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>middle(head)</code>: sie gibt den mittleren Knoten der Liste zurück (bei gerader Länge den zweiten der beiden mittleren). Ein Durchlauf genügt. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // örnek liste: 1 … 5
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // a sample list: 1 … 5
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // eine Beispielliste: 1 … 5
+</script>
+
+<textarea id="text2" class="deneme">
+function middle(head)
+{
+  // buraya yaz
+  return head
+}
+var m = middle(x)      // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function middle(head)
+{
+  // write here
+  return head
+}
+var m = middle(x)      // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function middle(head)
+{
+  // hier schreiben
+  return head
+}
+var m = middle(x)      // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>İki pointer kullan: biri her turda bir, diğeri iki düğüm ilerlesin.</li><li>Hızlı olan listenin sonuna gelince yavaş olan ortadadır. Hızlı pointer'ın <code>null</code> olup olmadığını (ve <code>next</code>'inin) kontrol et.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Use two pointers: one moves one node per round, the other two nodes.</li><li>When the fast one reaches the end of the list, the slow one is in the middle. Check whether the fast pointer (and its <code>next</code>) is <code>null</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Benutze zwei Zeiger: einer geht pro Runde einen Knoten weiter, der andere zwei.</li><li>Erreicht der schnelle das Ende der Liste, steht der langsame in der Mitte. Prüfe, ob der schnelle Zeiger (und sein <code>next</code>) <code>null</code> ist.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function build(n)\n{\n  var h = null\n  for(var i = n; i >= 1; i--)\n  {\n    h = new Node(i, h)\n  }\n  return h\n}\n",
+ "expect": [
+  [
+   "middle(build(5)).data",
+   3,
+   "Beş düğümlü listenin ortası",
+   "The middle of a list of five nodes",
+   "Die Mitte einer Liste mit fünf Knoten"
+  ],
+  [
+   "middle(build(4)).data",
+   3,
+   "Dört düğümlü listenin ortası (ikinci ortadaki)",
+   "The middle of a list of four nodes (the second one)",
+   "Die Mitte einer Liste mit vier Knoten (der zweite)"
+  ],
+  [
+   "middle(build(1)).data",
+   1,
+   "Tek düğümlü liste",
+   "A list of one node",
+   "Eine Liste mit einem Knoten"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function middle(head)
+{
+  var slow = head
+  var fast = head
+  while(fast != null && fast.next != null)
+  {
+    slow = slow.next
+    fast = fast.next.next
+  }
+  return slow
+}
+var m = middle(x)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

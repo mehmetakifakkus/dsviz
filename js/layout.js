@@ -106,6 +106,16 @@
 			['unionFind.html', {tr: 'Birleşik küme (union-find)', en: 'Disjoint sets (union-find)', de: 'Disjunkte Mengen (Union-Find)'}],
 			['kruskal.html', {tr: 'Kruskal: en küçük kapsayan ağaç', en: 'Kruskal: minimum spanning tree', de: 'Kruskal: minimaler Spannbaum'}],
 			['prim.html', {tr: 'Prim: en küçük kapsayan ağaç', en: 'Prim: minimum spanning tree', de: 'Prim: minimaler Spannbaum'}]
+		]},
+		{ group: {tr: 'Alıştırmalar', en: 'Exercises', de: 'Übungen'}, items: [
+			['exReverse.html', {tr: 'Listeyi ters çevir', en: 'Reverse a list', de: 'Eine Liste umkehren'}],
+			['exMiddle.html', {tr: 'Listenin ortadaki düğümü', en: 'The middle node of a list', de: 'Der mittlere Knoten einer Liste'}],
+			['exLength.html', {tr: 'Listenin uzunluğu', en: 'The length of a list', de: 'Die Länge einer Liste'}],
+			['exAppend.html', {tr: 'Listenin sonuna ekle', en: 'Append to a list', de: 'An eine Liste anhängen'}],
+			['exDedupe.html', {tr: 'Yinelenenleri sil', en: 'Remove duplicates', de: 'Duplikate entfernen'}],
+			['exRowSum.html', {tr: 'Matriste satır toplamı', en: 'The sum of a matrix row', de: 'Die Summe einer Matrixzeile'}],
+			['exPascal.html', {tr: 'Pascal üçgeni', en: "Pascal's triangle", de: 'Pascalsches Dreieck'}],
+			['exGridPaths.html', {tr: 'Izgarada yol sayısı', en: 'Paths in a grid', de: 'Wege im Gitter'}]
 		]}
 	];
 

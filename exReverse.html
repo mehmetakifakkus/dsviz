@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: listeyi ters çevir | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: listeyi ters çevir</h1>
+<h1 data-lang="en">Exercise: reverse a list</h1>
+<h1 data-lang="de">Übung: eine Liste umkehren</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>reverse(head)</code> fonksiyonunu yaz: listeyi ters çevirsin ve yeni baş düğümü döndürsün (boş liste için <code>null</code>). Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>reverse(head)</code>: it reverses the list and returns the new head node (<code>null</code> for an empty list). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>reverse(head)</code>: sie kehrt die Liste um und gibt den neuen Kopfknoten zurück (<code>null</code> bei einer leeren Liste). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // örnek liste: 1, 2, 3, 4
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // a sample list: 1, 2, 3, 4
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(2, new Node(3, new Node(4))))   // eine Beispielliste: 1, 2, 3, 4
+</script>
+
+<textarea id="text2" class="deneme">
+function reverse(head)
+{
+  // buraya yaz
+  return head
+}
+var r = reverse(x)     // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function reverse(head)
+{
+  // write here
+  return head
+}
+var r = reverse(x)     // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function reverse(head)
+{
+  // hier schreiben
+  return head
+}
+var r = reverse(x)     // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Listeyi dolaşırken her düğümün <code>next</code> bağını bir öncekine çevireceksin; önceki düğümü tutan bir değişken gerekir.</li><li>Bağı çevirmeden önce bir sonraki düğümü bir değişkende sakla; yoksa listenin kalanını kaybedersin.</li><li>Döngü bitince önceki düğüm yeni başı gösterir: onu döndür.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>While walking the list you turn the <code>next</code> link of every node to the one before; you need a variable that holds the previous node.</li><li>Save the next node in a variable before you turn the link; otherwise you lose the rest of the list.</li><li>When the loop ends the previous node is the new head: return it.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Beim Durchlaufen drehst du bei jedem Knoten den <code>next</code>-Verweis auf den vorigen; du brauchst eine Variable für den vorigen Knoten.</li><li>Merke dir den nächsten Knoten in einer Variablen, bevor du den Verweis drehst; sonst verlierst du den Rest der Liste.</li><li>Wenn die Schleife endet, ist der vorige Knoten der neue Kopf: gib ihn zurück.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function build(n)\n{\n  var h = null\n  for(var i = n; i >= 1; i--)\n  {\n    h = new Node(i, h)\n  }\n  return h\n}\n",
+ "expect": [
+  [
+   "walk(reverse(build(4)))",
+   "4>3>2>1",
+   "Dört düğümlü listeyi ters çevirince",
+   "Reversing a list of four nodes",
+   "Eine Liste mit vier Knoten umkehren"
+  ],
+  [
+   "walk(reverse(build(1)))",
+   "1",
+   "Tek düğümlü liste",
+   "A list of one node",
+   "Eine Liste mit einem Knoten"
+  ],
+  [
+   "reverse(null)",
+   null,
+   "Boş liste",
+   "An empty list",
+   "Eine leere Liste"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function reverse(head)
+{
+  var prev = null
+  var curr = head
+  while(curr != null)
+  {
+    var nxt = curr.next
+    curr.next = prev
+    prev = curr
+    curr = nxt
+  }
+  return prev
+}
+var r = reverse(x)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>
