@@ -120,6 +120,8 @@ window.dsvApplySettings = function(key){
 	}
 	if(key === 'narration' || key === 'warnings' || key === 'all')
 		showNarration(settingOn('narration') ? lastNarration : '', settingOn('warnings') ? lastWarning : '');
+	if(key === 'stepCompare' || key === 'all')
+		redrawPointers();
 	if(key === 'fontSize' || key === 'all') // CodeMirror measures its lines again
 		Array.prototype.forEach.call(document.querySelectorAll('.CodeMirror'), function(e){ e.CodeMirror.refresh(); });
 	if(key === 'theme' || key === 'all')
@@ -169,6 +171,7 @@ function Node(content, next){
 	this.visualPrev = null;
 	this.visualLeft = null;
 	this.visualRight = null;
+	this.firstData = this.data; // the value it was made with: a replay starts from it (the program has run to its end by then)
 	this.shownData = this.data;
 	this.cell = null;      // {row, col} on the layout grid
 	this.position = null;  // top left corner of the box
@@ -368,6 +371,10 @@ function drawRowArrays(){
 				var text = cell === true || cell === false ? codeWord(String(cell)) : '' + cell; // doğru in Turkish code
 				items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + 18], justification: 'center', fontSize: (text.length > 4 ? 11 : 15)+'px', fillColor: PAL.text, content: text }));
 			}
+			ghosts.cells.forEach(function(g){ // step comparison: the value the cell had before, small and struck through
+				if(g.visual === v && g.index === i && settingOn('stepCompare'))
+					items.push(struckText(g.old === true || g.old === false ? codeWord(String(g.old)) : '' + g.old, [x + ROW_CELL_W - 5, y + 10], 'right', 10, PAL.stroke));
+			});
 		}
 		// index markers: s[size] = v marks "size" under the cell it names
 		var at = {};
@@ -1216,6 +1223,8 @@ function Pointer(node, name, color, direction, scope){
 	var self = this;
 
 	this.draw = function(node){
+		if(self.active && node && self.points && self.points !== node)
+			ghosts.pointers.push({pointer: self, from: self.points, to: node});
 		self.points = node || self.points;
 		self.active = true;
 		if(self.scope)
@@ -1226,6 +1235,8 @@ function Pointer(node, name, color, direction, scope){
 	}
 
 	this.markNull = function(){
+		if(self.active && self.points)
+			ghosts.pointers.push({pointer: self, from: self.points, to: null});
 		self.points = null;
 		self.active = false;
 		if(self.scope)
@@ -1314,6 +1325,110 @@ function redrawPointers(){
 		items.push(labelGroup);
 		pointerDrawings.push(new Group(items));
 	});
+	drawGhosts();
+}
+
+// where the arrow and the name of a pointer go for a node (the same as redrawPointers uses)
+function pointerSpot(node, direction){
+	var pos = node.position, dx = geometry().dataX;
+	var up = drawnTable() ? true : !treeMode && direction === 'up';
+	var rise = drawnTable() ? 26 : 40;
+	var start = pos + (up ? [dx - 10, -rise] : [dx - 10, 55]);
+	return {up: up, start: start, end: pos + (up ? [dx + 10, -3] : [dx + 10, 28]), label: start + (up ? [-4, drawnTable() ? -11 : -14] : [-4, 14])};
+}
+
+// an old value, small and struck through
+function struckText(content, point, justification, size, color){
+	var text = new PointText({point: point, justification: justification, fontSize: size + 'px', fillColor: color, opacity: GHOST_OPACITY + 0.15, content: content});
+	var b = text.bounds;
+	return new Group([text, new Path.Line({from: [b.left - 1, b.center.y + 1], to: [b.right + 1, b.center.y + 1], strokeColor: color, strokeWidth: 1, opacity: GHOST_OPACITY + 0.15})]);
+}
+
+// A link, faded and dashed: the arrow the line looked like before the step
+function fadeArrow(group){
+	group.opacity = GHOST_OPACITY;
+	if(group.children && group.children[0])
+		group.children[0].dashArray = [6, 5];
+	if(group.children && group.children.length === 3) // the dot at the start belongs to the real link
+		group.children[2].remove();
+	return group;
+}
+
+var GHOST_OPACITY = 0.45;
+var ghostDrawing = null;
+
+// Step comparison (setting stepCompare): the state before the last step, faded and dashed, behind
+// the new one: the old target of a link, where a pointer came from (and a dashed arrow to where
+// it is now), an old value struck through.
+function drawGhosts(){
+	if(ghostDrawing){
+		ghostDrawing.remove();
+		ghostDrawing = null;
+	}
+	if(!settingOn('stepCompare'))
+		return;
+	var items = [], any = false;
+
+	ghosts.links.forEach(function(g){
+		if(!g.from.shown || !g.from.position || !g.to.shown || !g.to.position)
+			return;
+		items.push(fadeArrow(treeMode ? treeArrow(g.from, g.to, g.kind, PAL.stroke) : nodeArrow(g.from, g.to, g.kind, PAL.stroke)));
+		any = true;
+	});
+
+	ghosts.pointers.forEach(function(g){
+		if(!g.from.shown || !g.from.position || !g.pointer.active && g.to)
+			return;
+		var dir = g.pointer.direction, color = PAL[g.pointer.kind];
+		var spot = pointerSpot(g.from, dir);
+		// other pointers still stand at that node: their arrow is the same one, so the faded name
+		// only goes on a second line under theirs (no arrow of its own)
+		var crowded = pointers.some(function(p){ return p !== g.pointer && p.active && p.points === g.from && (treeMode || drawnTable() || p.direction === dir); });
+		var label = spot.label + [0, crowded ? (spot.up ? -24 : 24) : 0];
+		var parts = [new PointText({point: label + [0, crowded ? 5 : 6], justification: 'center', fontSize: (crowded ? 15 : 18) + 'px', fillColor: color, content: g.pointer.label})];
+		if(!crowded){
+			parts.push(new Path.Line({from: spot.start, to: spot.end, strokeColor: color, strokeWidth: 2, dashArray: [4, 3]}));
+			parts.push(arrowTip(spot.end, (spot.end - spot.start).angle, color));
+		}
+		var ghost = new Group(parts);
+		ghost.opacity = GHOST_OPACITY;
+		items.push(ghost);
+		any = true;
+
+		// and a dashed arrow from the old name to the new one
+		if(g.to && g.to.shown && g.to.position){
+			var now = pointerSpot(g.to, dir).label;
+			var half = 8 + 5 * g.pointer.label.length;
+			var sign = now.x >= label.x ? 1 : -1;
+			var a = new Point(label.x + sign * (half + 4), label.y + (spot.up ? -12 : 14));
+			var b = new Point(now.x - sign * 26, now.y + (spot.up ? -14 : 16));
+			if(a.getDistance(b) > 14){
+				var bulge = (spot.up ? -1 : 1) * (14 + a.getDistance(b) * 0.08);
+				var arc = new Path({segments: [a], strokeColor: color, strokeWidth: 1.5, dashArray: [4, 3]});
+				arc.arcTo(new Point((a.x + b.x) / 2, (a.y + b.y) / 2 + bulge), b);
+				var move = new Group([arc, arrowTip(b, arc.getTangentAt(arc.length).angle, color)]);
+				move.opacity = GHOST_OPACITY + 0.1;
+				items.push(move);
+			}
+		}
+	});
+
+	ghosts.values.forEach(function(g){
+		if(!g.node.shown || !g.node.position)
+			return;
+		var gg = geometry();
+		items.push(struckText(typeof g.old === 'boolean' ? codeWord(String(g.old)) : '' + g.old, g.node.position + [gg.width - 12, -5], 'center', 13, PAL.stroke));
+		any = true;
+	});
+
+	if(ghosts.cells.length) any = true;
+	if(any){ // what the faded things are, in the bottom right corner of the drawing
+		var note = new PointText({point: [view.viewSize.width / view.zoom - 10, view.viewSize.height / view.zoom - 8], justification: 'right',
+			fontSize: 12 + 'px', fillColor: PAL.stroke, opacity: 0.55, content: t('ghostLegend')});
+		items.push(note);
+	}
+	if(items.length)
+		ghostDrawing = new Group(items);
 }
 
 // the drawn pointers by variable: "p" for a global, "<call id>:p" for a local
@@ -1676,6 +1791,24 @@ var LOST_OPACITY = 0.45;
 var focus = {edges: [], pointers: []};
 var narration = '';
 
+// Step comparison: what the last step changed, as it was before, drawn faded and dashed behind the
+// new state: a link's old target, the place a pointer came from, an old value (see drawGhosts).
+// Like focus it belongs to one step: runStep starts it empty.
+var ghosts = {links: [], pointers: [], values: [], cells: []};
+function clearGhosts(){ ghosts = {links: [], pointers: [], values: [], cells: []}; }
+function ghostLink(node, kind, old, now){ // node.kind pointed to `old`, now to `now`
+	if(isNode(old) && old.shown && old !== now && old !== node)
+		ghosts.links.push({from: node, kind: kind, to: old});
+}
+function ghostValue(node, old, now){
+	if(old !== now && old !== null && old !== undefined && old !== '')
+		ghosts.values.push({node: node, old: old});
+}
+function ghostCell(visual, index, old, now){
+	if(old !== now && old !== null && old !== undefined && !isNode(old))
+		ghosts.cells.push({visual: visual, index: index, old: old});
+}
+
 function isFocusedEdge(node, kind){ return focus.edges.indexOf(node.id + kind) >= 0; }
 function focusEdge(node, kind){ focus.edges.push(node.id + kind); }
 function narrate(text){ narration = text || ''; }
@@ -1690,6 +1823,7 @@ function runNextStep(){
 
 function runStep(i){
 	focus = {edges: [], pointers: []};
+	clearGhosts();
 	narration = '';
 	player.steps[i]();
 }
@@ -1818,7 +1952,7 @@ function resetVisuals(){
 		n.visualPrev = null;
 		n.visualLeft = null;
 		n.visualRight = null;
-		n.shownData = n.data;
+		n.shownData = n.firstData;
 		n.shownHeight = undefined;
 		n.shownWeight = undefined;
 	});
@@ -1844,6 +1978,7 @@ function resetVisuals(){
 
 	clearHighlights(true);
 	focus = {edges: [], pointers: []};
+	clearGhosts();
 	showNarration('', '');
 
 	var output = document.getElementById("output");
@@ -1967,11 +2102,14 @@ function drawGraphics(line, result){
 				layout();
 
 				var key = pointerKey(line.lhs, scope);
+				var cameFrom = pointerMap[key] && pointerMap[key].active ? pointerMap[key].points : null;
 				if(pointerMap[key])  // a new node: replace the old pointer with a fresh one
 					pointerMap[key].remove();
 
 				pointerMap[key] = new Pointer(res, line.lhs, 'blue', 'up', scope);
 				pointerMap[key].draw(res);
+				if(cameFrom && cameFrom !== res)
+					ghosts.pointers.push({pointer: pointerMap[key], from: cameFrom, to: res});
 				focus.pointers.push(pointerMap[key]);
 			}
 			else if(res === null || isNode(res))  // p1 = null  /  p1 = x  /  p1 = x.next
@@ -1984,6 +2122,7 @@ function drawGraphics(line, result){
 			highlight(doc, line);
 			if(res.newNode)
 				showNewNode(res.newNode);
+			ghostCell(res.array.visual, res.index, res.array.visual.cells[res.index], res.value);
 			res.array.visual.cells[res.index] = res.value;
 			focusEdge(res.array.visual, 'cell' + res.index);
 			layout();
@@ -2008,12 +2147,14 @@ function drawGraphics(line, result){
 				if(res.newNode)
 					showNewNode(res.newNode);
 
+				ghostLink(res.target, res.prop.slice(1), res.target[VISUAL_FIELD[res.prop]], res.value);
 				res.target[VISUAL_FIELD[res.prop]] = res.value;
 				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
 			else if(res.prop == '.data' && res.target.boxDraw)
 			{
+				ghostValue(res.target, res.target.shownData, res.value);
 				res.target.shownData = res.value;
 				res.target.render();
 			}
@@ -2043,12 +2184,14 @@ function drawGraphics(line, result){
 			highlight(doc, line);
 
 			if(VISUAL_FIELD[res.prop]){
+				ghostLink(res.target, res.prop.slice(1), res.target[VISUAL_FIELD[res.prop]], res.value);
 				res.target[VISUAL_FIELD[res.prop]] = res.value;
 				focusEdge(res.target, res.prop.slice(1));
 				layout();
 			}
 			else if(res.prop == '.data' && res.target.boxDraw) // p.data = p.next.data
 			{
+				ghostValue(res.target, res.target.shownData, res.value);
 				res.target.shownData = res.value;
 				res.target.render();
 			}
@@ -2654,6 +2797,15 @@ window.dsvState = function(){
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
 		narration: (document.getElementById('narration') || {}).textContent || '',
+		// step comparison: what the last step changed, as it was before ("2>3 next": the next of [2] was [3];
+		// "curr:1>2": curr moved from [1] to [2]; "2<-4": the value 4 became 2; "a[0]:5": the cell held 5)
+		ghosts: {
+			links: ghosts.links.map(function(g){ return g.from.shownData + '>' + g.to.shownData + ' ' + g.kind; }),
+			pointers: ghosts.pointers.map(function(g){ return g.pointer.label + ':' + g.from.shownData + '>' + (g.to ? g.to.shownData : 'null'); }),
+			values: ghosts.values.map(function(g){ return g.node.shownData + '<-' + g.old; }),
+			cells: ghosts.cells.map(function(g){ return g.visual.name + '[' + g.index + ']:' + g.old; }),
+			drawn: !!ghostDrawing
+		},
 		// how the next / prev arrows on the canvas are drawn: {straight: 3, hook: 2, other: 0}
 		arrows: (function(){
 			var count = {straight: 0, hook: 0, other: 0};

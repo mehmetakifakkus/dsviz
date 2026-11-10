@@ -233,6 +233,7 @@
 		'<label class="setting switch"><span>' + esc(t('lessonModeSetting')) + '</span><input type="checkbox" name="lessonMode"' + (s.lessonMode ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('narrationSetting')) + '</span><input type="checkbox" name="narration"' + (s.narration ? ' checked' : '') + '></label>' +
 		'<label class="setting switch"><span>' + esc(t('warningsSetting')) + '</span><input type="checkbox" name="warnings"' + (s.warnings ? ' checked' : '') + '></label>' +
+		'<label class="setting switch"><span>' + esc(t('stepCompareSetting')) + '</span><input type="checkbox" name="stepCompare"' + (s.stepCompare ? ' checked' : '') + '></label>' +
 		'<div class="setting-note">' + esc(t('shortcuts')) + '</div>' +
 		'<button class="link-btn" name="tour">' + esc(t('tourRestart')) + '</button>' +
 		'<button class="link-btn" name="reset">' + esc(t('resetSettings')) + '</button>');
@@ -269,6 +270,7 @@
 		panel.querySelector('[name=speed]').value = dsv.settings.speed;
 		panel.querySelector('[name=narration]').checked = dsv.settings.narration;
 		panel.querySelector('[name=warnings]').checked = dsv.settings.warnings;
+		panel.querySelector('[name=stepCompare]').checked = dsv.settings.stepCompare;
 		panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
 		if(window.dsvApplyLessonMode) window.dsvApplyLessonMode();
 	});

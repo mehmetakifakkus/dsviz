@@ -677,6 +677,53 @@ test.describe('learning aids', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('step comparison: what the last step changed is kept, faded, from before', async ({ page }) => {
+		const problems = await openPage(page, 'reverseALinkedList.html');
+		await runAllBlocks(page);
+		const at = async step => { // the state at one step of the run
+			await page.locator('.dsv-timeline').evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input')); }, step);
+			return (await state(page));
+		};
+		let s = await at(14); // curr moved from [1] to [2]
+		expect(s.narration).toBe('curr artık [2] düğümünü gösteriyor.');
+		expect(s.ghosts).toMatchObject({ links: [], pointers: ['curr:1>2'], drawn: true });
+
+		s = await at(17); // [2].next was [3], now [1]
+		expect(s.narration).toBe('[2] düğümünün next bağı artık [1] düğümünü gösteriyor.');
+		expect(s.ghosts).toMatchObject({ links: ['2>3 next'], pointers: [], drawn: true });
+
+		s = await at(20); // a step that changes nothing has nothing to compare
+		expect(s.ghosts).toMatchObject({ links: [], pointers: [], values: [], drawn: false });
+
+		// the same step again after going back and forth: the same comparison
+		await at(16); s = await at(17);
+		expect(s.ghosts.links).toEqual(['2>3 next']);
+
+		// the setting switches the drawing off; the step still knows what changed
+		await page.evaluate(() => window.dsv.set('stepCompare', false));
+		expect((await state(page)).ghosts).toMatchObject({ links: ['2>3 next'], drawn: false });
+		await page.evaluate(() => window.dsv.set('stepCompare', true));
+		expect((await state(page)).ghosts.drawn).toBe(true);
+		expect(problems).toEqual([]);
+	});
+
+	test('step comparison: a changed value and a new node for a pointer', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var x = new Node(1)\nvar y = new Node(5)\nx.next = y\nx.data = 8\nx = new Node(9)\n');
+		await skipToEnd(page);
+		expect((await state(page)).ghosts.pointers).toEqual(['x:8>9']); // x = new Node(9): x came from [8]
+		await page.locator('.dsv-player button[title="Geri adım"]').click();
+		expect((await state(page)).ghosts.values).toEqual(['8<-1']);   // x.data = 8 replaced 1
+		await page.locator('.dsv-player button[title="Geri adım"]').click();
+		await page.locator('.dsv-player button[title="Geri adım"]').click();
+		expect((await state(page)).nodes).toEqual([1, 5]);            // going back: a node shows the value it had then, not the final one
+
+		await runCode(page, 'var a = new Array(3)\na[0] = 5\na[1] = 7\na[0] = 9\n');
+		await skipToEnd(page);
+		expect((await state(page)).ghosts.cells).toEqual(['a[0]:5']);
+		expect(problems).toEqual([]);
+	});
+
 	test('a circular doubly linked list: both rings drawn, read backwards, appended in O(1)', async ({ page }) => {
 		const problems = await openPage(page, 'circularDoublyLinkedList.html');
 		await runBlock(page, 1);
