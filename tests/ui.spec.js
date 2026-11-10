@@ -1000,3 +1000,117 @@ test('the first visit: a tour lights each part in turn, shows the code language 
 	expect(await valueOf(page, 'walk(x)')).toBe('1>2>3>4');
 	expect(problems).toEqual([]);
 });
+
+test.describe('matrices', () => {
+	const state = page => page.evaluate(() => window.dsvState());
+	const back = page => page.locator('.dsv-player button[title="Geri adım"]').click();
+
+	test('new Array(r, c): cells are written, read and replayed by row and column', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var g = new Array(2, 3)\ng[1][2] = 7\ng[0][0] = g[1][2] + 1\n');
+		let s = await state(page);
+		expect(s.grids).toEqual([{ name: 'g', rows: 2, cols: 3, cells: [[8, null, null], [null, null, 7]], reads: [[1, 2]], focus: [0, 0], markers: { row: {}, col: {} } }]);
+		expect(s.arrays).toEqual([]);                                  // a matrix is not a row array
+		expect(s.stats).toEqual({ compare: 0, write: 2 });
+		expect(s.narration).toContain('g[0][0]');
+
+		await back(page);                                              // g[1][2] = 7
+		s = await state(page);
+		expect(s.grids[0].cells).toEqual([[null, null, null], [null, null, 7]]);
+		expect(s.grids[0].focus).toEqual([1, 2]);
+		await back(page);                                              // right after new Array(2, 3)
+		expect((await state(page)).grids[0].cells).toEqual([[null, null, null], [null, null, null]]);
+
+		await runCode(page, 'g[0][0] = 9\n');                          // overwriting keeps the old value as a ghost
+		await skipToEnd(page);
+		s = await state(page);
+		expect(s.ghosts.cells).toEqual(['g[0][0]:8']);
+		expect(problems).toEqual([]);
+	});
+
+	test('a condition that reads matrix cells is a comparison and frames them', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var g = new Array(2, 2)\ng[0][1] = 3\ng[1][0] = 5\nif(g[0][1] < g[1][0])\n  print 1\n');
+		await back(page);                                              // the print is the last step; one back is the condition
+		const s = await state(page);
+		expect(s.grids[0].reads).toEqual([[0, 1], [1, 0]]);
+		expect(s.stats.compare).toBe(1);
+		expect(problems).toEqual([]);
+	});
+
+	test('matrix errors are explained', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		const out = page.locator('#output');
+		await runCode(page, 'var g = new Array(2, 3)\ng[2][0] = 1\n');
+		await expect(out).toContainText('g[2]: matrisin 2 satırı var, geçerli satır indisleri 0 ile 1 arası.');
+		await runCode(page, 'g[0][3] = 1\n');
+		await expect(out).toContainText('g[0][3]: matrisin 3 sütunu var, geçerli sütun indisleri 0 ile 2 arası.');
+		await runCode(page, 'g[0 - 1][0] = 1\n');
+		await expect(out).toContainText('g[-1]: matrisin 2 satırı var');
+		await runCode(page, 'var v = g[5][0]\n');                      // reading is as strict as writing
+		await expect(out).toContainText('g[5]: matrisin 2 satırı var');
+		await runCode(page, 'var w = g[1][9]\n');
+		await expect(out).toContainText('g[1][9]: matrisin 3 sütunu var');
+		await runCode(page, 'g[0.5][0] = 1\n');
+		await expect(out).toContainText('g[0.5]: matrisin 2 satırı var');
+		await runCode(page, 'var big = new Array(13, 2)\n');
+		await expect(out).toContainText('Matris boyutu: satır ve sütun sayısı 1 ile 12 arasında tam sayı olmalı (13 × 2 verildi).');
+		await runCode(page, 'var zero = new Array(0, 2)\n');
+		await expect(out).toContainText('(0 × 2 verildi)');
+		await runCode(page, 'var h = 5\nh[0][0] = 1\n');
+		await expect(out).toContainText('"h" bir matris değil');
+		await runCode(page, 'var a1 = new Array(3)\na1[0][0] = 1\n');
+		await expect(out).toContainText('"a1" bir matris değil');
+		await runCode(page, 'g[0] = 1\n');
+		await expect(out).toContainText('"g" bir matris: iki indis gerekir');
+		expect(problems).toEqual([]);                                  // none of these is a JavaScript error
+	});
+
+	test('a row on its own can be read without breaking the drawing', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var g = new Array(2, 2)\ng[0][0] = 1\nvar r = g[1]\nvar x = g[0][0]\n');
+		const s = await state(page);
+		expect(s.grids[0].cells).toEqual([[1, null], [null, null]]);
+		expect(problems).toEqual([]);
+	});
+	test('the grid: index variables are marked on their row and column, bands do not overlap, odd values draw', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var g = new Array(3, 4)\nvar i = 1\nvar j = 2\ng[i][j] = 1\n');
+		let s = await state(page);
+		expect(s.grids[0].markers).toEqual({ row: { i: 1 }, col: { j: 2 } });
+
+		await runCode(page, 'var a = new Array(6)\na[0] = 4\nvar h = new Array(2, 2)\nh[0][0] = true\nh[1][1] = 12345\n');
+		s = await state(page);
+		expect(s.bands.map(b => b[0])).toEqual(['g', 'a', 'h']);       // the order the arrays were made in
+		for (let k = 1; k < s.bands.length; k++)
+			expect(s.bands[k][1]).toBeGreaterThanOrEqual(s.bands[k - 1][1] + s.bands[k - 1][2]);
+		expect(s.bands[0][2]).toBeGreaterThanOrEqual(3 * 30);          // the first one holds three rows of cells
+		expect(s.grids.find(x => x.name === 'h').cells).toEqual([[true, null], [null, 12345]]);
+		await expect(page.locator('canvas').first()).toBeVisible();
+		expect(problems).toEqual([]);
+	});
+	test('an index that is not a number is explained too (undefined, NaN, null)', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		const out = page.locator('#output');
+		await runCode(page, 'var g = new Array(2, 2)\nvar a1 = g[0 / 0][0]\n');
+		await expect(out).toContainText('g[NaN]: matrisin 2 satırı var');
+		await runCode(page, 'var a2 = g[0][0 / 0]\n');
+		await expect(out).toContainText('g[0][NaN]: matrisin 2 sütunu var');
+		await runCode(page, 'var a3 = g[null][0]\n');
+		await expect(out).toContainText('g[null]: matrisin 2 satırı var');
+		await runCode(page, 'function f(i)\n{\n  return g[i][0]\n}\nvar a4 = f()\n');       // a missing argument is null
+		await expect(out).toContainText('g[null]: matrisin 2 satırı var');
+		await runCode(page, 'function h(i, j)\n{\n  return g[i][j]\n}\nvar a5 = h(1)\n');
+		await expect(out).toContainText('g[1][null]: matrisin 2 sütunu var');
+		expect(problems).toEqual([]);
+	});
+
+	for (const [lang, hint] of [['cpp', 'int g[3][4]'], ['java', 'int[][] g = new int[3][4]']])
+		test(`in ${lang} the hint of a missing matrix is written in that language`, async ({ page }) => {
+			const problems = await openPage(page, 'index.html', { codeLang: lang });
+			await runCode(page, 'var h = 5\nh[0][0] = 1\n');
+			await expect(page.locator('#output')).toContainText('"h" bir matris değil');
+			await expect(page.locator('#output')).toContainText(hint);
+			expect(problems).toEqual([]);
+		});
+});
