@@ -128,6 +128,15 @@
 	function pick(texts){ return texts[lang] || texts.tr; }
 
 	var page = decodeURIComponent(location.pathname.split('/').pop()) || 'index.html';
+
+	// what the student did in the exercises: {file: {done, attempts}}, kept in this browser (see js/exercise.js)
+	function exerciseProgress(){
+		try {
+			var all = JSON.parse(localStorage.getItem('dsv-exercises') || '{}');
+			return all && typeof all === 'object' ? all : {};
+		} catch(e) { return {}; }
+	}
+	window.dsvExerciseProgress = exerciseProgress;
 	var flat = [];
 	EXAMPLES.forEach(function(g){ g.items.forEach(function(it){ flat.push({file: it[0], title: pick(it[1])}); }); });
 	var current = null;
@@ -289,7 +298,8 @@
 			'<span>' + esc(pick(g.group)) + '</span><span class="drawer-count">' + g.items.length + '</span>' + ICON.chevron);
 		var items = el('div', {'class': 'drawer-items', id: 'menu-group-' + gi});
 		g.items.forEach(function(it){
-			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1]))));
+			var finished = (exerciseProgress()[it[0]] || {}).done === true; // an exercise the student solved
+			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1])) + (finished ? ' <span class="ex-mark" title="' + esc(t('exDone')) + '">✓</span>' : '')));
 		});
 		btn.addEventListener('click', function(){
 			var now = !box.classList.contains('open');
@@ -432,7 +442,12 @@
 		lesson.appendChild(planPager);
 		// opening the page counts when the student runs a block (see runBlock)
 		window.dsvPlanMark = function(){ PLAN.mark(planCtx.id, page); };
+		window.dsvPlanDone = window.dsvPlanMark;   // exercises count when they are solved (below)
 	}
+
+	// an exercise page is done when it is solved, not when a block was run
+	if(lesson.querySelector('script#exercise'))
+		window.dsvPlanMark = function(){};
 
 	// ---------- previous / next example ----------
 	if(current !== null && !planCtx){
