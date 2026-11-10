@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: Pascal üçgeni | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: Pascal üçgeni</h1>
+<h1 data-lang="en">Exercise: Pascal's triangle</h1>
+<h1 data-lang="de">Übung: Pascalsches Dreieck</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>p</code> matrisini Pascal üçgeniyle doldur: her satırın ilk ve son sayısı 1, aradaki her sayı üstündeki iki sayının toplamı. Satır sayısı <code>n</code> = 6; üçgenin ötesindeki hücreler boş kalsın. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Fill the matrix <code>p</code> with Pascal's triangle: the first and last number of every row is 1, every number between is the sum of the two numbers above it. The number of rows is <code>n</code> = 6; the cells beyond the triangle stay empty. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Fülle die Matrix <code>p</code> mit dem Pascalschen Dreieck: die erste und letzte Zahl jeder Zeile ist 1, jede Zahl dazwischen ist die Summe der beiden Zahlen darüber. Die Zeilenzahl ist <code>n</code> = 6; die Zellen hinter dem Dreieck bleiben leer. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var n = 6                  // satır sayısı
+var p = new Array(6, 6)    // 6 satır, 6 sütun
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var n = 6                  // the number of rows
+var p = new Array(6, 6)    // 6 rows, 6 columns
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var n = 6                  // die Anzahl der Zeilen
+var p = new Array(6, 6)    // 6 Zeilen, 6 Spalten
+</script>
+
+<textarea id="text2" class="deneme">
+for(var i = 0; i &lt; n; i++)
+{
+  // i. satırı doldur
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 0; i < n; i++)
+{
+  // fill row i
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 0; i < n; i++)
+{
+  // Zeile i füllen
+}
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Her satır için önce sol kenarı yaz: <code>p[i][0] = 1</code>.</li><li>Sonra j = 1 … i için: j == i ise 1, değilse <code>p[i - 1][j - 1] + p[i - 1][j]</code>.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>For every row write the left edge first: <code>p[i][0] = 1</code>.</li><li>Then for j = 1 … i: 1 if j == i, otherwise <code>p[i - 1][j - 1] + p[i - 1][j]</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Schreibe für jede Zeile zuerst den linken Rand: <code>p[i][0] = 1</code>.</li><li>Dann für j = 1 … i: 1, wenn j == i, sonst <code>p[i - 1][j - 1] + p[i - 1][j]</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "",
+ "expect": [
+  [
+   "Array.from(p[5])",
+   [
+    1,
+    5,
+    10,
+    10,
+    5,
+    1
+   ],
+   "5. satır",
+   "Row 5",
+   "Zeile 5"
+  ],
+  [
+   "p[2][1]",
+   2,
+   "p[2][1]",
+   "p[2][1]",
+   "p[2][1]"
+  ],
+  [
+   "p[3][3]",
+   1,
+   "p[3][3]",
+   "p[3][3]",
+   "p[3][3]"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+for(var i = 0; i < n; i++)
+{
+  p[i][0] = 1
+  for(var j = 1; j <= i; j++)
+  {
+    if(j == i)
+    {
+      p[i][j] = 1
+    }
+    else
+    {
+      p[i][j] = p[i - 1][j - 1] + p[i - 1][j]
+    }
+  }
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

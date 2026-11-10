@@ -1114,3 +1114,83 @@ test.describe('matrices', () => {
 			expect(problems).toEqual([]);
 		});
 });
+
+test.describe('quiet runs', () => {
+	const setBlock = (page, i, code) => page.evaluate(([i, code]) => document.querySelectorAll('.CodeMirror')[i].CodeMirror.setValue(code), [i, code]);
+	const state = page => page.evaluate(() => window.dsvState());
+
+	test('dsvRunBlock tells whether the block ran without an error', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await setBlock(page, 0, 'var x = new Node(1)\n');
+		expect(await page.evaluate(() => window.dsvRunBlock(0))).toBe(true);
+		await setBlock(page, 0, 'var x = \n');
+		expect(await page.evaluate(() => window.dsvRunBlock(0))).toBe(false);
+		await setBlock(page, 0, 'var p = null\np.next = p\n');
+		expect(await page.evaluate(() => window.dsvRunBlock(0))).toBe(false);   // a run-time error counts too
+		expect(problems).toEqual([]);
+	});
+
+	test('a quiet run changes the program but neither the drawing nor the steps nor the output', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await setBlock(page, 0, 'var x = new Node(1)\nx.next = new Node(2)\nprint 5\n');
+		await page.evaluate(() => window.dsvRunBlock(0));
+		await skipToEnd(page);
+		const before = { state: await state(page), counter: await stepCounter(page), output: await outputText(page) };
+		expect(before.output).toContain('5');
+
+		const result = await page.evaluate(() => window.dsvRunQuiet('var q = new Node(9)\nq.next = null\nprint 7\n'));
+		expect(result).toEqual({ ok: true, error: '' });
+		expect(await valueOf(page, 'q.data')).toBe(9);                      // the program has it
+		expect(await state(page)).toEqual(before.state);                     // the drawing has not
+		expect(await stepCounter(page)).toEqual(before.counter);
+		expect(await outputText(page)).toBe(before.output);                  // and the student's output is back
+
+		const bad = await page.evaluate(() => window.dsvRunQuiet('var z = nothing\n'));
+		expect(bad.ok).toBe(false);
+		expect(bad.error).toContain('nothing');
+		expect(await outputText(page)).toBe(before.output);
+		expect(await stepCounter(page)).toEqual(before.counter);
+
+		await page.evaluate(() => window.dsvRunBlock(0));                    // a normal run afterwards starts clean
+		await skipToEnd(page);
+		expect(await state(page)).toEqual(before.state);
+		expect(await valueOf(page, 'typeof q')).toBe('undefined');
+		expect(problems).toEqual([]);
+	});
+
+	test('expressions are evaluated quietly, helpers win over user globals, errors are explained', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await setBlock(page, 0, 'var x = new Node(1)\nx.next = new Node(2)\nfunction twice(v)\n{\n  var k = v * 2\n  return k\n}\nfunction walk(h)\n{\n  return 0\n}\n');
+		await page.evaluate(() => window.dsvRunBlock(0));
+		await skipToEnd(page);
+		const counter = await stepCounter(page);
+		const out = await page.evaluate(() => {
+			const walk = h => { const r = []; for (let n = h; n; n = n.next) r.push(n.data); return r.join('>'); };
+			return [window.dsvEvalQuiet('walk(x)', { walk }), window.dsvEvalQuiet('twice(21)', {}), window.dsvEvalQuiet('x.next.next.data', {})];
+		});
+		expect(out[0]).toEqual({ ok: true, value: '1>2', error: '' });       // the helper, not the student's walk
+		expect(out[1]).toEqual({ ok: true, value: 42, error: '' });          // a student function runs without drawing
+		expect(out[2].ok).toBe(false);
+		expect(out[2].error).not.toBe('');
+		expect(await stepCounter(page)).toEqual(counter);
+		expect(problems).toEqual([]);
+	});
+	test('what the student printed is available after a run (for output() checks)', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await setBlock(page, 0, 'print 42\nprint 7\n');
+		await page.evaluate(() => window.dsvRunBlock(0));
+		expect(await page.evaluate(() => window.dsvPrintedText())).toBe('42,7');   // before any animation step has played
+		await page.evaluate(() => window.dsvRunQuiet('print 1\n'));                   // a later run replaces it: exercise.js reads it right after the student's run
+		expect(await page.evaluate(() => window.dsvPrintedText())).toBe('1');
+		expect(problems).toEqual([]);
+	});
+
+	test('hidden code is Düğüm in every code language: it is not translated back from C++', async ({ page }) => {
+		const problems = await openPage(page, 'index.html', { codeLang: 'cpp' });
+		const wrong = await page.evaluate(() => window.dsvRunQuiet('int q = 5\n'));    // C++, not Düğüm: a syntax error here
+		expect(wrong.ok).toBe(false);
+		const right = await page.evaluate(() => window.dsvRunQuiet('var q = 5\n'));
+		expect(right).toEqual({ ok: true, error: '' });
+		expect(problems).toEqual([]);
+	});
+});

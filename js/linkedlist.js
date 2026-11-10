@@ -2675,6 +2675,7 @@ function processOneItem(item){
 		var resu = '';
 		for(var i=0; i < item.list.length; i++)
 			resu += item.list[i].subtype == 'var' ? printedValue(evalExpr(item.list[i].text)) : item.list[i].text;
+		printLog.push(resu);
 
 		drawGraphics(item, resu);
 	}
@@ -2970,11 +2971,18 @@ window.explainError = explainError;
 // the parser is compiled from grammer.pegjs ahead of time (js/grammar.js, npm run build:grammar)
 var parser = window.dsvParser;
 
+// what the program printed in its latest run, one entry per print (the output panel only fills while the steps play)
+var printLog = [];
+window.dsvPrintedText = function(){ return printLog.join(','); };
+
+var rawDugum = false; // a quiet run of hidden code: Düğüm as it is, not translated back from C++ / Java / Türkçe
+
 window.parse = function(text) {
 
 	var output = document.getElementById("output");
 	if(output)
 		output.textContent = '';
+	printLog = [];
 
 	currentLine = null;
 	currentDoc = window.activeEditor;
@@ -2984,7 +2992,7 @@ window.parse = function(text) {
 	try {
 		var text = text || editor.getValue();
 		original = text;
-		if(codeLangInfo()) // C++ / Java run as the Düğüm they stand for, line by line
+		if(codeLangInfo() && !rawDugum) // C++ / Java run as the Düğüm they stand for, line by line
 			text = codeLangInfo().from(text);
 		var result = parser.parse(text);
 
@@ -3066,7 +3074,7 @@ function insertAfter(el, referenceNode) {
 // blocks above it produce (also after they were edited), and block 2 can be run first.
 var blockEditors = [];
 
-window.dsvRunBlock = function(k){ runBlock(k); }; // lesson mode runs the block of a part
+window.dsvRunBlock = function(k){ return runBlock(k); }; // lesson mode runs the block of a part; true when it ran without an error
 
 function runBlock(k){
 	if(window.dsvPlanMark)
@@ -3080,14 +3088,55 @@ function runBlock(k){
 			if(output)
 				output.textContent = t('eInBlock', {n: i + 1}) + output.textContent;
 			player.toEnd();
-			return;
+			return false;
 		}
 		player.toEnd();
 	}
 
 	window.activeEditor = blockEditors[k].doc;
-	parse(blockEditors[k].getValue());
+	return !!parse(blockEditors[k].getValue());
 }
+
+// Quiet runs (the exercise checks): code runs as the program, but nothing is drawn, no step is added and the
+// output panel is left as it was. The program (variables, functions, nodes) keeps what the code did.
+function quietly(work){
+	var add = player.add, play = player.play, editor = window.activeEditor;
+	var output = document.getElementById('output'), text = output ? output.textContent : '';
+	player.add = function(){};
+	player.play = function(){};
+	window.activeEditor = null;
+	try { return work(function(){ return output ? output.textContent : ''; }); }
+	finally {
+		player.add = add;
+		player.play = play;
+		window.activeEditor = editor;
+		if(output) output.textContent = text;
+	}
+}
+
+// code: Düğüm. Returns {ok, error}; error is the explained message
+window.dsvRunQuiet = function(code){
+	return quietly(function(shown){
+		rawDugum = true;
+		try {
+			var ok = !!parse(code);
+			return {ok: ok, error: ok ? '' : shown()};
+		} finally { rawDugum = false; }
+	});
+};
+
+// expression: JavaScript over the program's variables; helpers (name -> function) win over the user's own names
+window.dsvEvalQuiet = function(expression, helpers){
+	return quietly(function(){
+		currentLine = null;   // an error of the expression is not on a line of any code that ran before
+		try {
+			var value = (new Function('__h', 'with(window){ with(__h){ return (' + expression + '\n); } }'))(helpers || {});
+			return {ok: true, value: value, error: ''};
+		} catch(err){
+			return {ok: false, value: undefined, error: explainError(err, expression)};
+		}
+	});
+};
 
 // forget the program (the user's variables, functions and nodes) and everything drawn
 function resetProgram(){

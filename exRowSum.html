@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: matriste satır toplamı | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: matriste satır toplamı</h1>
+<h1 data-lang="en">Exercise: the sum of a matrix row</h1>
+<h1 data-lang="de">Übung: die Summe einer Matrixzeile</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>rowSum(r)</code> fonksiyonunu yaz: <code>g</code> matrisinin <code>r</code>. satırındaki sayıların toplamını döndürsün. Sütun sayısı <code>cols</code> değişkeninde. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>rowSum(r)</code>: it returns the sum of the numbers in row <code>r</code> of the matrix <code>g</code>. The number of columns is in the variable <code>cols</code>. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>rowSum(r)</code>: sie gibt die Summe der Zahlen in Zeile <code>r</code> der Matrix <code>g</code> zurück. Die Spaltenzahl steht in der Variablen <code>cols</code>. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var g = new Array(3, 4)      // 3 satır, 4 sütun: 1 … 12
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i &lt; rows; i++)
+{
+  for(var j = 0; j &lt; cols; j++)
+  {
+    g[i][j] = k
+    k++
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var g = new Array(3, 4)      // 3 rows, 4 columns: 1 … 12
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i < rows; i++)
+{
+  for(var j = 0; j < cols; j++)
+  {
+    g[i][j] = k
+    k++
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var g = new Array(3, 4)      // 3 Zeilen, 4 Spalten: 1 … 12
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i < rows; i++)
+{
+  for(var j = 0; j < cols; j++)
+  {
+    g[i][j] = k
+    k++
+  }
+}
+</script>
+
+<textarea id="text2" class="deneme">
+function rowSum(r)
+{
+  var s = 0
+  // buraya yaz
+  return s
+}
+print rowSum(1)        // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function rowSum(r)
+{
+  var s = 0
+  // write here
+  return s
+}
+print rowSum(1)        // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function rowSum(r)
+{
+  var s = 0
+  // hier schreiben
+  return s
+}
+print rowSum(1)        // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Satırı sabit tut, sütunu gezen bir döngü yaz: <code>g[r][j]</code>, j = 0 … <code>cols</code> - 1.</li><li>Her hücreyi <code>s</code>'ye ekle.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Keep the row fixed and write a loop over the columns: <code>g[r][j]</code>, j = 0 … <code>cols</code> - 1.</li><li>Add every cell to <code>s</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Halte die Zeile fest und schreibe eine Schleife über die Spalten: <code>g[r][j]</code>, j = 0 … <code>cols</code> - 1.</li><li>Addiere jede Zelle zu <code>s</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "g[1][1] = 100\n",
+ "expect": [
+  [
+   "rowSum(0)",
+   10,
+   "0. satır",
+   "Row 0",
+   "Zeile 0"
+  ],
+  [
+   "rowSum(2)",
+   42,
+   "2. satır",
+   "Row 2",
+   "Zeile 2"
+  ],
+  [
+   "rowSum(1)",
+   120,
+   "1. satır (bir hücre değiştirilince)",
+   "Row 1 (after one cell was changed)",
+   "Zeile 1 (nachdem eine Zelle geändert wurde)"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function rowSum(r)
+{
+  var s = 0
+  for(var j = 0; j < cols; j++)
+  {
+    s = s + g[r][j]
+  }
+  return s
+}
+print rowSum(1)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

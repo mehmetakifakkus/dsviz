@@ -106,6 +106,16 @@
 			['unionFind.html', {tr: 'Birleşik küme (union-find)', en: 'Disjoint sets (union-find)', de: 'Disjunkte Mengen (Union-Find)'}],
 			['kruskal.html', {tr: 'Kruskal: en küçük kapsayan ağaç', en: 'Kruskal: minimum spanning tree', de: 'Kruskal: minimaler Spannbaum'}],
 			['prim.html', {tr: 'Prim: en küçük kapsayan ağaç', en: 'Prim: minimum spanning tree', de: 'Prim: minimaler Spannbaum'}]
+		]},
+		{ group: {tr: 'Alıştırmalar', en: 'Exercises', de: 'Übungen'}, items: [
+			['exReverse.html', {tr: 'Listeyi ters çevir', en: 'Reverse a list', de: 'Eine Liste umkehren'}],
+			['exMiddle.html', {tr: 'Listenin ortadaki düğümü', en: 'The middle node of a list', de: 'Der mittlere Knoten einer Liste'}],
+			['exLength.html', {tr: 'Listenin uzunluğu', en: 'The length of a list', de: 'Die Länge einer Liste'}],
+			['exAppend.html', {tr: 'Listenin sonuna ekle', en: 'Append to a list', de: 'An eine Liste anhängen'}],
+			['exDedupe.html', {tr: 'Yinelenenleri sil', en: 'Remove duplicates', de: 'Duplikate entfernen'}],
+			['exRowSum.html', {tr: 'Matriste satır toplamı', en: 'The sum of a matrix row', de: 'Die Summe einer Matrixzeile'}],
+			['exPascal.html', {tr: 'Pascal üçgeni', en: "Pascal's triangle", de: 'Pascalsches Dreieck'}],
+			['exGridPaths.html', {tr: 'Izgarada yol sayısı', en: 'Paths in a grid', de: 'Wege im Gitter'}]
 		]}
 	];
 
@@ -128,6 +138,15 @@
 	function pick(texts){ return texts[lang] || texts.tr; }
 
 	var page = decodeURIComponent(location.pathname.split('/').pop()) || 'index.html';
+
+	// what the student did in the exercises: {file: {done, attempts}}, kept in this browser (see js/exercise.js)
+	function exerciseProgress(){
+		try {
+			var all = JSON.parse(localStorage.getItem('dsv-exercises') || '{}');
+			return all && typeof all === 'object' ? all : {};
+		} catch(e) { return {}; }
+	}
+	window.dsvExerciseProgress = exerciseProgress;
 	var flat = [];
 	EXAMPLES.forEach(function(g){ g.items.forEach(function(it){ flat.push({file: it[0], title: pick(it[1])}); }); });
 	var current = null;
@@ -289,7 +308,8 @@
 			'<span>' + esc(pick(g.group)) + '</span><span class="drawer-count">' + g.items.length + '</span>' + ICON.chevron);
 		var items = el('div', {'class': 'drawer-items', id: 'menu-group-' + gi});
 		g.items.forEach(function(it){
-			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1]))));
+			var finished = (exerciseProgress()[it[0]] || {}).done === true; // an exercise the student solved
+			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1])) + (finished ? ' <span class="ex-mark" title="' + esc(t('exDone')) + '">✓</span>' : '')));
 		});
 		btn.addEventListener('click', function(){
 			var now = !box.classList.contains('open');
@@ -392,6 +412,15 @@
 		card.appendChild(ta);
 	});
 
+	// an exercise page: a place under the student's block for its check (js/exercise.js fills it); lesson mode keeps it with the block
+	var exerciseData = lesson.querySelector('script#exercise');
+	if(exerciseData){
+		var studentBlock = 1;
+		try { studentBlock = JSON.parse(exerciseData.textContent).block || 1; } catch(e) {}
+		var studentCard = lesson.querySelectorAll('.code-card')[studentBlock - 1];
+		if(studentCard) studentCard.parentNode.insertBefore(el('div', {'class': 'exercise-slot'}), studentCard.nextSibling);
+	}
+
 	// ---------- example list on the main page ----------
 	var list = document.getElementById('example-list');
 	if(list){
@@ -432,7 +461,12 @@
 		lesson.appendChild(planPager);
 		// opening the page counts when the student runs a block (see runBlock)
 		window.dsvPlanMark = function(){ PLAN.mark(planCtx.id, page); };
+		window.dsvPlanDone = window.dsvPlanMark;   // exercises count when they are solved (below)
 	}
+
+	// an exercise page is done when it is solved, not when a block was run
+	if(lesson.querySelector('script#exercise'))
+		window.dsvPlanMark = function(){};
 
 	// ---------- previous / next example ----------
 	if(current !== null && !planCtx){
@@ -457,6 +491,7 @@
 		Array.prototype.forEach.call(lesson.children, function(e){
 			if(e.tagName === 'H1' || e.classList.contains('plan-keep')) return;
 			if(e.tagName === 'FOOTER' || e.classList.contains('pager')){ tail.push(e); return; }
+			if(e.classList.contains('exercise-slot') && parts.length){ parts[parts.length - 1].push(e); return; } // the check goes with its block
 			partNow.push(e);
 			if(e.classList.contains('code-card')){ parts.push(partNow); partNow = []; }
 		});
