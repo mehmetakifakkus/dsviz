@@ -128,6 +128,85 @@
 	var lesson = document.querySelector('main.lesson');
 	if(!lesson)
 		return;
+	var plain = lesson.hasAttribute('data-plain'); // a page with no code (the plan pages): no drawing, no examples, no tour
+
+	// ---------- lesson plans: a teacher's list of pages, carried in the link ----------
+	//
+	// plan.html#plan=<base64url JSON>&i=<index>&c=<code language>. The plan holds a title, an
+	// introduction, the pages (only pages of this site are kept) with a note each, the code language
+	// and whether lesson mode is on. Nothing is stored on a server; what a student has done is kept in
+	// the browser (localStorage), per plan.
+	var PLAN = (function(){
+		var known = {};
+		flat.forEach(function(e){ known[e.file] = e; });
+		function encodeText(text){ return btoa(unescape(encodeURIComponent(text))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+		function decodeText(data){
+			var b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+			while(b64.length % 4) b64 = b64 + '=';
+			return decodeURIComponent(escape(atob(b64)));
+		}
+		function text(v, max){ return typeof v === 'string' ? v.replace(/\s+$/, '').slice(0, max) : ''; }
+		var CODE_LANGS = ['dugum', 'turkce', 'cpp', 'java'];
+		// a plan from its JSON text (null: not a plan); pages of other sites or unknown pages are dropped
+		function parse(str){
+			var raw, items = [], dropped = 0;
+			try { raw = JSON.parse(decodeText(str)); } catch(e) { return null; }
+			if(!raw || typeof raw !== 'object' || !(raw.i instanceof Array))
+				return null;
+			raw.i.slice(0, 80).forEach(function(it){
+				var file = it instanceof Array ? it[0] : it;
+				if(typeof file === 'string' && known[file] && !items.some(function(x){ return x.file === file; }))
+					items.push({file: file, note: it instanceof Array ? text(it[1], 600) : ''});
+				else
+					dropped = dropped + 1;
+			});
+			return {t: text(raw.t, 120), d: text(raw.d, 1500), items: items, c: CODE_LANGS.indexOf(raw.c) >= 0 ? raw.c : '', m: raw.m ? 1 : 0, dropped: dropped};
+		}
+		function encode(plan){
+			return encodeText(JSON.stringify({v: 1, t: plan.t || '', d: plan.d || '', i: plan.items.map(function(x){ return x.note ? [x.file, x.note] : [x.file]; }), c: plan.c || '', m: plan.m ? 1 : 0}));
+		}
+		function fromHash(hash){
+			var m = /(?:^#|&)plan=([A-Za-z0-9_-]{1,24000})(?:&|$)/.exec(hash || '');
+			if(!m) return null;
+			var plan = parse(m[1]);
+			if(!plan) return null;
+			var i = /(?:^#|&)i=(\d+)(?:&|$)/.exec(hash);
+			return {plan: plan, str: m[1], index: i ? Number(i[1]) : 0, id: idOf(m[1])};
+		}
+		function idOf(str){ // a short name for the plan, for what a student has done
+			var h = 5381;
+			for(var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+			return h.toString(36);
+		}
+		function url(file, str, index, plan){
+			return file + '#plan=' + str + '&i=' + index + (plan && plan.c ? '&c=' + plan.c : '');
+		}
+		function progress(){
+			try { return JSON.parse(localStorage.getItem('dsv-plan-progress') || '{}') || {}; } catch(e) { return {}; }
+		}
+		function done(id){ return progress()[id] || {}; }
+		function mark(id, file){
+			var all = progress();
+			all[id] = all[id] || {};
+			if(all[id][file]) return;
+			all[id][file] = 1;
+			try { localStorage.setItem('dsv-plan-progress', JSON.stringify(all)); } catch(e) {}
+		}
+		return {encode: encode, parse: parse, fromHash: fromHash, url: url, done: done, mark: mark, idOf: idOf, known: known, flat: flat};
+	})();
+	window.dsvPlan = PLAN;
+
+	// the plan this page is opened from (the page must be in it)
+	var planCtx = null;
+	if(!plain){
+		var fromLink = PLAN.fromHash(location.hash);
+		if(fromLink){
+			var at = fromLink.plan.items[fromLink.index] && fromLink.plan.items[fromLink.index].file === page ? fromLink.index
+			       : fromLink.plan.items.map(function(x){ return x.file; }).indexOf(page);
+			if(at >= 0){ fromLink.index = at; planCtx = fromLink; }
+		}
+	}
+	var planForcedLesson = planCtx && planCtx.plan.m ? true : null; // lesson mode the plan asks for; null: the student's setting
 
 	// ---------- the page's own content in the chosen language ----------
 	var contentLang = lesson.querySelector('[data-lang="' + lang + '"]') ? lang : 'tr';
@@ -188,6 +267,7 @@
 	head.appendChild(closeBtn);
 	drawer.appendChild(head);
 	drawer.appendChild(el('a', {href: 'index.html', 'class': page === 'index.html' ? 'active' : ''}, esc(t('homeLink'))));
+	drawer.appendChild(el('a', {href: 'teacher.html', 'class': 'drawer-teacher' + (page === 'teacher.html' ? ' active' : '')}, esc(t('teacherLink'))));
 	// Each group folds: its title is a button with the number of pages, and only the group of
 	// the current page is open at first. The groups the user opened stay open (localStorage).
 	var openGroups = [];
@@ -277,7 +357,10 @@
 		if(name === 'speed') dsv.set('speed', Number(input.value));
 		else if(input.type === 'checkbox') dsv.set(name, input.checked);
 		else dsv.set(name, input.value);
-		if(name === 'lessonMode' && window.dsvApplyLessonMode) window.dsvApplyLessonMode();
+		if(name === 'lessonMode'){
+			planForcedLesson = null; // the student's own choice wins over the plan's
+			if(window.dsvApplyLessonMode) window.dsvApplyLessonMode();
+		}
 	});
 	panel.querySelector('[name=reset]').addEventListener('click', function(){
 		dsv.reset();
@@ -314,8 +397,37 @@
 		});
 	}
 
+	// ---------- the plan bar and the teacher's note ----------
+	if(planCtx){
+		var pl = planCtx.plan, n = pl.items.length, here = planCtx.index;
+		var link = function(k){ return PLAN.url(pl.items[k].file, planCtx.str, k, pl); };
+		var title = function(k){ return PLAN.known[pl.items[k].file].title; };
+		var bar = el('nav', {'class': 'plan-bar plan-keep', 'aria-label': t('planBarLabel')});
+		bar.appendChild(el('a', {'class': 'plan-name', href: 'plan.html#plan=' + planCtx.str + (pl.c ? '&c=' + pl.c : ''), title: t('planBack')}, esc(pl.t || t('planBarLabel'))));
+		bar.appendChild(el('span', {'class': 'plan-count'}, esc(t('planOf', {i: here + 1, n: n}))));
+		if(here > 0) bar.appendChild(el('a', {'class': 'plan-prev', href: link(here - 1)}, esc(t('previous'))));
+		if(here < n - 1) bar.appendChild(el('a', {'class': 'plan-next', href: link(here + 1)}, esc(t('next'))));
+		else bar.appendChild(el('a', {'class': 'plan-next', href: 'plan.html#plan=' + planCtx.str + (pl.c ? '&c=' + pl.c : '')}, esc(t('planFinish'))));
+		lesson.insertBefore(bar, lesson.firstChild);
+		var noteText = pl.items[here].note;
+		if(noteText){
+			var note = el('aside', {'class': 'plan-note plan-keep', role: 'note'});
+			note.appendChild(el('strong', {}, esc(t('planNote'))));
+			note.appendChild(document.createTextNode(' ' + noteText)); // the teacher's text is shown as text, never as HTML
+			var heading = lesson.querySelector('h1');
+			if(heading) heading.insertAdjacentElement('afterend', note);
+		}
+		var planPager = el('nav', {'class': 'pager'});
+		if(here > 0) planPager.appendChild(el('a', {href: link(here - 1)}, '<small>' + esc(t('previous')) + '</small>' + esc(title(here - 1))));
+		if(here < n - 1) planPager.appendChild(el('a', {href: link(here + 1), 'class': 'next'}, '<small>' + esc(t('next')) + '</small>' + esc(title(here + 1))));
+		else planPager.appendChild(el('a', {href: 'plan.html#plan=' + planCtx.str + (pl.c ? '&c=' + pl.c : ''), 'class': 'next'}, '<small>' + esc(t('planFinish')) + '</small>' + esc(pl.t || t('planBarLabel'))));
+		lesson.appendChild(planPager);
+		// opening the page counts when the student runs a block (see runBlock)
+		window.dsvPlanMark = function(){ PLAN.mark(planCtx.id, page); };
+	}
+
 	// ---------- previous / next example ----------
-	if(current !== null){
+	if(current !== null && !planCtx){
 		var pager = el('nav', {'class': 'pager'});
 		if(current > 0)
 			pager.appendChild(el('a', {href: flat[current - 1].file}, '<small>' + esc(t('previous')) + '</small>' + esc(flat[current - 1].title)));
@@ -335,7 +447,7 @@
 	if(page !== 'index.html' && cards.length >= 2){
 		var parts = [], tail = [], partNow = [];
 		Array.prototype.forEach.call(lesson.children, function(e){
-			if(e.tagName === 'H1') return;
+			if(e.tagName === 'H1' || e.classList.contains('plan-keep')) return;
 			if(e.tagName === 'FOOTER' || e.classList.contains('pager')){ tail.push(e); return; }
 			partNow.push(e);
 			if(e.classList.contains('code-card')){ parts.push(partNow); partNow = []; }
@@ -368,7 +480,7 @@
 				window.dsvRunBlock(partIndex); // each part holds exactly one block, in order
 		};
 		window.dsvApplyLessonMode = function(){
-			var on = !!dsv.settings.lessonMode;
+			var on = planForcedLesson !== null ? planForcedLesson : !!dsv.settings.lessonMode; // a plan can ask for lesson mode
 			document.documentElement.classList.toggle('lesson-mode', on);
 			toggle.textContent = on ? t('lessonOff') : t('lessonOn');
 			toggle.title = on ? '' : t('lessonOnTitle');
@@ -382,8 +494,12 @@
 			}
 		};
 		toggle.addEventListener('click', function(){
-			dsv.set('lessonMode', !dsv.settings.lessonMode);
-			panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+			if(planForcedLesson !== null)
+				planForcedLesson = !planForcedLesson; // the plan's choice changes for this visit only
+			else {
+				dsv.set('lessonMode', !dsv.settings.lessonMode);
+				panel.querySelector('[name=lessonMode]').checked = dsv.settings.lessonMode;
+			}
 			window.dsvApplyLessonMode();
 		});
 		var move = function(d){
@@ -397,7 +513,7 @@
 	}
 
 	// ---------- visualisation card ----------
-	var viz = el('div', {'class': 'card viz'},
+	var viz = plain ? null : el('div', {'class': 'card viz'},
 		'<div class="viz-canvas"><canvas id="myCanvas0" width="800" height="260"></canvas></div>' +
 		// on a phone the panels below fold: one row of buttons opens one panel at a time
 		'<div class="viz-folds">' +
@@ -412,18 +528,26 @@
 		'<div class="tab-body" id="tab-command" hidden><textarea id="command" class="commandPrompt"></textarea>' +
 		'<div class="hint">' + t('commandHint') + '</div></div></div>');
 
-	var vizCol = el('aside', {'class': 'viz-col'});
-	vizCol.appendChild(viz);
-
-	var layout = el('div', {'class': 'layout'});
+	var layout = el('div', {'class': 'layout' + (plain ? ' layout-plain' : '')});
 	lesson.parentNode.insertBefore(layout, lesson);
 	layout.appendChild(lesson);
-	layout.appendChild(vizCol);
+	if(!plain){
+		var vizCol = el('aside', {'class': 'viz-col'});
+		vizCol.appendChild(viz);
+		layout.appendChild(vizCol);
+	}
 
 	document.body.insertBefore(panel, document.body.firstChild);
 	document.body.insertBefore(drawer, document.body.firstChild);
 	document.body.insertBefore(backdrop, document.body.firstChild);
 	document.body.insertBefore(topbar, document.body.firstChild);
+
+	if(plain){ // no drawing here: the plan pages have no tabs, panels or tour
+		var tourButton = panel.querySelector('[name=tour]');
+		if(tourButton) tourButton.parentNode.removeChild(tourButton);
+		window.dsvExamples = EXAMPLES;
+		return;
+	}
 
 	Array.prototype.forEach.call(viz.querySelectorAll('.tab'), function(tab){
 		tab.addEventListener('click', function(){

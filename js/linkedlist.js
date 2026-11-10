@@ -2908,6 +2908,8 @@ var blockEditors = [];
 window.dsvRunBlock = function(k){ runBlock(k); }; // lesson mode runs the block of a part
 
 function runBlock(k){
+	if(window.dsvPlanMark)
+		window.dsvPlanMark(); // a lesson plan counts the page as done once a block was run
 	resetProgram();
 
 	for(var i = 0; i < k; i++){
@@ -3033,6 +3035,8 @@ function decodeCode(data){
 function sharedHash(){
 	var lang = codeLangInfo() ? 'c=' + window.dsvCodeLang : '';
 	var parts = lang ? [lang] : [];
+	var plan = /(?:^#|&)(plan=[A-Za-z0-9_-]+&i=\d+)(?:&|$)/.exec(location.hash); // a link from a lesson plan keeps the plan
+	if(plan) parts.unshift(plan[1]);
 	blockEditors.forEach(function(editor, i){
 		var code = editor.getValue();
 		if(code !== blockOriginals[i])
@@ -3103,8 +3107,9 @@ function openSharedCode(){
 	back.textContent = t('sharedRestore');
 	back.addEventListener('click', function(){
 		blockEditors.forEach(function(editor, i){ editor.setValue(blockOriginals[i]); });
+		var keep = /(?:^#|&)(plan=[A-Za-z0-9_-]+&i=\d+)(?:&c=\w+)?(?:&|$)/.exec(location.hash); // the plan stays, the shared code goes
 		if(history.replaceState)
-			history.replaceState(null, '', location.href.split('#')[0]);
+			history.replaceState(null, '', location.href.split('#')[0] + (keep ? '#' + keep[0].replace(/^#/, '') : ''));
 		banner.parentNode.removeChild(banner);
 	});
 	banner.appendChild(back);

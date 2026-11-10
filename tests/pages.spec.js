@@ -6,7 +6,8 @@ const path = require('path');
 const { expect, openPage, runAllBlocks, valueOf, stepCounter } = require('./helpers');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html')).sort();
+// the lesson plan pages (teacher.html, plan.html) hold no code: they are not examples (see tests/plan.spec.js)
+const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && !['teacher.html', 'plan.html'].includes(f)).sort();
 
 // The state a page must end in: [expression evaluated in the page, expected value].
 // walk(h) lists a list forwards, back(t) backwards (prev), output() the Çıktı lines.
