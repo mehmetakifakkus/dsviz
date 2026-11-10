@@ -11,7 +11,6 @@
 
 ## Yeni konular
 
-- [ ] Topolojik sıralama (yönlü graf, DFS ile), istenirse heap ile Dijkstra.
 
 ## Altyapı
 
@@ -41,7 +40,7 @@
 - [x] Bootstrap 3, jQuery ve kullanılmayan dosyalar kaldırıldı; SSS README'ye taşındı.
 - [x] Fonksiyonlar: `function` / `fonksiyon`, parametreler, yerel değişkenler, `return` / `döndür`, ifade içinde çağrı, özyineleme (200 çağrı sınırı); çağrı yığını paneli ve yerel pointer'lar (özyinelemede `p`, `p₂`, `p₃`).
 - [x] Operatörsüz koşullar: `if(p)`, `while(p.next)`, `while(!isEmpty())`, `if(p && p.next)`; `!`, `not`, `değil`, iç içe parantez.
-- [x] Tarayıcı testleri (Playwright, şu an 412 test) ve her PR'da çalışan GitHub Actions iş akışı.
+- [x] Tarayıcı testleri (Playwright, şu an 449 test) ve her PR'da çalışan GitHub Actions iş akışı.
 - [x] Bir blok çalıştırılınca sayfa temiz başlar: üstündeki bloklar anında yeniden çalışır, sonra bu blok animasyonla çalışır (eski çizimler ve değişkenler kalmaz).
 - [x] Öğrenme yardımcıları: her adımın Türkçe anlatımı, son adımda değişen bağ/pointer'ın vurgulanması, `null` bağların çapraz çizgiyle gösterilmesi, kendine dönen bağ ilmeği, kopan (ulaşılamayan) düğüm uyarısı.
 - [x] Oynatıcıda adım çubuğu ve klavye kısayolları (← → boşluk); hata satırı editörde işaretlenir; değiştirilen örnek kod "Geri yükle" ile geri alınır.
@@ -76,3 +75,4 @@
 - [x] Ağırlıklı graflar ve Dijkstra: kenar düğümünün ağırlığı (`e.weight = w`, Türkçe kodda `.ağırlık`) listede düğümün üstünde, grafta kenarın ortasında; aynı boydaki `dist` dizisinin değerleri köşelerin içinde (`INF` ∞ olarak), `parent` dizisinin en kısa yol ağacı kalın mavi. Yeni sayfa: O(n²) Dijkstra ve yolun `parent` ile geri izlenmesi.
 - [x] Adım karşılaştırma: bir adımın değiştirdiği şeyin önceki hali soluk ve kesik çizgiyle arkada kalır: değişen bağın eski hedefi, pointer'ın eski yeri (ve yeni yerine kesik bir ok), değişen değerin eskisi (üstü çizili; dizi hücresinde de). Ayarlardan kapatılabilir; geri/ileri oynatmada aynı sonucu verir. Düzeltme: geri sarıp yeniden oynatınca düğümler artık oluşturuldukları andaki değeri gösterir (sondaki değeri değil).
 - [x] Dizide arama ve sıralama: sayı dizileri (adı `a`, `arr`, `dizi`, `nums`…) hücrelerin üstünde çubuk olarak da çizilir; bir adımın okuduğu (karşılaştırdığı) hücreler mavi, yazdığı hücre turuncu çerçevelenir; `a[mid]` gibi indisler ve `low`/`high`/`size` sınırları hücrelerin altında işaretlenir; oynatıcının yanında blok başına karşılaştırma ve yazma sayacı. Yeni sayfalar ("Dizilerde arama ve sıralama" grubu): doğrusal ve ikili arama, seçmeli, kabarcık, eklemeli, hızlı, heap ve sayarak sıralama, ve karşılaştırma sayacıyla sıralama karşılaştırması. Heap sort'ta global `size` ağacı küçültür.
+- [x] Graf paketi ("Graflar" grubunda 6 yeni sayfa): topolojik sıralama (Kahn ve DFS, döngü tespiti; köşelerin içinde `indeg`), bağlı bileşenler (`comp` dizisi köşeleri renklendirir), birleşik küme (`leader` dizisi altta orman olarak çizilir; yol sıkıştırma), Kruskal (seçilen kenarlar `p.chosen = true` ile kalın mavi), Prim (`key` köşenin içinde, `parent` ağacı kalın) ve Bellman-Ford (negatif ağırlıklar, yönlü graf). 

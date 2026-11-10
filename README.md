@@ -9,6 +9,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 ## Neler var?
 
 - Kodlar bu iş için geliştirilmiş, JavaScript'e benzeyen **Düğüm** dilinde yazılır; dilin rehberi sitede ayrı bir sayfadadır (`language.html`, menüde "Başlarken").
+- Graflar: komşuluk listesi, BFS, DFS, Dijkstra, Bellman-Ford, topolojik sıralama, bağlı bileşenler, birleşik küme, Kruskal ve Prim; graf, komşuluk listesinden kendiliğinden çizilir (bileşenler renkli, ağaç kenarları kalın, birleşik küme orman olarak).
 - Dizilerde arama ve sıralama (ikili arama, seçmeli, kabarcık, eklemeli, hızlı, heap ve sayarak sıralama): dizi çubuk olarak da çizilir, karşılaştırılan hücreler çerçevelenir, oynatıcının yanında karşılaştırma ve yazma sayacı çalışır.
 - Adım karşılaştırma: her adımda değişen şeyin önceki hali (eski bağ, pointer'ın eski yeri, eski değer) soluk ve kesik çizgiyle arkada görünür; ayarlardan kapatılabilir.
 - Siteye ilk gelen kullanıcıya kısa bir tanıtım turu sayfanın bölümlerini sırayla gösterir (ayarlardan yeniden başlatılabilir).

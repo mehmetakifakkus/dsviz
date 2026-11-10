@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birleşik küme (union-find) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Birleşik küme (union-find)</h1>
+<h1 data-lang="en">Disjoint sets (union-find)</h1>
+<h1 data-lang="de">Disjunkte Mengen (Union-Find)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Birleşik küme yapısı (<em>disjoint set</em>, <em>union-find</em>) bir elemanlar topluluğunu ayrık kümelere böler ve iki işi çok hızlı yapar: iki elemanın <em>aynı kümede olup olmadığını</em> söylemek (<code>find</code>) ve iki kümeyi <em>birleştirmek</em> (<code>unite</code>). Her küme bir ağaçtır ve ağacın kökü kümenin temsilcisidir. Ağaçlar tek bir diziyle tutulur: <code>leader[i]</code>, <code>i</code>'nin ebeveynidir. Dizi, altta temsil ettiği ormanla birlikte çizilir: başta her eleman kendi başına bir kök.</p>
+<p data-lang="en">The disjoint-set structure (<em>union-find</em>) divides a collection of elements into separate sets and does two jobs very fast: telling whether two elements are <em>in the same set</em> (<code>find</code>) and <em>joining</em> two sets (<code>unite</code>). Every set is a tree and the root of the tree represents the set. The trees are kept in one array: <code>leader[i]</code> is the parent of <code>i</code>. The array is drawn together with the forest it stands for: at first every element is a root by itself.</p>
+<p data-lang="de">Die Datenstruktur der disjunkten Mengen (<em>Union-Find</em>) teilt eine Sammlung von Elementen in getrennte Mengen und erledigt zwei Aufgaben sehr schnell: sagen, ob zwei Elemente <em>in derselben Menge</em> liegen (<code>find</code>), und zwei Mengen <em>vereinigen</em> (<code>unite</code>). Jede Menge ist ein Baum, und die Wurzel vertritt die Menge. Die Bäume stehen in einem einzigen Array: <code>leader[i]</code> ist der Elternknoten von <code>i</code>. Das Array wird zusammen mit dem Wald gezeichnet, für den es steht: anfangs ist jedes Element eine eigene Wurzel.</p>
+
+<textarea id="text1" class="deneme">
+var n = 8                 // eleman sayısı
+var leader = new Array(8)   // leader[i]: i'nin ebeveyni (kendisiyse i bir kök, yani bir kümenin temsilcisi)
+for(var i = 0; i &lt; n; i++)
+{
+  leader[i] = i
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var n = 8                 // the number of elements
+var leader = new Array(8)   // leader[i]: the parent of i (if it is i itself, i is a root, the representative of a set)
+for(var i = 0; i < n; i++)
+{
+  leader[i] = i
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var n = 8                 // die Anzahl der Elemente
+var leader = new Array(8)   // leader[i]: der Elternknoten von i (ist es i selbst, ist i eine Wurzel, der Vertreter einer Menge)
+for(var i = 0; i < n; i++)
+{
+  leader[i] = i
+}
+</script>
+
+<p data-lang="tr"><code>find</code> köke kadar ebeveyn bağlarını izler. <code>unite</code> iki elemanın köklerini bulur ve farklıysa birini ötekinin altına asar. Birleştirmeleri izleyin: <code>unite(0, 1)</code>, <code>unite(1, 2)</code>, <code>unite(2, 3)</code> sırasıyla 0 → 1 → 2 → 3 gibi uzun bir zincir yapar; zincir uzadıkça <code>find</code> yavaşlar (en kötü durumda O(<em>n</em>)).</p>
+<p data-lang="en"><code>find</code> follows the parent links up to the root. <code>unite</code> finds the roots of the two elements and, if they differ, hangs one under the other. Watch the joining: <code>unite(0, 1)</code>, <code>unite(1, 2)</code>, <code>unite(2, 3)</code> make a long chain 0 → 1 → 2 → 3; the longer the chain, the slower <code>find</code> gets (O(<em>n</em>) in the worst case).</p>
+<p data-lang="de"><code>find</code> folgt den Elternverbindungen bis zur Wurzel. <code>unite</code> findet die Wurzeln der beiden Elemente und hängt, wenn sie verschieden sind, die eine unter die andere. Beobachten Sie das Vereinigen: <code>unite(0, 1)</code>, <code>unite(1, 2)</code>, <code>unite(2, 3)</code> machen eine lange Kette 0 → 1 → 2 → 3; je länger die Kette, desto langsamer wird <code>find</code> (im schlimmsten Fall O(<em>n</em>)).</p>
+
+<textarea id="text2" class="deneme">
+function find(x)            // x'in köküne çık
+{
+  while(leader[x] != x)
+  {
+    x = leader[x]
+  }
+  return x
+}
+function unite(a, b)         // iki kümeyi birleştir
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra != rb)
+  {
+    leader[ra] = rb          // bir kökü ötekinin altına as
+    return true
+  }
+  return false               // zaten aynı kümedeydiler
+}
+unite(0, 1)
+unite(1, 2)
+unite(2, 3)
+unite(4, 5)
+unite(6, 7)
+unite(5, 7)
+print find(0)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function find(x)            // climb to the root of x
+{
+  while(leader[x] != x)
+  {
+    x = leader[x]
+  }
+  return x
+}
+function unite(a, b)         // join two sets
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra != rb)
+  {
+    leader[ra] = rb          // hang one root under the other
+    return true
+  }
+  return false               // they were in the same set already
+}
+unite(0, 1)
+unite(1, 2)
+unite(2, 3)
+unite(4, 5)
+unite(6, 7)
+unite(5, 7)
+print find(0)
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function find(x)            // zur Wurzel von x aufsteigen
+{
+  while(leader[x] != x)
+  {
+    x = leader[x]
+  }
+  return x
+}
+function unite(a, b)         // zwei Mengen vereinigen
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra != rb)
+  {
+    leader[ra] = rb          // eine Wurzel unter die andere hängen
+    return true
+  }
+  return false               // sie waren schon in derselben Menge
+}
+unite(0, 1)
+unite(1, 2)
+unite(2, 3)
+unite(4, 5)
+unite(6, 7)
+unite(5, 7)
+print find(0)
+</script>
+
+<p data-lang="tr"><em>Yol sıkıştırma</em> bunu çözer: <code>find</code> köke giderken yoldaki her elemanı doğrudan köke bağlar. Aşağıdaki çağrıdan sonra ağaç yassılaşır ve sonraki aramalar tek adımda biter. Yol sıkıştırma ve "küçük ağacı büyüğünün altına as" kuralı birlikte, işlem başına neredeyse sabit süre (O(α(<em>n</em>))) verir.</p>
+<p data-lang="en"><em>Path compression</em> solves this: while <code>find</code> goes up to the root, it hangs every element on the way directly under the root. After the call below the tree is flat and later searches finish in one step. Path compression together with the rule "hang the smaller tree under the bigger one" gives an almost constant time per operation (O(α(<em>n</em>))).</p>
+<p data-lang="de"><em>Pfadkompression</em> löst das: während <code>find</code> zur Wurzel aufsteigt, hängt es jedes Element auf dem Weg direkt unter die Wurzel. Nach dem Aufruf unten ist der Baum flach, und spätere Suchen sind in einem Schritt fertig. Pfadkompression zusammen mit der Regel „den kleineren Baum unter den größeren hängen“ ergibt eine fast konstante Zeit pro Operation (O(α(<em>n</em>))).</p>
+
+<textarea id="text3" class="deneme">
+function find(x)            // yol sıkıştırma: bulunan kökü yol boyunca herkesin ebeveyni yap
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+print find(0)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function find(x)            // path compression: make the root found the parent of everyone on the way
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+print find(0)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function find(x)            // Pfadkompression: die gefundene Wurzel zum Elternknoten aller auf dem Weg machen
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+print find(0)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

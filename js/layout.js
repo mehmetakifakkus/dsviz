@@ -91,7 +91,13 @@
 		]},
 		{ group: {tr: 'Graflar', en: 'Graphs', de: 'Graphen'}, items: [
 			['graph.html', {tr: 'Komşuluk listesi, BFS ve DFS', en: 'Adjacency lists, BFS and DFS', de: 'Adjazenzlisten, BFS und DFS'}],
-			['dijkstra.html', {tr: 'Dijkstra: ağırlıklı kenarlar ve en kısa yol', en: 'Dijkstra: weighted edges and shortest paths', de: 'Dijkstra: gewichtete Kanten und kürzeste Wege'}]
+			['dijkstra.html', {tr: 'Dijkstra: ağırlıklı kenarlar ve en kısa yol', en: 'Dijkstra: weighted edges and shortest paths', de: 'Dijkstra: gewichtete Kanten und kürzeste Wege'}],
+			['bellmanFord.html', {tr: 'Bellman-Ford: negatif ağırlıklar', en: 'Bellman-Ford: negative weights', de: 'Bellman-Ford: negative Gewichte'}],
+			['topologicalSort.html', {tr: 'Topolojik sıralama', en: 'Topological sort', de: 'Topologische Sortierung'}],
+			['connectedComponents.html', {tr: 'Bağlı bileşenler', en: 'Connected components', de: 'Zusammenhangskomponenten'}],
+			['unionFind.html', {tr: 'Birleşik küme (union-find)', en: 'Disjoint sets (union-find)', de: 'Disjunkte Mengen (Union-Find)'}],
+			['kruskal.html', {tr: 'Kruskal: en küçük kapsayan ağaç', en: 'Kruskal: minimum spanning tree', de: 'Kruskal: minimaler Spannbaum'}],
+			['prim.html', {tr: 'Prim: en küçük kapsayan ağaç', en: 'Prim: minimum spanning tree', de: 'Prim: minimaler Spannbaum'}]
 		]}
 	];
 

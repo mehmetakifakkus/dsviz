@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kruskal: en küçük kapsayan ağaç | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Kruskal: en küçük kapsayan ağaç</h1>
+<h1 data-lang="en">Kruskal: the minimum spanning tree</h1>
+<h1 data-lang="de">Kruskal: der minimale Spannbaum</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir graftaki bütün köşeleri bağlayan ve toplam ağırlığı en küçük olan döngüsüz kenar kümesine <em>en küçük kapsayan ağaç</em> (MST) denir: bütün şehirleri en ucuz yol ağıyla bağlamak gibi. <em>Kruskal algoritması</em> kenarları ağırlığa göre küçükten büyüğe dener ve bir kenar <em>döngü yapmıyorsa</em> ağaca alır. Grafta altı köşe ve sekiz ağırlıklı kenar var; ağaca alınan kenarlar kalın mavi çizilecek.</p>
+<p data-lang="en">A set of edges without a cycle that joins all vertices of a graph and has the smallest total weight is called a <em>minimum spanning tree</em> (MST): like joining all cities with the cheapest network of roads. <em>Kruskal's algorithm</em> tries the edges from the lightest to the heaviest and takes an edge if it <em>makes no cycle</em>. The graph has six vertices and eight weighted edges; the edges taken into the tree will be drawn thick and blue.</p>
+<p data-lang="de">Eine Menge von Kanten ohne Zyklus, die alle Knoten eines Graphen verbindet und das kleinste Gesamtgewicht hat, heißt <em>minimaler Spannbaum</em> (MST): wie alle Städte mit dem billigsten Straßennetz zu verbinden. <em>Kruskals Algorithmus</em> probiert die Kanten von der leichtesten zur schwersten und nimmt eine Kante auf, wenn sie <em>keinen Zyklus bildet</em>. Der Graph hat sechs Knoten und acht gewichtete Kanten; die in den Baum aufgenommenen Kanten werden dick und blau gezeichnet.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(6)      // komşuluk listeleri: ağırlıklı yönsüz graf
+var n = 6                 // köşe sayısı
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // ağırlık kenar düğümünde
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(6)      // adjacency lists: a weighted undirected graph
+var n = 6                 // the number of vertices
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // the weight is in the edge's node
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(6)      // Adjazenzlisten: ein gewichteter ungerichteter Graph
+var n = 6                 // die Anzahl der Knoten
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // das Gewicht steht im Kantenknoten
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</script>
+
+<p data-lang="tr">Bir kenarın döngü yapıp yapmadığını anlamak için birleşik küme yapısını kullanırız (<em>birleşik küme</em> sayfası): iki ucu <em>aynı</em> kümedeyse zaten bir yol vardır ve kenar döngü kurar; <em>farklı</em> kümelerdeyse kenar iki kümeyi birleştirir. Dizi altta orman olarak çizilir.</p>
+<p data-lang="en">To find out whether an edge makes a cycle we use the disjoint-set structure (see the <em>disjoint sets</em> page): if its two ends are in the <em>same</em> set there is already a path and the edge would make a cycle; if they are in <em>different</em> sets the edge joins the two sets. The array is drawn as a forest below.</p>
+<p data-lang="de">Um zu erkennen, ob eine Kante einen Zyklus bildet, benutzen wir die Struktur der disjunkten Mengen (siehe die Seite zu <em>disjunkten Mengen</em>): liegen ihre beiden Enden in <em>derselben</em> Menge, gibt es schon einen Weg und die Kante würde einen Zyklus bilden; liegen sie in <em>verschiedenen</em> Mengen, vereinigt die Kante die beiden Mengen. Das Array wird unten als Wald gezeichnet.</p>
+
+<textarea id="text2" class="deneme">
+var leader = new Array(6)   // kümeler: birleşik küme
+for(var i = 0; i &lt; n; i++)
+{
+  leader[i] = i
+}
+function find(x)            // kökü bul, yol sıkıştır
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+function unite(a, b)        // iki kümeyi birleştir; zaten aynıysa false
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra == rb)
+  {
+    return false
+  }
+  leader[ra] = rb
+  return true
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var leader = new Array(6)   // the sets: disjoint sets
+for(var i = 0; i < n; i++)
+{
+  leader[i] = i
+}
+function find(x)            // find the root, compress the path
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+function unite(a, b)        // join two sets; false if they were the same
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra == rb)
+  {
+    return false
+  }
+  leader[ra] = rb
+  return true
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var leader = new Array(6)   // die Mengen: disjunkte Mengen
+for(var i = 0; i < n; i++)
+{
+  leader[i] = i
+}
+function find(x)            // die Wurzel finden, den Pfad komprimieren
+{
+  if(leader[x] != x)
+  {
+    leader[x] = find(leader[x])
+  }
+  return leader[x]
+}
+function unite(a, b)        // zwei Mengen vereinigen; false, wenn sie schon gleich waren
+{
+  var ra = find(a)
+  var rb = find(b)
+  if(ra == rb)
+  {
+    return false
+  }
+  leader[ra] = rb
+  return true
+}
+</script>
+
+<p data-lang="tr">Kenarları ağırlığa göre küçükten büyüğe işliyoruz. Önce 1 (1–2), sonra 2 (1–3 ve 3–4), sonra 3 (0–2) alınır; 4 ağırlıklı 0–1 ve 2–3 kenarlarının uçları artık aynı kümede olduğundan atlanır, 5 ağırlıklı 3–5 alınır. 5 kenar, toplam ağırlık 13. Ağaca giren kenarlar kalın mavi çizilir (kenar düğümünün <code>chosen</code> alanı). Kenarları sıralamak O(<em>m</em> log <em>m</em>) sürer ve baskın maliyet budur.</p>
+<p data-lang="en">We process the edges from the lightest to the heaviest. First weight 1 (1–2), then 2 (1–3 and 3–4), then 3 (0–2) are taken; the edges 0–1 and 2–3 of weight 4 are skipped because their ends are in the same set by now, and 3–5 of weight 5 is taken. Five edges, total weight 13. The edges that entered the tree are drawn thick and blue (the <code>chosen</code> field of the edge's node). Sorting the edges takes O(<em>m</em> log <em>m</em>) and is the dominant cost.</p>
+<p data-lang="de">Wir bearbeiten die Kanten von der leichtesten zur schwersten. Zuerst Gewicht 1 (1–2), dann 2 (1–3 und 3–4), dann 3 (0–2) werden genommen; die Kanten 0–1 und 2–3 mit Gewicht 4 werden übersprungen, weil ihre Enden inzwischen in derselben Menge liegen, und 3–5 mit Gewicht 5 wird genommen. Fünf Kanten, Gesamtgewicht 13. Die Kanten, die in den Baum kamen, werden dick und blau gezeichnet (das Feld <code>chosen</code> des Kantenknotens). Das Sortieren der Kanten dauert O(<em>m</em> log <em>m</em>) und ist der größte Kostenfaktor.</p>
+
+<textarea id="text3" class="deneme">
+function choose(u, v)       // u–v kenarını ağaca al: iki yöndeki düğümü de işaretle
+{
+  var p = adj[u]
+  while(p != null)
+  {
+    if(p.data == v)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+  p = adj[v]
+  while(p != null)
+  {
+    if(p.data == u)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var w = 1; w &lt;= 9; w++)   // ağırlıkları küçükten büyüğe dolaş (ağırlıklar küçük tam sayı: sıralamak yerine saymak yeter)
+{
+  for(var u = 0; u &lt; n; u++)
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      if(p.weight == w &amp;&amp; u &lt; p.data)   // her kenar bir kez: u &lt; v
+      {
+        if(unite(u, p.data))     // iki ucu farklı kümelerdeyse döngü olmaz: ağaca al
+        {
+          choose(u, p.data)
+          total = total + w      // toplam ağırlık
+        }
+      }
+      p = p.next
+    }
+  }
+}
+print total
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function choose(u, v)       // take the edge u–v into the tree: mark the node in both directions
+{
+  var p = adj[u]
+  while(p != null)
+  {
+    if(p.data == v)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+  p = adj[v]
+  while(p != null)
+  {
+    if(p.data == u)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var w = 1; w <= 9; w++)   // go over the weights from the smallest to the biggest (the weights are small whole numbers: counting is enough, no sorting)
+{
+  for(var u = 0; u < n; u++)
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      if(p.weight == w && u < p.data)   // every edge once: u < v
+      {
+        if(unite(u, p.data))     // if its two ends are in different sets there is no cycle: take it
+        {
+          choose(u, p.data)
+          total = total + w      // the total weight
+        }
+      }
+      p = p.next
+    }
+  }
+}
+print total
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function choose(u, v)       // die Kante u–v in den Baum aufnehmen: den Knoten in beiden Richtungen markieren
+{
+  var p = adj[u]
+  while(p != null)
+  {
+    if(p.data == v)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+  p = adj[v]
+  while(p != null)
+  {
+    if(p.data == u)
+    {
+      p.chosen = true
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var w = 1; w <= 9; w++)   // die Gewichte von klein nach groß durchgehen (die Gewichte sind kleine ganze Zahlen: Zählen genügt, kein Sortieren)
+{
+  for(var u = 0; u < n; u++)
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      if(p.weight == w && u < p.data)   // jede Kante einmal: u < v
+      {
+        if(unite(u, p.data))     // liegen ihre beiden Enden in verschiedenen Mengen, entsteht kein Zyklus: aufnehmen
+        {
+          choose(u, p.data)
+          total = total + w      // das Gesamtgewicht
+        }
+      }
+      p = p.next
+    }
+  }
+}
+print total
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
