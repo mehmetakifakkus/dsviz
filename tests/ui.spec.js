@@ -1089,4 +1089,28 @@ test.describe('matrices', () => {
 		await expect(page.locator('canvas').first()).toBeVisible();
 		expect(problems).toEqual([]);
 	});
+	test('an index that is not a number is explained too (undefined, NaN, null)', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		const out = page.locator('#output');
+		await runCode(page, 'var g = new Array(2, 2)\nvar a1 = g[0 / 0][0]\n');
+		await expect(out).toContainText('g[NaN]: matrisin 2 satırı var');
+		await runCode(page, 'var a2 = g[0][0 / 0]\n');
+		await expect(out).toContainText('g[0][NaN]: matrisin 2 sütunu var');
+		await runCode(page, 'var a3 = g[null][0]\n');
+		await expect(out).toContainText('g[null]: matrisin 2 satırı var');
+		await runCode(page, 'function f(i)\n{\n  return g[i][0]\n}\nvar a4 = f()\n');       // a missing argument is null
+		await expect(out).toContainText('g[null]: matrisin 2 satırı var');
+		await runCode(page, 'function h(i, j)\n{\n  return g[i][j]\n}\nvar a5 = h(1)\n');
+		await expect(out).toContainText('g[1][null]: matrisin 2 sütunu var');
+		expect(problems).toEqual([]);
+	});
+
+	for (const [lang, hint] of [['cpp', 'int g[3][4]'], ['java', 'int[][] g = new int[3][4]']])
+		test(`in ${lang} the hint of a missing matrix is written in that language`, async ({ page }) => {
+			const problems = await openPage(page, 'index.html', { codeLang: lang });
+			await runCode(page, 'var h = 5\nh[0][0] = 1\n');
+			await expect(page.locator('#output')).toContainText('"h" bir matris değil');
+			await expect(page.locator('#output')).toContainText(hint);
+			expect(problems).toEqual([]);
+		});
 });

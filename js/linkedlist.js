@@ -311,7 +311,13 @@ var cellReads = [];
 var MATRIX_MAX = 12;
 function isMatrix(v){ return isArray(v) && v.visual.kind === 'grid'; }
 function nullCells(n){ var cells = []; for(var i = 0; i < n; i = i + 1) cells.push(null); return cells; }
-function matrixIndex(prop){ return typeof prop === 'string' && /^-?\d+(\.\d+)?$/.test(prop) ? Number(prop) : null; }
+// a property name that stands for an index: a number, or what a bad index value (undefined, NaN, null...) turns into
+// when it is used as a name; the latter come back as the word itself so that the error can say it
+function matrixIndex(prop){
+	if(typeof prop !== 'string') return null;
+	if(/^-?\d+(\.\d+)?$/.test(prop)) return Number(prop);
+	return /^(undefined|NaN|null|Infinity|-Infinity|true|false)$/.test(prop) ? prop : null;
+}
 function validIndex(i, n){ return i >= 0 && i < n && i % 1 === 0; }
 
 function makeMatrix(rows, cols){
@@ -2543,7 +2549,8 @@ window['tamBöl'] = function(a, b){
 // The pieces of code in a message (between backticks in the texts) in the chosen code
 // language: `p != null` is p != boş in Turkish code and p != nullptr in C++. A declaration
 // (`var x = ...`) becomes auto x = ... in C++; an array has its own form in C++ and Java.
-var CODE_EXAMPLES = {'var t = new Array(n)': {cpp: 'int t[n]', java: 'int[] t = new int[n]'}};
+var CODE_EXAMPLES = {'var t = new Array(n)': {cpp: 'int t[n]', java: 'int[] t = new int[n]'},
+                     'var g = new Array(3, 4)': {cpp: 'int g[3][4]', java: 'int[][] g = new int[3][4]'}};
 function codePieces(text){
 	var lang = codeLangInfo(), id = window.dsvCodeLang;
 	return String(text).replace(/`([^`\n]*)`/g, function(m, piece){
