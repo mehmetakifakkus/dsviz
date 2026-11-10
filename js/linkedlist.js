@@ -304,6 +304,52 @@ function makeArray(n){
 // the cells of arrays the statement being evaluated has read (see drawGraphics)
 var cellReads = [];
 
+// A matrix, new Array(rows, cols): an array of row arrays. Its drawing state is one flat, row-major list
+// (visual.cells, cell (r, c) at r * cols + c: the same flat index the one-dimensional machinery uses for
+// cell focus, reads and ghosts); the values the program holds are in m.raw[r][c]. Reading a row or a
+// cell through the proxies checks the index and records the cell as read.
+var MATRIX_MAX = 12;
+function isMatrix(v){ return isArray(v) && v.visual.kind === 'grid'; }
+function nullCells(n){ var cells = []; for(var i = 0; i < n; i = i + 1) cells.push(null); return cells; }
+function matrixIndex(prop){ return typeof prop === 'string' && /^-?\d+(\.\d+)?$/.test(prop) ? Number(prop) : null; }
+function validIndex(i, n){ return i >= 0 && i < n && i % 1 === 0; }
+
+function makeMatrix(rows, cols){
+	rows = Number(rows);
+	cols = Number(cols);
+	if(!(validIndex(rows - 1, MATRIX_MAX) && validIndex(cols - 1, MATRIX_MAX)))
+		throw ownError(currentLine, 'eMatrixSize', {r: formatValue(rows), c: formatValue(cols)});
+	var m = [], r;
+	m.dsvArray = true;
+	m.raw = [];
+	m.visual = {id: 'a' + (allArrays.length + 1), shown: false, name: '', kind: 'grid', rows: rows, cols: cols, cells: nullCells(rows * cols)};
+	allArrays.push(m);
+	for(r = 0; r < rows; r = r + 1){
+		m.raw.push(nullCells(cols));
+		m.push(matrixRow(m, r));
+	}
+	return window.Proxy ? new Proxy(m, {get: function(target, prop){
+		var i = matrixIndex(prop);
+		if(i !== null && !validIndex(i, rows))
+			throw ownError(currentLine, 'eMatrixRow', {name: target.dsvName || '', i: formatValue(i), n: rows, last: rows - 1});
+		return target[prop];
+	}}) : m;
+}
+
+function matrixRow(m, r){
+	var row = m.raw[r], cols = m.visual.cols;
+	row.dsvRow = true;
+	return window.Proxy ? new Proxy(row, {get: function(target, prop){
+		var j = matrixIndex(prop);
+		if(j !== null){
+			if(!validIndex(j, cols))
+				throw ownError(currentLine, 'eMatrixCol', {name: m.dsvName || '', i: r, j: formatValue(j), n: cols, last: cols - 1});
+			cellReads.push({visual: m.visual, index: r * cols + j});
+		}
+		return target[prop];
+	}}) : row;
+}
+
 // An array holding nodes is drawn as a column of buckets (a hash table); an array of
 // numbers (or still empty) as a row of cells over the drawing. Which one is decided by the
 // first value the program puts in it (visual.kind).
@@ -320,7 +366,7 @@ function drawnTable(){ return bucketTables()[0] || null; }
 
 // the arrays drawn as rows at the top, in the order they were made
 function rowArrays(){
-	return allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'buckets'; });
+	return allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'buckets' && a.visual.kind !== 'grid'; });
 }
 
 var ROW_BAND = 120, ROW_CELL_W = 40, ROW_TOP = 40; // height of one row array with its labels
@@ -2041,11 +2087,13 @@ function describe(line, res, removed){
 	case 'assignment':
 		if(line.rhs.type == 'node' && res.firstNext) return t('nNewNodeNext', {name: name, node: nodeLabel(res), next: nodeLabel(res.firstNext)});
 		if(line.rhs.type == 'node') return t('nNewNode', {name: name, node: nodeLabel(res)});
+		if(line.rhs.type == 'array' && res.visual.kind === 'grid') return t('nNewMatrix', {name: name, r: res.visual.rows, c: res.visual.cols});
 		if(line.rhs.type == 'array') return t('nNewArray', {name: name, n: res.length});
 		if(res === null || isNode(res)) return pointsTo(res);
 		return t('nValue', {name: name, value: formatValue(res)});
+	case 'matrix assignment':
 	case 'array assignment':
-		var cell = '`' + line.array + '[' + res.index + ']`';
+		var cell = '`' + line.array + '[' + (line.type == 'matrix assignment' ? res.row + '][' + res.col : res.index) + ']`';
 		if(res.newNode) return t('nCellNew', {cell: cell, node: nodeLabel(res.newNode)});
 		if(res.value === null) return t('nCellNull', {cell: cell});
 		if(isNode(res.value)) return t('nCellNode', {cell: cell, node: nodeLabel(res.value)});
@@ -2099,7 +2147,7 @@ function resetVisuals(){
 	lastPlaced = null;
 	doublyMode = false;
 	treeMode = false;
-	allArrays.forEach(function(a){ a.visual.shown = false; a.visual.cells = a.map(function(){ return null; }); });
+	allArrays.forEach(function(a){ a.visual.shown = false; a.visual.cells = a.visual.kind === 'grid' ? nullCells(a.visual.rows * a.visual.cols) : a.map(function(){ return null; }); });
 	shownNumbers = {};
 
 	pointerMap = {};
@@ -2238,7 +2286,7 @@ function drawGraphics(line, result){
 		reads.forEach(function(r){ focusEdge(r.visual, 'read' + r.index); });
 		if(line.type == 'logical' && reads.length)   // a condition that looked at cells: a comparison
 			stats.compare = stats.compare + 1;
-		else if(line.type == 'array assignment')
+		else if(line.type == 'array assignment' || line.type == 'matrix assignment')
 			stats.write = stats.write + 1;
 
 		if(line.type == 'declaration' || line.type == 'assignment')
@@ -2273,6 +2321,16 @@ function drawGraphics(line, result){
 				showValue(line.lhs, res, scope);
 		}
 		else if(line.type == 'array assignment')
+		{
+			highlight(doc, line);
+			if(res.newNode)
+				showNewNode(res.newNode);
+			ghostCell(res.array.visual, res.index, res.array.visual.cells[res.index], res.value);
+			res.array.visual.cells[res.index] = res.value;
+			focusEdge(res.array.visual, 'cell' + res.index);
+			layout();
+		}
+		else if(line.type == 'matrix assignment')
 		{
 			highlight(doc, line);
 			if(res.newNode)
@@ -2522,10 +2580,14 @@ function processOneItem(item){
 
 		var value = item.rhs.type == 'node'   //  x = new? Node(2)  /  Node(i)
 			? makeNode(item.rhs)
-			: item.rhs.type == 'array' ? makeArray(evalExpr(item.rhs.size)) // table = new Array(5)
+			: item.rhs.type == 'array' ? (item.rhs.size2 !== null && item.rhs.size2 !== undefined
+				? makeMatrix(evalExpr(item.rhs.size), evalExpr(item.rhs.size2))   // g = new Array(3, 4)
+				: makeArray(evalExpr(item.rhs.size)))                             // table = new Array(5)
 			: evalExpr(item.rhs);
 
 		setVar(item.lhs, value, item.type == 'declaration');
+		if(isArray(value) && !value.dsvName)
+			value.dsvName = item.lhs;                // the name the errors of a matrix call it by
 		if(isNode(value))
 			value.setName(item.lhs);
 
@@ -2572,6 +2634,8 @@ function processOneItem(item){
 		var arr = evalExpr(item.array);
 		if(!isArray(arr))
 			throw ownError(item.lineNumber, 'eNotArray', {name: item.array});
+		if(isMatrix(arr))
+			throw ownError(item.lineNumber, 'eMatrixOneIndex', {name: item.array});
 		var index = evalExpr(item.index);
 		if(!(index >= 0 && index < arr.length && index % 1 === 0))
 			throw ownError(item.lineNumber, 'eIndex', {name: item.array, i: formatValue(index), n: arr.length, last: arr.length - 1});
@@ -2587,6 +2651,27 @@ function processOneItem(item){
 			(arr.visual.indexVars = arr.visual.indexVars || {})[item.index] = true;
 
 		drawGraphics(item, {array: arr, index: index, value: cellValue, newNode: cellNode});
+	}
+	else if(item.type == 'matrix assignment') // g[i][j] = n
+	{
+		item['#evaluation']++;
+
+		var mat = evalExpr(item.array);
+		if(!isMatrix(mat))
+			throw ownError(item.lineNumber, 'eNotMatrix', {name: item.array});
+		var mrow = evalExpr(item.row), mcol = evalExpr(item.col), mv = mat.visual;
+		if(!validIndex(mrow, mv.rows))
+			throw ownError(item.lineNumber, 'eMatrixRow', {name: item.array, i: formatValue(mrow), n: mv.rows, last: mv.rows - 1});
+		if(!validIndex(mcol, mv.cols))
+			throw ownError(item.lineNumber, 'eMatrixCol', {name: item.array, i: formatValue(mrow), j: formatValue(mcol), n: mv.cols, last: mv.cols - 1});
+		var mnode = null, mvalue;
+		if(item.rhs && item.rhs.type == 'node')
+			mvalue = mnode = makeNode(item.rhs);
+		else
+			mvalue = evalExpr(rhsCode(item.rhs));
+		mat.raw[mrow][mcol] = mvalue;
+
+		drawGraphics(item, {array: mat, row: mrow, col: mcol, index: mrow * mv.cols + mcol, value: mvalue, newNode: mnode});
 	}
 	else if(item.type == 'object property right') // p1 = p1.next
 	{
@@ -2728,6 +2813,7 @@ function codeWord(word){ return codeLangInfo() ? codeLangInfo().display(word) : 
 function formatValue(value){
 	if(isNode(value)) return t('nodeValue', {data: value.data});
 	if(isArray(value)) return t('arrayValue', {n: value.length});
+	if(value && value.dsvRow) return t('rowValue', {n: value.length});   // g[1]: a row of a matrix
 	if(value === null) return codeWord('null');
 	if(value === true || value === false) return codeWord(String(value));
 	if(value === undefined) return t('undefinedValue');
@@ -2965,7 +3051,18 @@ window.dsvState = function(){
 		pointers: pointers.filter(function(p){ return p.active; }).map(function(p){ return p.label; }).sort(),
 		doubly: doublyMode,
 		tree: treeMode,
-		arrays: allArrays.filter(function(a){ return a.visual.shown; }).map(function(a){
+		grids: allArrays.filter(function(a){ return a.visual.shown && a.visual.kind === 'grid'; }).map(function(a){
+			var v = a.visual, rows = [], reads = [], focused = null, r, c;
+			for(r = 0; r < v.rows; r = r + 1){
+				rows.push(v.cells.slice(r * v.cols, (r + 1) * v.cols).map(function(x){ return isNode(x) ? '[' + x.shownData + ']' : x; }));
+				for(c = 0; c < v.cols; c = c + 1){
+					if(isFocusedEdge(v, 'read' + (r * v.cols + c))) reads.push([r, c]);
+					if(isFocusedEdge(v, 'cell' + (r * v.cols + c))) focused = [r, c];
+				}
+			}
+			return {name: v.name, rows: v.rows, cols: v.cols, cells: rows, reads: reads, focus: focused};
+		}),
+		arrays: allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'grid'; }).map(function(a){
 			var markers = {};
 			var at = markersOf(a.visual);
 			Object.keys(at).forEach(function(k){ at[k].forEach(function(n){ markers[n] = Number(k); }); });
@@ -2988,7 +3085,9 @@ window.dsvState = function(){
 			links: ghosts.links.map(function(g){ return g.from.shownData + '>' + g.to.shownData + ' ' + g.kind; }),
 			pointers: ghosts.pointers.map(function(g){ return g.pointer.label + ':' + g.from.shownData + '>' + (g.to ? g.to.shownData : 'null'); }),
 			values: ghosts.values.map(function(g){ return g.node.shownData + '<-' + g.old; }),
-			cells: ghosts.cells.map(function(g){ return g.visual.name + '[' + g.index + ']:' + g.old; }),
+			cells: ghosts.cells.map(function(g){
+				return g.visual.name + (g.visual.kind === 'grid' ? '[' + Math.floor(g.index / g.visual.cols) + '][' + g.index % g.visual.cols + ']' : '[' + g.index + ']') + ':' + g.old;
+			}),
 			drawn: !!ghostDrawing
 		},
 		// how the next / prev arrows on the canvas are drawn: {straight: 3, hook: 2, other: 0}
