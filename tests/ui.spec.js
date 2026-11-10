@@ -1009,7 +1009,7 @@ test.describe('matrices', () => {
 		const problems = await openPage(page, 'index.html');
 		await runCode(page, 'var g = new Array(2, 3)\ng[1][2] = 7\ng[0][0] = g[1][2] + 1\n');
 		let s = await state(page);
-		expect(s.grids).toEqual([{ name: 'g', rows: 2, cols: 3, cells: [[8, null, null], [null, null, 7]], reads: [[1, 2]], focus: [0, 0] }]);
+		expect(s.grids).toEqual([{ name: 'g', rows: 2, cols: 3, cells: [[8, null, null], [null, null, 7]], reads: [[1, 2]], focus: [0, 0], markers: { row: {}, col: {} } }]);
 		expect(s.arrays).toEqual([]);                                  // a matrix is not a row array
 		expect(s.stats).toEqual({ compare: 0, write: 2 });
 		expect(s.narration).toContain('g[0][0]');
@@ -1071,6 +1071,22 @@ test.describe('matrices', () => {
 		await runCode(page, 'var g = new Array(2, 2)\ng[0][0] = 1\nvar r = g[1]\nvar x = g[0][0]\n');
 		const s = await state(page);
 		expect(s.grids[0].cells).toEqual([[1, null], [null, null]]);
+		expect(problems).toEqual([]);
+	});
+	test('the grid: index variables are marked on their row and column, bands do not overlap, odd values draw', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await runCode(page, 'var g = new Array(3, 4)\nvar i = 1\nvar j = 2\ng[i][j] = 1\n');
+		let s = await state(page);
+		expect(s.grids[0].markers).toEqual({ row: { i: 1 }, col: { j: 2 } });
+
+		await runCode(page, 'var a = new Array(6)\na[0] = 4\nvar h = new Array(2, 2)\nh[0][0] = true\nh[1][1] = 12345\n');
+		s = await state(page);
+		expect(s.bands.map(b => b[0])).toEqual(['g', 'a', 'h']);       // the order the arrays were made in
+		for (let k = 1; k < s.bands.length; k++)
+			expect(s.bands[k][1]).toBeGreaterThanOrEqual(s.bands[k - 1][1] + s.bands[k - 1][2]);
+		expect(s.bands[0][2]).toBeGreaterThanOrEqual(3 * 30);          // the first one holds three rows of cells
+		expect(s.grids.find(x => x.name === 'h').cells).toEqual([[true, null], [null, 12345]]);
+		await expect(page.locator('canvas').first()).toBeVisible();
 		expect(problems).toEqual([]);
 	});
 });

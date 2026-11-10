@@ -371,6 +371,13 @@ function rowArrays(){
 
 var ROW_BAND = 120, ROW_CELL_W = 40, ROW_TOP = 40; // height of one row array with its labels
 
+// the arrays drawn over everything else, in the order they were made: rows of cells, and matrices as grids
+function layoutArrays(){
+	return allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'buckets'; });
+}
+function isGridArray(a){ return a.visual.kind === 'grid'; }
+var GRID_CELL_H = 30, GRID_HEAD = 26, GRID_ROWNUM_W = 26, GRID_LABEL_W = 60; // a grid: a row of its cell, the column numbers over it, the row numbers and row markers beside it
+
 // A heap kept in an array: once the code uses the index formulas of one (the children of i
 // at 2 * i + 1 and 2 * i + 2, its parent at (i - 1) / 2), arrays of numbers are also drawn as
 // the tree they stand for, under their row: cell 0 is the root, cell i's children are cells
@@ -379,9 +386,9 @@ var ROW_BAND = 120, ROW_CELL_W = 40, ROW_TOP = 40; // height of one row array wi
 var HEAP_FORMULA = /\b2\s*\*\s*[A-Za-z_]\w*\s*\+\s*[12]\b|\(\s*[A-Za-z_]\w*\s*-\s*1\s*\)\s*\/\s*2\b|tamBöl\(\s*[A-Za-z_]\w*\s*-\s*1\s*,\s*2\s*\)/;
 var heapRequested = false; // program state: some code on this page used those formulas
 var HEAP_LEVEL_H = 58, HEAP_R = 15, HEAP_TOP = 112; // a level of the tree, a node's radius, the tree's top under its row
-function heapLevels(a){ return heapRequested && a.visual.kind !== 'buckets' ? Math.floor(Math.log(a.length) / Math.LN2) + 1 : 0; }
-function heapWidth(a){ return Math.max(a.length * ROW_CELL_W, heapLevels(a) ? Math.pow(2, heapLevels(a) - 1) * 44 : 0, forestWidth(a)); }
-function rowBand(a){ var l = heapLevels(a) || forestLevels(a); return (l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND) + (barsOn(a) ? BAR_BAND : 0); }
+function heapLevels(a){ return heapRequested && a.visual.kind !== 'buckets' && a.visual.kind !== 'grid' ? Math.floor(Math.log(a.length) / Math.LN2) + 1 : 0; }
+function heapWidth(a){ if(isGridArray(a)) return GRID_ROWNUM_W + a.visual.cols * ROW_CELL_W + GRID_LABEL_W; return Math.max(a.length * ROW_CELL_W, heapLevels(a) ? Math.pow(2, heapLevels(a) - 1) * 44 : 0, forestWidth(a)); }
+function rowBand(a){ if(isGridArray(a)) return GRID_HEAD + a.visual.rows * GRID_CELL_H + 72; var l = heapLevels(a) || forestLevels(a); return (l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND) + (barsOn(a) ? BAR_BAND : 0); }
 
 // A disjoint-set forest kept in an array (named leader, lider, temsilci, uf, dsu): cell i holds the parent of i
 // (a cell with its own number, or an empty one, is a root). It is drawn under its row as the trees it stands for:
@@ -423,8 +430,8 @@ function forestOf(a){
 	roots.forEach(place);
 	return {parent: parent, depth: depth, levels: levels, slot: slot, slots: next, roots: roots};
 }
-function forestLevels(a){ var f = forestOf(a); return f ? f.levels : 0; }
-function forestWidth(a){ var f = forestOf(a); return f ? f.slots * 44 : 0; }
+function forestLevels(a){ if(isGridArray(a)) return 0; var f = forestOf(a); return f ? f.levels : 0; }
+function forestWidth(a){ if(isGridArray(a)) return 0; var f = forestOf(a); return f ? f.slots * 44 : 0; }
 
 // An array of numbers that holds data to search or sort (named a, arr, dizi, nums...) is also drawn as bars over
 // its cells: the height of a bar is its value, so "sorted" and "in the wrong place" can be seen at a glance.
@@ -432,7 +439,7 @@ var BAR_BAND = 76, BAR_MAX = 60;
 var BAR_NAMES = /^(a|arr|array|dizi|sayılar|sayilar|nums|numbers|veri|data|input|items|list|liste)$/i;
 function barsOn(a){
 	var v = a.visual, numbers = 0;
-	if(a.visual.kind === 'buckets' || !BAR_NAMES.test(v.name || '') || v.cells.length < 4 || v.cells.length > 24)
+	if(a.visual.kind === 'buckets' || a.visual.kind === 'grid' || !BAR_NAMES.test(v.name || '') || v.cells.length < 4 || v.cells.length > 24)
 		return false;
 	for(var i = 0; i < v.cells.length; i = i + 1){
 		var c = v.cells[i];
@@ -444,7 +451,7 @@ function barsOn(a){
 	}
 	return numbers > 0;
 }
-function topOffset(){ return rowArrays().reduce(function(sum, a){ return sum + rowBand(a); }, 0); }
+function topOffset(){ return layoutArrays().reduce(function(sum, a){ return sum + rowBand(a); }, 0); }
 
 // the value of an index variable for the markers: a local of the running call, else a global
 function markerValue(name){
@@ -485,9 +492,11 @@ function drawRowArrays(){
 		rowArraysDraw = null;
 	}
 	var items = [], bandTop = 0;
-	rowArrays().forEach(function(a){
+	layoutArrays().forEach(function(a){
 		var v = a.visual, x0 = COL_X0, top0 = ROW_TOP + bandTop, bars = barsOn(a), y = top0 + (bars ? BAR_BAND : 0), maxValue = 1;
 		bandTop = bandTop + rowBand(a);
+		if(isGridArray(a))
+			return drawGrid(v, x0, top0, items);
 		v.cells.forEach(function(c){ if(typeof c === 'number') maxValue = Math.max(maxValue, c); });
 		items.push(new PointText({ point: [x0, top0 - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
 		for(var i = 0; i < v.cells.length; i = i + 1){
@@ -534,6 +543,61 @@ function drawRowArrays(){
 	});
 	if(items.length)
 		rowArraysDraw = new Group(items);
+}
+
+// the index variables of a matrix: the names used as the first subscript (g[i]) stand on their row, those used as
+// the second (g[i][j]) under their column, wherever the variable's number is in range
+var gridColUses = {};
+function gridMarkers(v){
+	var out = {row: {}, col: {}};
+	Object.keys(indexUses[v.name] || {}).forEach(function(n){
+		var k = markerValue(n);
+		if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k < v.rows) out.row[n] = k;
+	});
+	Object.keys(gridColUses[v.name] || {}).forEach(function(n){
+		var k = markerValue(n);
+		if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k < v.cols) out.col[n] = k;
+	});
+	return out;
+}
+
+// a matrix: column numbers over its cells, row numbers beside them, read cells framed, the written one lit,
+// the value a cell had before small and struck through; row markers to the right, column markers below
+function drawGrid(v, x0, top0, items){
+	var cx0 = x0 + GRID_ROWNUM_W, y0 = top0 + GRID_HEAD, mk = gridMarkers(v), r, c;
+	items.push(new PointText({ point: [x0, top0 - 10], fontSize: 18+'px', fillColor: PAL.named, content: v.name }));
+	for(c = 0; c < v.cols; c = c + 1)
+		items.push(new PointText({ point: [cx0 + c * ROW_CELL_W + ROW_CELL_W / 2, y0 - 8], justification: 'center', fontSize: 12+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + c }));
+	for(r = 0; r < v.rows; r = r + 1){
+		items.push(new PointText({ point: [cx0 - 7, y0 + r * GRID_CELL_H + GRID_CELL_H / 2 + 4], justification: 'right', fontSize: 12+'px', fillColor: PAL.stroke, opacity: 0.6, content: '' + r }));
+		for(c = 0; c < v.cols; c = c + 1){
+			var i = r * v.cols + c, x = cx0 + c * ROW_CELL_W, y = y0 + r * GRID_CELL_H, cell = v.cells[i];
+			var focused = isFocusedEdge(v, 'cell' + i), read = isFocusedEdge(v, 'read' + i);
+			items.push(new Path.Rectangle({ point: [x, y], size: [ROW_CELL_W, GRID_CELL_H], strokeColor: focused ? PAL.changed : read ? PAL.named : PAL.stroke, strokeWidth: focused || read ? 3 : 2, fillColor: PAL.node }));
+			if(cell === null || cell === undefined)
+				items.push(new Path.Line({ from: [x + 13, y + GRID_CELL_H - 7], to: [x + ROW_CELL_W - 13, y + 7], strokeColor: PAL.stroke, strokeWidth: 1.5, opacity: 0.6 }));
+			else {
+				var text = isNode(cell) ? '→' + cell.shownData : cell === true || cell === false ? codeWord(String(cell)) : '' + cell;
+				items.push(new PointText({ point: [x + ROW_CELL_W / 2, y + GRID_CELL_H / 2 + 5], justification: 'center', fontSize: (text.length > 4 ? 11 : 15)+'px', fillColor: PAL.text, content: text }));
+			}
+			ghosts.cells.forEach(function(g){
+				if(g.visual === v && g.index === i && settingOn('stepCompare'))
+					items.push(struckText(g.old === true || g.old === false ? codeWord(String(g.old)) : '' + g.old, [x + ROW_CELL_W - 5, y + 10], 'right', 10, PAL.stroke));
+			});
+		}
+	}
+	var byRow = {}, byCol = {};
+	Object.keys(mk.row).forEach(function(n){ (byRow[mk.row[n]] = byRow[mk.row[n]] || []).push(n); });
+	Object.keys(mk.col).forEach(function(n){ (byCol[mk.col[n]] = byCol[mk.col[n]] || []).push(n); });
+	Object.keys(byRow).forEach(function(k){
+		items.push(new PointText({ point: [cx0 + v.cols * ROW_CELL_W + 8, y0 + Number(k) * GRID_CELL_H + GRID_CELL_H / 2 + 5], fontSize: 16+'px', fillColor: PAL.pointer, content: '← ' + byRow[k].join(', ') }));
+	});
+	Object.keys(byCol).forEach(function(k){
+		var cx = cx0 + Number(k) * ROW_CELL_W + ROW_CELL_W / 2, top = y0 + v.rows * GRID_CELL_H + 6;
+		items.push(new Path.Line({ from: [cx, top + 20], to: [cx, top], strokeColor: PAL.pointer, strokeWidth: 2 }));
+		items.push(arrowTip(new Point(cx, top), -90, PAL.pointer));
+		items.push(new PointText({ point: [cx, top + 38], justification: 'center', fontSize: 16+'px', fillColor: PAL.pointer, content: byCol[k].join(', ') }));
+	});
 }
 
 // the cells of a heap array as a tree: level d holds cells 2^d - 1 ... 2^(d+1) - 2, spread
@@ -1262,8 +1326,8 @@ function layout(tidy){
 		? {width: COL_X0 + (maxCol - minCol) * colWidth + geometry().width + 40, height: ROW_Y0 + (maxRowUsed - minRow) * rowH() + NODE_H + 100}
 		: null;
 
-	var rows = rowArrays();
-	if(rows.length){ // the row arrays sit over everything else
+	var rows = layoutArrays();
+	if(rows.length){ // the row arrays and grids sit over everything else
 		var arrayWidth = COL_X0 + Math.max.apply(null, rows.map(heapWidth)) + 40;
 		extent = extent ? {width: Math.max(extent.width, arrayWidth), height: extent.height + topOffset()}
 		                : {width: arrayWidth, height: ROW_TOP + topOffset()};
@@ -1693,7 +1757,7 @@ function setFrameVar(id, name, text, isNull, isPointer){
 function showValue(name, value, scope){
 	if(!scope && shownNumbers[name] !== value){
 		shownNumbers[name] = value; // the index markers of row arrays read it
-		if(rowArrays().length)
+		if(layoutArrays().length)
 			drawRowArrays();
 	}
 	if(isArray(value) || value === true || value === false)
@@ -1705,7 +1769,7 @@ function showValue(name, value, scope){
 }
 
 function renderCallStack(){
-	if(rowArrays().length) // index markers can be locals of the running call
+	if(layoutArrays().length) // index markers can be locals of the running call
 		drawRowArrays();
 	var box = document.getElementById('callstack');
 	if(!box)
@@ -2930,6 +2994,10 @@ window.parse = function(text) {
 			(indexUses[array] = indexUses[array] || {})[index] = true; // a[mid]: mid is marked under the cells of a
 			return m;
 		});
+		text.replace(new RegExp('(' + NAME_RE + ')\\s*\\[[^\\]\\[]*\\]\\s*\\[\\s*(' + NAME_RE + ')', 'g'), function(m, array, index){
+			(gridColUses[array] = gridColUses[array] || {})[index] = true; // g[i][j]: j is marked under the columns of g
+			return m;
+		});
 
 		frames = []; // a previous run may have stopped inside a call
 		if(unfinishedCalls.length){ // ... and left its frames in the panel: remove them first
@@ -3036,6 +3104,7 @@ function resetProgram(){
 	treeRequested = false;
 	heapRequested = false;
 	indexUses = {};
+	gridColUses = {};
 	currentLine = null;
 
 	player.steps = [];
@@ -3060,7 +3129,7 @@ window.dsvState = function(){
 					if(isFocusedEdge(v, 'cell' + (r * v.cols + c))) focused = [r, c];
 				}
 			}
-			return {name: v.name, rows: v.rows, cols: v.cols, cells: rows, reads: reads, focus: focused};
+			return {name: v.name, rows: v.rows, cols: v.cols, cells: rows, reads: reads, focus: focused, markers: gridMarkers(v)};
 		}),
 		arrays: allArrays.filter(function(a){ return a.visual.shown && a.visual.kind !== 'grid'; }).map(function(a){
 			var markers = {};
@@ -3074,6 +3143,7 @@ window.dsvState = function(){
 			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null, // the cells drawn as a tree
 			        graph: a.visual.graphCol !== undefined ? graphState(a) : null};    // the graph drawn beside the chains
 		}),
+		bands: (function(){ var top = ROW_TOP; return layoutArrays().map(function(a){ var b = [a.visual.name, top, rowBand(a)]; top = top + rowBand(a); return b; }); })(),
 		heights: allNodes.filter(function(n){ return n.shown && n.shownHeight !== undefined; }).map(function(n){ return [n.shownData, n.shownHeight]; }),
 		lost: allNodes.filter(function(n){ return n.shown && n.lost; }).map(function(n){ return n.shownData; }),
 		nullNext: allNodes.filter(function(n){ return n.shown && !(n.visualNext && n.visualNext.shown); }).map(function(n){ return n.shownData; }),
