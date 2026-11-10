@@ -336,3 +336,15 @@ test('Düğüm with Turkish words: translated word by word both ways, strings an
 	expect(w.dsvCode.langs.turkce.display('p.left = null')).toBe('p.sol = boş');
 	expect(w.dsvCode.langs.turkce.field('right')).toBe('sağ');
 });
+
+test('matrices: new Array(r, c) and g[i][j] = v', () => {
+	expect(parse('var g = new Array(3, 4)\n')[0].rhs).toMatchObject({ type: 'array', size: '3', size2: '4' });
+	expect(parse('var g = new Array(5)\n')[0].rhs).toMatchObject({ type: 'array', size: '5', size2: null });
+	expect(parse('var g = new Dizi(r, c + 1)\n')[0].rhs).toMatchObject({ size: 'r', size2: 'c + 1' });
+	expect(parse('g[1][2] = 5\n')[0]).toMatchObject({ type: 'matrix assignment', array: 'g', row: '1', col: '2', rhs: '5' });
+	const s = parse('g[i][j] = g[i - 1][j] + g[i][j - 1]\n')[0];
+	expect(s).toMatchObject({ type: 'matrix assignment', row: 'i', col: 'j', rhs: 'g[i - 1][j] + g[i][j - 1]' });
+	expect(parse('g[i][j] = new Node(1)\n')[0]).toMatchObject({ type: 'matrix assignment' });
+	expect(parse('a[i] = 3\n')[0].type).toBe('array assignment'); // one subscript is still a plain array
+	expect(parse('if(g[i][j] == 0)\n  print g[i][j]\n')[0]).toMatchObject({ type: 'logical' }); // read inside conditions and prints
+});

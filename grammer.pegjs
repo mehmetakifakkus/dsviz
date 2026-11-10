@@ -157,6 +157,7 @@ block_item
 	/ object_statement	
 	/ Object_Constructor
 	/ free_item
+	/ matrix_assignment
 	/ index_assignment
 		
 	/ left_right_object_poperty 
@@ -214,7 +215,7 @@ init_declarator
     else if(exp.type == 'node') // x = new Node(9): without this it was read as "x = new" and "Node(9)"
         return {'lhs': left, 'rhs': exp, 'text': left + ' = ' + nodeText(exp)};
     else if(exp.type == 'array') // table = new Array(5)
-        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Array(' + exp.size + ')'};
+        return {'lhs': left, 'rhs': exp, 'text': left + ' = new Array(' + exp.size + (exp.size2 ? ', ' + exp.size2 : '') + ')'};
     else
         return {'lhs': left, 'rhs': exp.text};
 }   
@@ -250,15 +251,22 @@ object_statement
 Object_Constructor
  = node
 
-// new Array(5) (or: new Dizi(5)): an array of 5 cells, all null
+// new Array(5) (or: new Dizi(5)): an array of 5 cells, all null; new Array(3, 4): a matrix of 3 rows and 4 columns
 array_constructor
- = _ 'new'? _ ('Array' / 'Dizi') !idChar _ '(' _ size:expression_statement _ ')' _ comment? _ nl {
-	return {'type': 'array', 'size': size.text, 'lineNumber': location().start.line};
+ = _ 'new'? _ ('Array' / 'Dizi') !idChar _ '(' _ size:expression_statement size2:(_ ',' _ s2:expression_statement { return s2; })? _ ')' _ comment? _ nl {
+	return {'type': 'array', 'size': size.text, 'size2': size2 ? size2.text : null, 'lineNumber': location().start.line};
  }
 
 // table[k], table[hash(v)].data: reading a cell inside an expression (evaluated as JavaScript)
 index_access
- = name _ '[' _ expression_statement _ ']' ('.' name)* { return text(); }
+ = name _ '[' _ expression_statement _ ']' (_ '[' _ expression_statement _ ']')? ('.' name)* { return text(); }   // g[i][j]: a cell of a matrix
+
+// g[i][j] = v: a cell of a matrix (new Array(3, 4))
+matrix_assignment
+ = _ a:name _ '[' _ r:expression_statement _ ']' _ '[' _ c:expression_statement _ ']' _ '=' !'=' _ right:(Object_Constructor / e:expression_statement { return e.text.trim(); }) _ nl {
+	return {'type': 'matrix assignment', '#evaluation': 0, 'array': a, 'row': r.text, 'col': c.text, 'rhs': right,
+	        'text': a + '[' + r.text + '][' + c.text + '] = ' + (typeof right === 'string' ? right : nodeText(right)), 'lineNumber': location().start.line};
+ }
 
 // table[k] = n   /   table[k] = p.next   /   table[k] = new Node(5)
 index_assignment
