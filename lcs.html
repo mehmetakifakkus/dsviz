@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>En uzun ortak altdizi (LCS) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">En uzun ortak altdizi (LCS)</h1>
+<h1 data-lang="en">Longest common subsequence (LCS)</h1>
+<h1 data-lang="de">Längste gemeinsame Teilfolge (LCS)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">İki dizide, sırası bozulmadan ortak olan en uzun değer dizisini arıyoruz; araya başka değerler girebilir. <code>x = 2 7 1 8 2</code> ve <code>y = 7 8 2 8</code> için ortak altdizi <code>7 8 2</code>: uzunluğu 3. Tablo: <code>dp[i][j]</code>, <code>x</code>'in ilk i değeri ile <code>y</code>'nin ilk j değerinin en uzun ortak altdizisinin uzunluğu. Boş bir diziyle ortak hiçbir şey yoktur: ilk satır ve ilk sütun 0.</p>
+<p data-lang="en">We look for the longest sequence of values that both arrays share in the same order; other values may sit in between. For <code>x = 2 7 1 8 2</code> and <code>y = 7 8 2 8</code> a common subsequence is <code>7 8 2</code>: length 3. The table: <code>dp[i][j]</code> is the length of the longest common subsequence of the first i values of <code>x</code> and the first j values of <code>y</code>. With an empty array nothing is shared: the first row and the first column are 0.</p>
+<p data-lang="de">Wir suchen die längste Folge von Werten, die beide Arrays in derselben Reihenfolge enthalten; dazwischen dürfen andere Werte stehen. Für <code>x = 2 7 1 8 2</code> und <code>y = 7 8 2 8</code> ist <code>7 8 2</code> eine gemeinsame Teilfolge: Länge 3. Die Tabelle: <code>dp[i][j]</code> ist die Länge der längsten gemeinsamen Teilfolge der ersten i Werte von <code>x</code> und der ersten j Werte von <code>y</code>. Mit einem leeren Array gibt es nichts Gemeinsames: erste Zeile und erste Spalte sind 0.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Array(5)       // birinci dizi
+var y = new Array(4)       // ikinci dizi
+x[0] = 2
+x[1] = 7
+x[2] = 1
+x[3] = 8
+x[4] = 2
+y[0] = 7
+y[1] = 8
+y[2] = 2
+y[3] = 8
+var n = 5
+var m = 4
+var dp = new Array(6, 5)   // (n + 1) satır, (m + 1) sütun
+for(var i = 0; i &lt;= n; i++)
+{
+  dp[i][0] = 0
+}
+for(var j = 0; j &lt;= m; j++)
+{
+  dp[0][j] = 0
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Array(5)       // the first array
+var y = new Array(4)       // the second array
+x[0] = 2
+x[1] = 7
+x[2] = 1
+x[3] = 8
+x[4] = 2
+y[0] = 7
+y[1] = 8
+y[2] = 2
+y[3] = 8
+var n = 5
+var m = 4
+var dp = new Array(6, 5)   // (n + 1) rows, (m + 1) columns
+for(var i = 0; i <= n; i++)
+{
+  dp[i][0] = 0
+}
+for(var j = 0; j <= m; j++)
+{
+  dp[0][j] = 0
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Array(5)       // das erste Array
+var y = new Array(4)       // das zweite Array
+x[0] = 2
+x[1] = 7
+x[2] = 1
+x[3] = 8
+x[4] = 2
+y[0] = 7
+y[1] = 8
+y[2] = 2
+y[3] = 8
+var n = 5
+var m = 4
+var dp = new Array(6, 5)   // (n + 1) Zeilen, (m + 1) Spalten
+for(var i = 0; i <= n; i++)
+{
+  dp[i][0] = 0
+}
+for(var j = 0; j <= m; j++)
+{
+  dp[0][j] = 0
+}
+</script>
+
+<p data-lang="tr">Son değerler eşitse ortak altdizi bir uzar: çaprazdaki hücre + 1. Değilse ya üstteki ya soldaki hücrenin büyüğünü alırız. Karşılaştırılan <code>x</code> ve <code>y</code> hücreleri çerçevelenir; tablo adım adım dolar.</p>
+<p data-lang="en">If the last values are equal the common subsequence grows by one: the diagonal cell + 1. Otherwise we take the larger of the cell above and the cell to the left. The cells of <code>x</code> and <code>y</code> being compared get a frame; the table fills step by step.</p>
+<p data-lang="de">Sind die letzten Werte gleich, wächst die gemeinsame Teilfolge um eins: die Zelle diagonal + 1. Sonst nehmen wir den größeren Wert aus der Zelle darüber und der Zelle links. Die verglichenen Zellen von <code>x</code> und <code>y</code> bekommen einen Rahmen; die Tabelle füllt sich Schritt für Schritt.</p>
+
+<textarea id="text2" class="deneme">
+for(var i = 1; i &lt;= n; i++)
+{
+  for(var j = 1; j &lt;= m; j++)
+  {
+    if(x[i - 1] == y[j - 1])
+    {
+      dp[i][j] = dp[i - 1][j - 1] + 1   // eşit: çapraz + 1
+    }
+    else if(dp[i - 1][j] &gt;= dp[i][j - 1])
+    {
+      dp[i][j] = dp[i - 1][j]           // eşit değil: üstteki ya da soldaki büyük olan
+    }
+    else
+    {
+      dp[i][j] = dp[i][j - 1]
+    }
+  }
+}
+print dp[n][m]
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 1; i <= n; i++)
+{
+  for(var j = 1; j <= m; j++)
+  {
+    if(x[i - 1] == y[j - 1])
+    {
+      dp[i][j] = dp[i - 1][j - 1] + 1   // equal: diagonal + 1
+    }
+    else if(dp[i - 1][j] >= dp[i][j - 1])
+    {
+      dp[i][j] = dp[i - 1][j]           // not equal: the larger of above and left
+    }
+    else
+    {
+      dp[i][j] = dp[i][j - 1]
+    }
+  }
+}
+print dp[n][m]
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 1; i <= n; i++)
+{
+  for(var j = 1; j <= m; j++)
+  {
+    if(x[i - 1] == y[j - 1])
+    {
+      dp[i][j] = dp[i - 1][j - 1] + 1   // gleich: diagonal + 1
+    }
+    else if(dp[i - 1][j] >= dp[i][j - 1])
+    {
+      dp[i][j] = dp[i - 1][j]           // ungleich: der größere von oben und links
+    }
+    else
+    {
+      dp[i][j] = dp[i][j - 1]
+    }
+  }
+}
+print dp[n][m]
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

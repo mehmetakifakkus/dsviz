@@ -63,7 +63,13 @@ const EXPECTED = {
 	'countingSort.html': ['[Array.from(a), Array.from(count)]', [[0, 2, 2, 4, 4, 7, 7, 9], [1, 0, 2, 0, 2, 0, 0, 2, 0, 1]]],
 	'sortComparison.html': ['[Array.from(a), cmp, output()]', [[3, 8, 13, 18, 23, 28, 33, 38], 7, '7,28,7']],
 	'graph.html': ['[output(), Array.from(visited), Array.from(q)]', ['0,5,4,3,2,1', [true, true, true, true, true, true], [0, 5, 1, 4, 2, 3]]],
-	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8']
+	'mergeTwoSortedLinkedLists.html': ['walk(head.next)', '1>2>3>4>6>8'],
+	'matrisGezme.html': ['[Array.from(rowSum), Array.from(colSum), trace]', [[10, 26, 42], [15, 18, 21, 24], 18]],
+	'pascal.html': ['[Array.from(p[5]), total, output()]', [[1, 5, 10, 10, 5, 1], 32, '32']],
+	'gridPaths.html': ['[dp[2][3], output()]', [10, '10']],
+	'lcs.html': ['[dp[5][4], output()]', [3, '3']],
+	'knapsack.html': ['[dp[4][7], output()]', [9, '9']],
+	'nQueens.html': ['Array.from(board).map(r => Array.from(r).indexOf(1))', [1, 3, 0, 2]]
 };
 
 // In English and German some pages use English names (tepe -> topNode, bas/son -> front/rear);

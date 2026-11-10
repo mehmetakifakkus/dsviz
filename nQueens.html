@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N vezir (geri izleme) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">N vezir (geri izleme)</h1>
+<h1 data-lang="en">N queens (backtracking)</h1>
+<h1 data-lang="de">N-Damen (Backtracking)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">4×4'lük bir tahtaya, birbirini yemeyecek 4 vezir koyacağız: aynı satırda, aynı sütunda ya da aynı çaprazda iki vezir olmaz. Tahta bir matris: <code>board[r][c] = 1</code> o hücrede vezir var demek. Yöntem <em>geri izleme</em> (backtracking): satır satır ilerleriz, güvenli bir hücreye vezir koyarız; sonraki satırda yer kalmazsa son veziri geri alıp başka hücre deneriz.</p>
+<p data-lang="en">We will put 4 queens on a 4×4 board so that none attacks another: no two queens in the same row, column or diagonal. The board is a matrix: <code>board[r][c] = 1</code> means there is a queen in that cell. The method is <em>backtracking</em>: we go row by row and put a queen in a safe cell; if the next row has no room we take the last queen back and try another cell.</p>
+<p data-lang="de">Wir setzen 4 Damen auf ein 4×4-Brett, sodass keine eine andere schlägt: keine zwei Damen in derselben Zeile, Spalte oder Diagonale. Das Brett ist eine Matrix: <code>board[r][c] = 1</code> heißt, in dieser Zelle steht eine Dame. Die Methode heißt <em>Backtracking</em>: wir gehen Zeile für Zeile und setzen eine Dame auf ein sicheres Feld; hat die nächste Zeile keinen Platz, nehmen wir die letzte Dame zurück und probieren ein anderes Feld.</p>
+
+<textarea id="text1" class="deneme">
+var n = 4
+var board = new Array(4, 4)   // boş tahta: hepsi 0
+for(var i = 0; i &lt; n; i++)
+{
+  for(var j = 0; j &lt; n; j++)
+  {
+    board[i][j] = 0
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var n = 4
+var board = new Array(4, 4)   // an empty board: all 0
+for(var i = 0; i < n; i++)
+{
+  for(var j = 0; j < n; j++)
+  {
+    board[i][j] = 0
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var n = 4
+var board = new Array(4, 4)   // leeres Brett: alles 0
+for(var i = 0; i < n; i++)
+{
+  for(var j = 0; j < n; j++)
+  {
+    board[i][j] = 0
+  }
+}
+</script>
+
+<p data-lang="tr"><code>isSafe(r, c)</code>, (r, c) hücresine vezir koymanın güvenli olup olmadığına bakar: yukarıdaki satırlarda aynı sütunda ya da iki çaprazdan birinde vezir var mı? Satırlar yukarıdan aşağı doldurulduğu için yalnızca yukarıya bakmak yeter.</p>
+<p data-lang="en"><code>isSafe(r, c)</code> checks whether it is safe to put a queen in cell (r, c): is there a queen in the same column or on one of the two diagonals in the rows above? Rows are filled from top to bottom, so looking upwards is enough.</p>
+<p data-lang="de"><code>isSafe(r, c)</code> prüft, ob es sicher ist, auf Feld (r, c) eine Dame zu setzen: steht in den Zeilen darüber eine Dame in derselben Spalte oder auf einer der beiden Diagonalen? Die Zeilen werden von oben nach unten gefüllt, nach oben zu sehen genügt also.</p>
+
+<textarea id="text2" class="deneme">
+function isSafe(r, c)          // (r, c) güvenli mi?
+{
+  for(var k = 0; k &lt; r; k++)
+  {
+    var d = r - k
+    if(board[k][c] == 1)
+    {
+      return false             // aynı sütunda vezir var
+    }
+    if(c - d &gt;= 0 &amp;&amp; board[k][c - d] == 1)
+    {
+      return false             // çaprazda vezir var
+    }
+    if(c + d &lt; n &amp;&amp; board[k][c + d] == 1)
+    {
+      return false
+    }
+  }
+  return true
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function isSafe(r, c)          // is (r, c) safe?
+{
+  for(var k = 0; k < r; k++)
+  {
+    var d = r - k
+    if(board[k][c] == 1)
+    {
+      return false             // a queen in the same column
+    }
+    if(c - d >= 0 && board[k][c - d] == 1)
+    {
+      return false             // a queen on the diagonal
+    }
+    if(c + d < n && board[k][c + d] == 1)
+    {
+      return false
+    }
+  }
+  return true
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function isSafe(r, c)          // ist (r, c) sicher?
+{
+  for(var k = 0; k < r; k++)
+  {
+    var d = r - k
+    if(board[k][c] == 1)
+    {
+      return false             // eine Dame in derselben Spalte
+    }
+    if(c - d >= 0 && board[k][c - d] == 1)
+    {
+      return false             // eine Dame auf der Diagonale
+    }
+    if(c + d < n && board[k][c + d] == 1)
+    {
+      return false
+    }
+  }
+  return true
+}
+</script>
+
+<p data-lang="tr"><code>place(r)</code> r. satıra vezir yerleştirir. Güvenli bir sütun bulursa veziri koyar ve bir sonraki satıra geçer; o satırdan yerleştirme başarısız dönerse veziri geri alır (<code>board[r][c] = 0</code>) ve sonraki sütunu dener. Çözüm bulununca 1'ler tahtada kalır.</p>
+<p data-lang="en"><code>place(r)</code> places a queen in row r. If it finds a safe column it puts the queen there and moves to the next row; if the placement from that row fails it takes the queen back (<code>board[r][c] = 0</code>) and tries the next column. When a solution is found the 1s stay on the board.</p>
+<p data-lang="de"><code>place(r)</code> setzt eine Dame in Zeile r. Findet es eine sichere Spalte, setzt es die Dame dorthin und geht zur nächsten Zeile; scheitert das Setzen ab dieser Zeile, nimmt es die Dame zurück (<code>board[r][c] = 0</code>) und probiert die nächste Spalte. Ist eine Lösung gefunden, bleiben die 1en auf dem Brett.</p>
+
+<textarea id="text3" class="deneme">
+function place(r)             // r. satıra vezir yerleştir
+{
+  if(r == n)
+  {
+    return true                // tüm satırlar doldu: çözüm
+  }
+  for(var c = 0; c &lt; n; c++)
+  {
+    if(isSafe(r, c))
+    {
+      board[r][c] = 1          // vezir koy
+      if(place(r + 1))
+      {
+        return true
+      }
+      board[r][c] = 0          // geri al
+    }
+  }
+  return false
+}
+place(0)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+function place(r)             // place a queen in row r
+{
+  if(r == n)
+  {
+    return true                // all rows are filled: a solution
+  }
+  for(var c = 0; c < n; c++)
+  {
+    if(isSafe(r, c))
+    {
+      board[r][c] = 1          // put a queen
+      if(place(r + 1))
+      {
+        return true
+      }
+      board[r][c] = 0          // take it back
+    }
+  }
+  return false
+}
+place(0)
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+function place(r)             // eine Dame in Zeile r setzen
+{
+  if(r == n)
+  {
+    return true                // alle Zeilen gefüllt: eine Lösung
+  }
+  for(var c = 0; c < n; c++)
+  {
+    if(isSafe(r, c))
+    {
+      board[r][c] = 1          // Dame setzen
+      if(place(r + 1))
+      {
+        return true
+      }
+      board[r][c] = 0          // zurücknehmen
+    }
+  }
+  return false
+}
+place(0)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

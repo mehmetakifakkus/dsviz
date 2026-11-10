@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matris (2B dizi): satır ve sütun gezme | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Matris (2B dizi): satır ve sütun gezme</h1>
+<h1 data-lang="en">Matrix (2D array): walking rows and columns</h1>
+<h1 data-lang="de">Matrix (2D-Array): Zeilen und Spalten durchlaufen</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir <em>matris</em>, satırlar ve sütunlardan oluşan bir dizidir. <code>new Array(3, 4)</code> 3 satır, 4 sütunluk bir matris kurar; <code>g[i][j]</code> i. satırın j. sütunundaki hücredir. Hücreler 0'dan numaralanır. Çizimde satır ve sütun numaraları kenarlarda durur, yazılan hücre turuncu yanar, okunanlar çerçevelenir. Önce matrisi 1'den 12'ye kadar sayılarla dolduralım: iç içe iki döngü, dıştaki satırları, içteki sütunları gezer.</p>
+<p data-lang="en">A <em>matrix</em> is an array made of rows and columns. <code>new Array(3, 4)</code> builds a matrix of 3 rows and 4 columns; <code>g[i][j]</code> is the cell in row i, column j. Cells are numbered from 0. In the drawing the row and column numbers stand on the edges, the cell that is written lights up in orange and the cells that are read get a frame. First we fill the matrix with the numbers 1 to 12: two nested loops, the outer one walks the rows, the inner one the columns.</p>
+<p data-lang="de">Eine <em>Matrix</em> ist ein Array aus Zeilen und Spalten. <code>new Array(3, 4)</code> baut eine Matrix mit 3 Zeilen und 4 Spalten; <code>g[i][j]</code> ist die Zelle in Zeile i, Spalte j. Die Zellen werden ab 0 nummiert. In der Zeichnung stehen die Zeilen- und Spaltennummern am Rand, die geschriebene Zelle leuchtet orange und gelesene Zellen bekommen einen Rahmen. Zuerst füllen wir die Matrix mit den Zahlen 1 bis 12: zwei verschachtelte Schleifen, die äußere läuft über die Zeilen, die innere über die Spalten.</p>
+
+<textarea id="text1" class="deneme">
+var g = new Array(3, 4)      // 3 satır, 4 sütun
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i &lt; rows; i++)
+{
+  for(var j = 0; j &lt; cols; j++)
+  {
+    g[i][j] = k            // satır satır, soldan sağa
+    k++
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var g = new Array(3, 4)      // 3 rows, 4 columns
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i < rows; i++)
+{
+  for(var j = 0; j < cols; j++)
+  {
+    g[i][j] = k            // row by row, left to right
+    k++
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var g = new Array(3, 4)      // 3 Zeilen, 4 Spalten
+var rows = 3
+var cols = 4
+var k = 1
+for(var i = 0; i < rows; i++)
+{
+  for(var j = 0; j < cols; j++)
+  {
+    g[i][j] = k            // Zeile für Zeile, von links nach rechts
+    k++
+  }
+}
+</script>
+
+<p data-lang="tr">Her satırın toplamı için dıştaki döngü satırı seçer, içteki döngü o satırın hücrelerini toplar. Hücreler okunurken çerçevelenir; toplam her satır için yeniden sıfırlanır.</p>
+<p data-lang="en">For the sum of each row the outer loop picks the row and the inner loop adds up the cells of that row. The cells get a frame as they are read; the sum starts again from zero for every row.</p>
+<p data-lang="de">Für die Summe jeder Zeile wählt die äußere Schleife die Zeile und die innere addiert deren Zellen. Beim Lesen bekommen die Zellen einen Rahmen; die Summe beginnt für jede Zeile wieder bei null.</p>
+
+<textarea id="text2" class="deneme">
+var rowSum = new Array(3)   // her satırın toplamı
+for(var i = 0; i &lt; rows; i++)
+{
+  var s = 0
+  for(var j = 0; j &lt; cols; j++)
+  {
+    s = s + g[i][j]        // satır i, sütun j: okunan hücre
+  }
+  rowSum[i] = s
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var rowSum = new Array(3)   // the sum of each row
+for(var i = 0; i < rows; i++)
+{
+  var s = 0
+  for(var j = 0; j < cols; j++)
+  {
+    s = s + g[i][j]        // row i, column j: the cell that is read
+  }
+  rowSum[i] = s
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var rowSum = new Array(3)   // die Summe jeder Zeile
+for(var i = 0; i < rows; i++)
+{
+  var s = 0
+  for(var j = 0; j < cols; j++)
+  {
+    s = s + g[i][j]        // Zeile i, Spalte j: die gelesene Zelle
+  }
+  rowSum[i] = s
+}
+</script>
+
+<p data-lang="tr">Sütun toplamında döngülerin sırası yer değiştirir: dışta sütunlar, içte satırlar. Köşegen için tek döngü yeter, çünkü köşegendeki hücrelerin satır ve sütun numarası aynıdır: <code>g[i][i]</code>.</p>
+<p data-lang="en">For the column sums the loops swap places: columns outside, rows inside. The diagonal needs one loop only, because the cells on the diagonal have the same row and column number: <code>g[i][i]</code>.</p>
+<p data-lang="de">Bei den Spaltensummen tauschen die Schleifen die Plätze: außen die Spalten, innen die Zeilen. Für die Diagonale genügt eine Schleife, denn die Zellen auf der Diagonale haben dieselbe Zeilen- und Spaltennummer: <code>g[i][i]</code>.</p>
+
+<textarea id="text3" class="deneme">
+var colSum = new Array(4)   // her sütunun toplamı
+for(var j = 0; j &lt; cols; j++)
+{
+  var s = 0
+  for(var i = 0; i &lt; rows; i++)
+  {
+    s = s + g[i][j]        // bu sefer dışta sütun, içte satır
+  }
+  colSum[j] = s
+}
+var trace = 0              // köşegen toplamı (iz)
+for(var i = 0; i &lt; rows; i++)
+{
+  trace = trace + g[i][i]
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var colSum = new Array(4)   // the sum of each column
+for(var j = 0; j < cols; j++)
+{
+  var s = 0
+  for(var i = 0; i < rows; i++)
+  {
+    s = s + g[i][j]        // this time columns outside, rows inside
+  }
+  colSum[j] = s
+}
+var trace = 0              // the sum of the diagonal (the trace)
+for(var i = 0; i < rows; i++)
+{
+  trace = trace + g[i][i]
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var colSum = new Array(4)   // die Summe jeder Spalte
+for(var j = 0; j < cols; j++)
+{
+  var s = 0
+  for(var i = 0; i < rows; i++)
+  {
+    s = s + g[i][j]        // diesmal außen die Spalten, innen die Zeilen
+  }
+  colSum[j] = s
+}
+var trace = 0              // die Summe der Diagonale (die Spur)
+for(var i = 0; i < rows; i++)
+{
+  trace = trace + g[i][i]
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

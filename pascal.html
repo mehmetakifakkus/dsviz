@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pascal üçgeni | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Pascal üçgeni</h1>
+<h1 data-lang="en">Pascal's triangle</h1>
+<h1 data-lang="de">Pascalsches Dreieck</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Pascal üçgeninde her satırın kenarları 1'dir; içteki her sayı, üstündeki iki sayının toplamıdır. Üçgen bir matrise doğal olarak oturur: <code>p[i][j]</code>, i. satırın j. sayısı. Matrisin üst köşegeninin ötesi hiç yazılmayacak, boş kalacak; çizimde çaprazlı hücreler olarak görünür.</p>
+<p data-lang="en">In Pascal's triangle the edges of every row are 1; every number inside is the sum of the two numbers above it. The triangle fits a matrix naturally: <code>p[i][j]</code> is the j-th number of row i. The part of the matrix beyond the diagonal is never written and stays empty; it is drawn as crossed cells.</p>
+<p data-lang="de">Im Pascalschen Dreieck sind die Ränder jeder Zeile 1; jede innere Zahl ist die Summe der beiden Zahlen darüber. Das Dreieck passt natürlich in eine Matrix: <code>p[i][j]</code> ist die j-te Zahl der Zeile i. Der Teil der Matrix hinter der Diagonale wird nie beschrieben und bleibt leer; er wird als durchgestrichene Zellen gezeichnet.</p>
+
+<textarea id="text1" class="deneme">
+var n = 6                  // satır sayısı
+var p = new Array(6, 6)    // 6 satır, 6 sütun
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var n = 6                  // the number of rows
+var p = new Array(6, 6)    // 6 rows, 6 columns
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var n = 6                  // die Anzahl der Zeilen
+var p = new Array(6, 6)    // 6 Zeilen, 6 Spalten
+</script>
+
+<p data-lang="tr">Her satırı soldan sağa dolduruyoruz. Formüldeki iki hücre okunurken çerçevelenir, yeni sayı üçüncü hücreye yazılır: üstündeki iki sayının toplamı.</p>
+<p data-lang="en">We fill every row from left to right. The two cells in the formula get a frame as they are read and the new number is written to the third cell: the sum of the two numbers above it.</p>
+<p data-lang="de">Wir füllen jede Zeile von links nach rechts. Die beiden Zellen der Formel bekommen beim Lesen einen Rahmen, die neue Zahl wird in die dritte Zelle geschrieben: die Summe der beiden Zahlen darüber.</p>
+
+<textarea id="text2" class="deneme">
+for(var i = 0; i &lt; n; i++)
+{
+  p[i][0] = 1              // sol kenar her zaman 1
+  for(var j = 1; j &lt;= i; j++)
+  {
+    if(j == i)
+    {
+      p[i][j] = 1          // sağ kenar da 1
+    }
+    else
+    {
+      p[i][j] = p[i - 1][j - 1] + p[i - 1][j]   // üstteki iki sayının toplamı
+    }
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 0; i < n; i++)
+{
+  p[i][0] = 1              // the left edge is always 1
+  for(var j = 1; j <= i; j++)
+  {
+    if(j == i)
+    {
+      p[i][j] = 1          // so is the right edge
+    }
+    else
+    {
+      p[i][j] = p[i - 1][j - 1] + p[i - 1][j]   // the sum of the two numbers above
+    }
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 0; i < n; i++)
+{
+  p[i][0] = 1              // der linke Rand ist immer 1
+  for(var j = 1; j <= i; j++)
+  {
+    if(j == i)
+    {
+      p[i][j] = 1          // der rechte Rand ist auch 1
+    }
+    else
+    {
+      p[i][j] = p[i - 1][j - 1] + p[i - 1][j]   // die Summe der beiden Zahlen darüber
+    }
+  }
+}
+</script>
+
+<p data-lang="tr">Son satırın toplamı 2<sup>5</sup> = 32 çıkar: her satırın toplamı bir öncekinin iki katıdır.</p>
+<p data-lang="en">The sum of the last row is 2<sup>5</sup> = 32: the sum of every row is twice the sum of the one before.</p>
+<p data-lang="de">Die Summe der letzten Zeile ist 2<sup>5</sup> = 32: die Summe jeder Zeile ist das Doppelte der vorigen.</p>
+
+<textarea id="text3" class="deneme">
+var total = 0
+for(var j = 0; j &lt; n; j++)
+{
+  total = total + p[5][j]   // 5. satırın toplamı
+}
+print total
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var total = 0
+for(var j = 0; j < n; j++)
+{
+  total = total + p[5][j]   // the sum of row 5
+}
+print total
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var total = 0
+for(var j = 0; j < n; j++)
+{
+  total = total + p[5][j]   // die Summe der Zeile 5
+}
+print total
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

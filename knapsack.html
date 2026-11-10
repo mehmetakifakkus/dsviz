@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sırt çantası (0/1 knapsack) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Sırt çantası (0/1 knapsack)</h1>
+<h1 data-lang="en">0/1 knapsack</h1>
+<h1 data-lang="de">0/1-Rucksackproblem</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Çantanın taşıma sınırı 7. Dört eşya var; her birinin ağırlığı ve değeri farklı, her eşyayı ya alırız ya almayız. En değerli seçim hangisi? Tablo: <code>dp[i][c]</code>, ilk i eşya arasından seçerek <code>c</code> ağırlık sınırıyla elde edilen en büyük değer. Hiç eşya yoksa değer 0.</p>
+<p data-lang="en">The bag can carry 7. There are four items, each with its own weight and value, and we either take an item or leave it. Which choice is worth the most? The table: <code>dp[i][c]</code> is the best value we can get from the first i items with a weight limit of <code>c</code>. With no items the value is 0.</p>
+<p data-lang="de">Der Rucksack trägt höchstens 7. Es gibt vier Gegenstände mit eigenem Gewicht und Wert; jeden nimmt man ganz oder gar nicht. Welche Auswahl ist am wertvollsten? Die Tabelle: <code>dp[i][c]</code> ist der beste Wert aus den ersten i Gegenständen bei Gewichtsgrenze <code>c</code>. Ohne Gegenstände ist der Wert 0.</p>
+
+<textarea id="text1" class="deneme">
+var wt = new Array(4)      // eşyaların ağırlıkları
+var val = new Array(4)     // eşyaların değerleri
+wt[0] = 1
+wt[1] = 3
+wt[2] = 4
+wt[3] = 5
+val[0] = 1
+val[1] = 4
+val[2] = 5
+val[3] = 7
+var n = 4
+var cap = 7                // çantanın sınırı
+var dp = new Array(5, 8)   // (eşya sayısı + 1) satır, (sınır + 1) sütun
+for(var c = 0; c &lt;= cap; c++)
+{
+  dp[0][c] = 0             // eşya yokken değer 0
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var wt = new Array(4)      // the weights of the items
+var val = new Array(4)     // the values of the items
+wt[0] = 1
+wt[1] = 3
+wt[2] = 4
+wt[3] = 5
+val[0] = 1
+val[1] = 4
+val[2] = 5
+val[3] = 7
+var n = 4
+var cap = 7                // the limit of the bag
+var dp = new Array(5, 8)   // (items + 1) rows, (limit + 1) columns
+for(var c = 0; c <= cap; c++)
+{
+  dp[0][c] = 0             // no items: value 0
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var wt = new Array(4)      // die Gewichte der Gegenstände
+var val = new Array(4)     // die Werte der Gegenstände
+wt[0] = 1
+wt[1] = 3
+wt[2] = 4
+wt[3] = 5
+val[0] = 1
+val[1] = 4
+val[2] = 5
+val[3] = 7
+var n = 4
+var cap = 7                // die Grenze des Rucksacks
+var dp = new Array(5, 8)   // (Gegenstände + 1) Zeilen, (Grenze + 1) Spalten
+for(var c = 0; c <= cap; c++)
+{
+  dp[0][c] = 0             // keine Gegenstände: Wert 0
+}
+</script>
+
+<p data-lang="tr">Her hücre için iki seçenek var: eşyayı almamak (üstteki hücre) ya da almak (eşyanın ağırlığı kadar solundaki hücre + eşyanın değeri). İkisinden büyüğü yazılır. Okunan hücreler çerçevelenir; son hücre cevabı verir: 9 (ağırlıkları 3 ve 4 olan iki eşya).</p>
+<p data-lang="en">Every cell has two options: leave the item (the cell above) or take it (the cell to the left by the weight of the item + the value of the item). The larger of the two is written. The cells that are read get a frame; the last cell holds the answer: 9 (the two items with weights 3 and 4).</p>
+<p data-lang="de">Für jede Zelle gibt es zwei Möglichkeiten: den Gegenstand lassen (die Zelle darüber) oder nehmen (die Zelle um sein Gewicht weiter links + sein Wert). Der größere Wert wird geschrieben. Gelesene Zellen bekommen einen Rahmen; die letzte Zelle enthält die Antwort: 9 (die beiden Gegenstände mit Gewicht 3 und 4).</p>
+
+<textarea id="text2" class="deneme">
+for(var i = 1; i &lt;= n; i++)
+{
+  for(var c = 0; c &lt;= cap; c++)
+  {
+    dp[i][c] = dp[i - 1][c]                      // almadan: üstteki hücre
+    if(wt[i - 1] &lt;= c)
+    {
+      var take = dp[i - 1][c - wt[i - 1]] + val[i - 1]   // alarak: kalan sınırdaki değer + bu eşya
+      if(take &gt; dp[i][c])
+      {
+        dp[i][c] = take
+      }
+    }
+  }
+}
+print dp[n][cap]
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 1; i <= n; i++)
+{
+  for(var c = 0; c <= cap; c++)
+  {
+    dp[i][c] = dp[i - 1][c]                      // leave it: the cell above
+    if(wt[i - 1] <= c)
+    {
+      var take = dp[i - 1][c - wt[i - 1]] + val[i - 1]   // take it: the value at the remaining limit + this item
+      if(take > dp[i][c])
+      {
+        dp[i][c] = take
+      }
+    }
+  }
+}
+print dp[n][cap]
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 1; i <= n; i++)
+{
+  for(var c = 0; c <= cap; c++)
+  {
+    dp[i][c] = dp[i - 1][c]                      // nicht nehmen: die Zelle darüber
+    if(wt[i - 1] <= c)
+    {
+      var take = dp[i - 1][c - wt[i - 1]] + val[i - 1]   // nehmen: der Wert bei der Restgrenze + dieser Gegenstand
+      if(take > dp[i][c])
+      {
+        dp[i][c] = take
+      }
+    }
+  }
+}
+print dp[n][cap]
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

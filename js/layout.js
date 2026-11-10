@@ -79,6 +79,14 @@
 			['countingSort.html', {tr: 'Sayarak sıralama', en: 'Counting sort', de: 'Counting Sort'}],
 			['sortComparison.html', {tr: 'Sıralama karşılaştırması', en: 'Comparing sorts', de: 'Sortierverfahren im Vergleich'}]
 		]},
+		{ group: {tr: '2B diziler ve dinamik programlama', en: 'Two-dimensional arrays and dynamic programming', de: 'Zweidimensionale Arrays und dynamische Programmierung'}, items: [
+			['matrisGezme.html', {tr: 'Matris: satır ve sütun gezme', en: 'Matrix: walking rows and columns', de: 'Matrix: Zeilen und Spalten durchlaufen'}],
+			['pascal.html', {tr: 'Pascal üçgeni', en: "Pascal's triangle", de: 'Pascalsches Dreieck'}],
+			['gridPaths.html', {tr: 'Izgarada yol sayısı (DP)', en: 'Paths in a grid (DP)', de: 'Wege im Gitter (DP)'}],
+			['lcs.html', {tr: 'En uzun ortak altdizi (LCS)', en: 'Longest common subsequence', de: 'Längste gemeinsame Teilfolge'}],
+			['knapsack.html', {tr: 'Sırt çantası (0/1 knapsack)', en: '0/1 knapsack', de: '0/1-Rucksackproblem'}],
+			['nQueens.html', {tr: 'N vezir (geri izleme)', en: 'N queens (backtracking)', de: 'N-Damen (Backtracking)'}]
+		]},
 		{ group: {tr: 'Ağaçlar', en: 'Trees', de: 'Bäume'}, items: [
 			['binarySearchTree.html', {tr: 'İkili arama ağacı: ekleme ve arama', en: 'Binary search tree: insert and search', de: 'Binärer Suchbaum: einfügen und suchen'}],
 			['treeTraversal.html', {tr: 'Ağacı dolaşma ve yükseklik', en: 'Tree traversal and height', de: 'Baumdurchlauf und Höhe'}],

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Izgarada yol sayısı (dinamik programlama) | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Izgarada yol sayısı (dinamik programlama)</h1>
+<h1 data-lang="en">Paths in a grid (dynamic programming)</h1>
+<h1 data-lang="de">Wege im Gitter (dynamische Programmierung)</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir robot 3×4'lük bir ızgaranın sol üst köşesinden sağ alt köşesine gidecek; yalnızca sağa ya da aşağı adım atabiliyor. Kaç farklı yol var? <em>Dinamik programlamada</em> büyük soruyu küçük sorulara böler, cevapları bir tabloda saklarız: <code>dp[i][j]</code>, (i, j) hücresine varan yol sayısı. İlk satıra ve ilk sütuna tek yoldan gidilir.</p>
+<p data-lang="en">A robot goes from the top left corner of a 3×4 grid to the bottom right corner; it can only step right or down. How many different paths are there? In <em>dynamic programming</em> we split the big question into small ones and keep the answers in a table: <code>dp[i][j]</code> is the number of paths that reach cell (i, j). The first row and the first column can only be reached in one way.</p>
+<p data-lang="de">Ein Roboter geht von der linken oberen Ecke eines 3×4-Gitters zur rechten unteren Ecke; er darf nur nach rechts oder unten gehen. Wie viele verschiedene Wege gibt es? Bei der <em>dynamischen Programmierung</em> zerlegen wir die große Frage in kleine und speichern die Antworten in einer Tabelle: <code>dp[i][j]</code> ist die Anzahl der Wege zur Zelle (i, j). Die erste Zeile und die erste Spalte erreicht man nur auf einem Weg.</p>
+
+<textarea id="text1" class="deneme">
+var rows = 3
+var cols = 4
+var dp = new Array(3, 4)   // dp[i][j]: (i, j) hücresine yol sayısı
+for(var i = 0; i &lt; rows; i++)
+{
+  dp[i][0] = 1             // ilk sütun: hep aşağı
+}
+for(var j = 0; j &lt; cols; j++)
+{
+  dp[0][j] = 1             // ilk satır: hep sağa
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var rows = 3
+var cols = 4
+var dp = new Array(3, 4)   // dp[i][j]: the number of paths to cell (i, j)
+for(var i = 0; i < rows; i++)
+{
+  dp[i][0] = 1             // first column: always down
+}
+for(var j = 0; j < cols; j++)
+{
+  dp[0][j] = 1             // first row: always right
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var rows = 3
+var cols = 4
+var dp = new Array(3, 4)   // dp[i][j]: die Anzahl der Wege zur Zelle (i, j)
+for(var i = 0; i < rows; i++)
+{
+  dp[i][0] = 1             // erste Spalte: immer nach unten
+}
+for(var j = 0; j < cols; j++)
+{
+  dp[0][j] = 1             // erste Zeile: immer nach rechts
+}
+</script>
+
+<p data-lang="tr">Diğer hücrelere ya üstten ya soldan gelinir; yani yol sayıları toplanır. Formüldeki iki hücre çerçevelenir, yeni değer üçüncüsüne yazılır; tablo soldan sağa, yukarıdan aşağı dolar. Sağ alt hücre cevabı verir: 10 yol.</p>
+<p data-lang="en">Every other cell is reached either from above or from the left, so the path counts add up. The two cells in the formula get a frame and the new value is written to the third; the table fills from left to right, top to bottom. The bottom right cell holds the answer: 10 paths.</p>
+<p data-lang="de">Jede andere Zelle erreicht man von oben oder von links, die Wegzahlen addieren sich also. Die beiden Zellen der Formel bekommen einen Rahmen, der neue Wert wird in die dritte geschrieben; die Tabelle füllt sich von links nach rechts und von oben nach unten. Die Zelle unten rechts enthält die Antwort: 10 Wege.</p>
+
+<textarea id="text2" class="deneme">
+for(var i = 1; i &lt; rows; i++)
+{
+  for(var j = 1; j &lt; cols; j++)
+  {
+    dp[i][j] = dp[i - 1][j] + dp[i][j - 1]   // üstten gelen + soldan gelen
+  }
+}
+print dp[rows - 1][cols - 1]
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+for(var i = 1; i < rows; i++)
+{
+  for(var j = 1; j < cols; j++)
+  {
+    dp[i][j] = dp[i - 1][j] + dp[i][j - 1]   // from above + from the left
+  }
+}
+print dp[rows - 1][cols - 1]
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+for(var i = 1; i < rows; i++)
+{
+  for(var j = 1; j < cols; j++)
+  {
+    dp[i][j] = dp[i - 1][j] + dp[i][j - 1]   // von oben + von links
+  }
+}
+print dp[rows - 1][cols - 1]
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
