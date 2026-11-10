@@ -12,7 +12,7 @@
 (function(){
 
 	var LANGS = ['tr', 'en', 'de'];
-	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, fontSize: 'normal', lessonMode: false, codeLang: 'dugum'};
+	var DEFAULTS = {lang: null, theme: 'system', speed: 2, narration: true, warnings: true, stepCompare: true, fontSize: 'normal', lessonMode: false, codeLang: 'dugum'};
 
 	var TEXT = {
 		// ---------------- page chrome (js/layout.js) ----------------
@@ -73,7 +73,7 @@
 				['Hoş geldiniz', 'Burada veri yapılarının kodunu çalıştırıp her adımı çizimde izlersiniz. Bu kısa tur sayfanın bölümlerini tanıtır; Sonraki ile ilerleyin, istediğiniz an atlayabilirsiniz.'],
 				['Kod blokları', 'Örnekler Düğüm dilinde yazılmıştır: JavaScript\'e benzeyen, bu iş için geliştirilmiş sade bir dil. Kodu değiştirip yeniden çalıştırabilirsiniz.'],
 				['Çalıştır', 'Bloğu çalıştırır. Üstündeki bloklar da kendiliğinden yeniden çalışır, çizim her seferinde temiz başlar.'],
-				['Çizim', 'Düğümler, bağlar (oklar) ve pointer\'lar burada çizilir. Son adımda değişen bağ turuncu görünür; ulaşılamayan düğümler uyarıyla işaretlenir.'],
+				['Çizim', 'Düğümler, bağlar (oklar) ve pointer\'lar burada çizilir. Son adımda değişen bağ turuncu görünür, eski hali soluk ve kesik çizgiyle arkada kalır; ulaşılamayan düğümler uyarıyla işaretlenir.'],
 				['Oynatıcı', 'Çalışmayı adım adım geri ve ileri oynatın, hızı ayarlayın ya da çubukla istediğiniz adıma gidin. Klavyede ← → ve boşluk tuşu da çalışır.'],
 				['Anlatım', 'Her adımda ne olduğu bir cümleyle anlatılır; kodda o anda çalışan satır da vurgulanır.'],
 				['Değişkenler ve çıktı', 'Değişkenlerin o adımdaki değerleri, fonksiyon çağrıları ve programın çıktısı burada. Komut satırı sekmesinden tek satırlık kod da deneyebilirsiniz.'],
@@ -85,7 +85,7 @@
 				['Welcome', 'Here you run the code of data structures and follow every step in the drawing. This short tour shows the parts of the page; go on with Next, and skip it whenever you like.'],
 				['Code blocks', 'The examples are written in Düğüm: a small language like JavaScript, made for this site. You can change the code and run it again.'],
 				['Run', 'Runs the block. The blocks above it run again by themselves, so the drawing always starts clean.'],
-				['Drawing', 'Nodes, links (arrows) and pointers are drawn here. The link the last step changed is orange; nodes nothing reaches any more are marked with a warning.'],
+				['Drawing', 'Nodes, links (arrows) and pointers are drawn here. The link the last step changed is orange and how it was before stays behind it, faded and dashed; nodes nothing reaches any more are marked with a warning.'],
 				['Player', 'Play the run step by step backwards and forwards, set the speed or jump to a step with the slider. The keys ← → and space work too.'],
 				['Narration', 'Every step is told in a sentence, and the line that runs is highlighted in the code.'],
 				['Variables and output', 'The values of the variables at this step, the function calls and the output of the program. In the command line tab you can try a single line of code.'],
@@ -97,7 +97,7 @@
 				['Willkommen', 'Hier führen Sie den Code von Datenstrukturen aus und verfolgen jeden Schritt in der Zeichnung. Diese kurze Tour zeigt die Teile der Seite; mit Weiter geht es voran, überspringen können Sie jederzeit.'],
 				['Codeblöcke', 'Die Beispiele sind in Düğüm geschrieben: einer kleinen, JavaScript-ähnlichen Sprache, die für diese Seite gemacht ist. Sie können den Code ändern und erneut ausführen.'],
 				['Ausführen', 'Führt den Block aus. Die Blöcke darüber laufen von selbst erneut, so beginnt die Zeichnung immer sauber.'],
-				['Zeichnung', 'Knoten, Verbindungen (Pfeile) und Zeiger werden hier gezeichnet. Die Verbindung, die der letzte Schritt geändert hat, ist orange; Knoten, die nichts mehr erreicht, werden mit einer Warnung markiert.'],
+				['Zeichnung', 'Knoten, Verbindungen (Pfeile) und Zeiger werden hier gezeichnet. Die Verbindung, die der letzte Schritt geändert hat, ist orange, ihr früherer Zustand bleibt blass und gestrichelt dahinter; Knoten, die nichts mehr erreicht, werden mit einer Warnung markiert.'],
 				['Player', 'Spielen Sie den Ablauf Schritt für Schritt vor und zurück, stellen Sie die Geschwindigkeit ein oder springen Sie mit dem Regler zu einem Schritt. Die Tasten ← → und Leertaste funktionieren auch.'],
 				['Erzählung', 'Jeder Schritt wird in einem Satz erklärt, und die laufende Zeile wird im Code hervorgehoben.'],
 				['Variablen und Ausgabe', 'Die Werte der Variablen in diesem Schritt, die Funktionsaufrufe und die Ausgabe des Programms. Im Reiter Befehlszeile können Sie eine einzelne Codezeile ausprobieren.'],
@@ -114,6 +114,8 @@
 		lessonOff: {tr: 'Tüm sayfayı göster', en: 'Show the whole page', de: 'Ganze Seite zeigen'},
 		lessonPart: {tr: 'Bölüm {i} / {n}', en: 'Part {i} of {n}', de: 'Teil {i} von {n}'},
 		narrationSetting: {tr: 'Adım anlatımı', en: 'Step narration', de: 'Schrittbeschreibung'},
+		stepCompareSetting: {tr: 'Adım karşılaştırma: önceki hali soluk göster', en: 'Step comparison: show the previous state faded', de: 'Schrittvergleich: vorherigen Zustand blass zeigen'},
+		ghostLegend: {tr: 'soluk ve kesik: bir önceki adımdaki hal', en: 'faded and dashed: how it was before this step', de: 'blass und gestrichelt: der Zustand vor diesem Schritt'},
 		warningsSetting: {tr: 'Kopan düğüm uyarısı', en: 'Lost node warnings', de: 'Warnung bei verlorenen Knoten'},
 		fontSize: {tr: 'Kod yazı boyutu', en: 'Code font size', de: 'Schriftgröße im Code'},
 		fontSizes: {
