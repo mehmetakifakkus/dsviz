@@ -3066,7 +3066,7 @@ function insertAfter(el, referenceNode) {
 // blocks above it produce (also after they were edited), and block 2 can be run first.
 var blockEditors = [];
 
-window.dsvRunBlock = function(k){ runBlock(k); }; // lesson mode runs the block of a part
+window.dsvRunBlock = function(k){ return runBlock(k); }; // lesson mode runs the block of a part; true when it ran without an error
 
 function runBlock(k){
 	if(window.dsvPlanMark)
@@ -3080,14 +3080,51 @@ function runBlock(k){
 			if(output)
 				output.textContent = t('eInBlock', {n: i + 1}) + output.textContent;
 			player.toEnd();
-			return;
+			return false;
 		}
 		player.toEnd();
 	}
 
 	window.activeEditor = blockEditors[k].doc;
-	parse(blockEditors[k].getValue());
+	return !!parse(blockEditors[k].getValue());
 }
+
+// Quiet runs (the exercise checks): code runs as the program, but nothing is drawn, no step is added and the
+// output panel is left as it was. The program (variables, functions, nodes) keeps what the code did.
+function quietly(work){
+	var add = player.add, play = player.play, editor = window.activeEditor;
+	var output = document.getElementById('output'), text = output ? output.textContent : '';
+	player.add = function(){};
+	player.play = function(){};
+	window.activeEditor = null;
+	try { return work(function(){ return output ? output.textContent : ''; }); }
+	finally {
+		player.add = add;
+		player.play = play;
+		window.activeEditor = editor;
+		if(output) output.textContent = text;
+	}
+}
+
+// code: Düğüm. Returns {ok, error}; error is the explained message
+window.dsvRunQuiet = function(code){
+	return quietly(function(shown){
+		var ok = !!parse(code);
+		return {ok: ok, error: ok ? '' : shown()};
+	});
+};
+
+// expression: JavaScript over the program's variables; helpers (name -> function) win over the user's own names
+window.dsvEvalQuiet = function(expression, helpers){
+	return quietly(function(){
+		try {
+			var value = (new Function('__h', 'with(window){ with(__h){ return (' + expression + '\n); } }'))(helpers || {});
+			return {ok: true, value: value, error: ''};
+		} catch(err){
+			return {ok: false, value: undefined, error: explainError(err, expression)};
+		}
+	});
+};
 
 // forget the program (the user's variables, functions and nodes) and everything drawn
 function resetProgram(){
