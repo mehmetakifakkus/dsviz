@@ -53,7 +53,7 @@ matrisGezme, pascal, gridPaths, lcs, knapsack, nQueens (4×4). Menü grubu "2B d
 - Ders planında alıştırma sayfası açıldığında değil, doğru çözüldüğünde "yapıldı" sayılır (`dsvPlanMark` sadece geçişte).
 
 ### Diller
-Düğüm ve Türkçe kelimeli Düğüm. C++/Java seçiliyse sayfa not gösterip Düğüm'e döner (çeviri tek yönlü, C++ yazılan kod çalıştırılamaz). Metinler tr/en/de.
+Her kod diliyle çalışır (Düğüm, Türkçe kelimeli Düğüm, C++, Java): başlangıç kodu seçili dilde gösterilir, öğrencinin yazdığı kod çalışmadan önce Düğüm'e çevrilir (siteye zaten var olan ters çeviri); gizli `setup`, `test` ve `expect` kodu Düğüm'dür ve dilden etkilenmez. (İlk tasarım yanlışlıkla "C++/Java'da Düğüm'e dönülür" diyordu; ters çeviri var, gerek yok.) Metinler tr/en/de.
 
 ### İlk içerik (8)
 Listeyi ters çevir, ortadaki düğüm, uzunluk (fonksiyon), sona ekle, yinelenenleri sil, matriste satır toplamı, Pascal satırı, ızgarada yol sayısı.
