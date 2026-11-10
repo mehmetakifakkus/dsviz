@@ -334,8 +334,51 @@ var HEAP_FORMULA = /\b2\s*\*\s*[A-Za-z_]\w*\s*\+\s*[12]\b|\(\s*[A-Za-z_]\w*\s*-\
 var heapRequested = false; // program state: some code on this page used those formulas
 var HEAP_LEVEL_H = 58, HEAP_R = 15, HEAP_TOP = 112; // a level of the tree, a node's radius, the tree's top under its row
 function heapLevels(a){ return heapRequested && a.visual.kind !== 'buckets' ? Math.floor(Math.log(a.length) / Math.LN2) + 1 : 0; }
-function heapWidth(a){ return Math.max(a.length * ROW_CELL_W, Math.pow(2, heapLevels(a) - 1) * 44); }
-function rowBand(a){ var l = heapLevels(a); return (l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND) + (barsOn(a) ? BAR_BAND : 0); }
+function heapWidth(a){ return Math.max(a.length * ROW_CELL_W, heapLevels(a) ? Math.pow(2, heapLevels(a) - 1) * 44 : 0, forestWidth(a)); }
+function rowBand(a){ var l = heapLevels(a) || forestLevels(a); return (l ? HEAP_TOP + l * HEAP_LEVEL_H : ROW_BAND) + (barsOn(a) ? BAR_BAND : 0); }
+
+// A disjoint-set forest kept in an array (named leader, lider, temsilci, uf, dsu): cell i holds the parent of i
+// (a cell with its own number, or an empty one, is a root). It is drawn under its row as the trees it stands for:
+// the roots on top, every element under its parent, so that unite and path compression can be seen.
+var FOREST_NAMES = /^(leader|lider|temsilci|uf|dsu)$/i;
+function forestOf(a){
+	var v = a.visual, n = v.cells.length, parent = [], numbers = 0, i, x, steps;
+	if(v.kind === 'buckets' || !FOREST_NAMES.test(v.name || '') || n < 2)
+		return null;
+	for(i = 0; i < n; i = i + 1){
+		var c = v.cells[i];
+		if(c === null || c === undefined){ parent.push(i); continue; }
+		if(typeof c !== 'number' || c % 1 !== 0 || c < 0 || c >= n)
+			return null;
+		parent.push(c);
+		numbers = numbers + 1;
+	}
+	if(!numbers)
+		return null;
+	var depth = [], levels = 0, children = [], roots = [];
+	for(i = 0; i < n; i = i + 1){
+		children.push([]);
+		for(x = i, steps = 0; parent[x] !== x && steps <= n; x = parent[x], steps = steps + 1);
+		if(steps > n)
+			return null;                         // a cycle: not a forest
+		depth.push(steps);
+		levels = Math.max(levels, steps + 1);
+	}
+	for(i = 0; i < n; i = i + 1){
+		if(parent[i] === i) roots.push(i);
+		else children[parent[i]].push(i);
+	}
+	var slot = [], next = 0;                      // a leaf takes the next free slot, a parent stands over its children
+	function place(u){
+		if(!children[u].length){ slot[u] = next; next = next + 1; return; }
+		children[u].forEach(place);
+		slot[u] = (slot[children[u][0]] + slot[children[u][children[u].length - 1]]) / 2;
+	}
+	roots.forEach(place);
+	return {parent: parent, depth: depth, levels: levels, slot: slot, slots: next, roots: roots};
+}
+function forestLevels(a){ var f = forestOf(a); return f ? f.levels : 0; }
+function forestWidth(a){ var f = forestOf(a); return f ? f.slots * 44 : 0; }
 
 // An array of numbers that holds data to search or sort (named a, arr, dizi, nums...) is also drawn as bars over
 // its cells: the height of a bar is its value, so "sorted" and "in the wrong place" can be seen at a glance.
@@ -440,6 +483,8 @@ function drawRowArrays(){
 		});
 		if(heapLevels(a))
 			drawHeapTree(a, x0, y + HEAP_TOP, at, items);
+		else if(forestLevels(a))
+			drawForest(a, x0, y + HEAP_TOP, at, items);
 	});
 	if(items.length)
 		rowArraysDraw = new Group(items);
@@ -481,6 +526,24 @@ function drawHeapTree(a, x0, top, at, items){
 	}
 }
 
+function drawForest(a, x0, top, at, items){
+	var v = a.visual, f = forestOf(a), i;
+	function center(i){ return new Point(x0 + (f.slot[i] + 0.5) * 44, top + HEAP_R + f.depth[i] * HEAP_LEVEL_H); }
+	for(i = 0; i < f.parent.length; i = i + 1)
+		if(f.parent[i] !== i){
+			var from = center(f.parent[i]), to = center(i), dir = (to - from).normalize(HEAP_R);
+			items.push(new Path.Line({ from: from + dir, to: to - dir, strokeColor: PAL.stroke, strokeWidth: 2 }));
+		}
+	for(i = 0; i < f.parent.length; i = i + 1){
+		var c = center(i), focused = isFocusedEdge(v, 'cell' + i), read = isFocusedEdge(v, 'read' + i), root = f.parent[i] === i;
+		items.push(new Path.Circle({ center: c, radius: HEAP_R, strokeColor: focused ? PAL.changed : read ? PAL.named : root ? PAL.named : PAL.stroke,
+		                              strokeWidth: focused || read || root ? 3 : 2, fillColor: PAL.node }));
+		items.push(new PointText({ point: c + [0, 5], justification: 'center', fontSize: 14+'px', fillColor: PAL.text, content: '' + i }));
+		if(at[i])
+			items.push(new PointText({ point: c + [0, HEAP_R + 15], justification: 'center', fontSize: 14+'px', fillColor: PAL.pointer, content: at[i].join(', ') }));
+	}
+}
+
 var TABLE_W = 34; // width of an array cell
 var tableDraw = null;
 function drawTable(){
@@ -507,7 +570,18 @@ var VISITED_NAMES = /^(visited|seen|marked|ziyaret|görüldü|goruldu|işaretli|
 // Dijkstra and the like: the values of an array named dist (mesafe, uzaklık) stand beside the
 // vertices (the value of a variable named INF / SONSUZ as ∞), and the edges parent[v] - v of an
 // array named parent (pred, ebeveyn) are drawn thick: the tree of shortest paths.
-var DIST_NAMES = /^(dist|distance|mesafe|uzaklık|uzaklik)$/i, PARENT_NAMES = /^(parent|pred|ebeveyn)$/i;
+var DIST_NAMES = /^(dist|distance|mesafe|uzaklık|uzaklik|key|anahtar|indeg|indegree|girdi)$/i, PARENT_NAMES = /^(parent|pred|ebeveyn)$/i;
+// the numbers of an array named comp (renk, color...) colour the vertices: the same number, the same colour (0 or empty: none)
+var COMP_NAMES = /^(comp|component|components|bileşen|bilesen|renk|color|colour|group|grup)$/i;
+var COMP_COLORS = ['#2f5bea', '#e8590c', '#2f9e44', '#ae3ec9', '#d6336c', '#0c8599'];
+function compOf(n, i){
+	var found = 0;
+	graphArrays(n, COMP_NAMES).forEach(function(a){
+		var c = a.visual.cells[i];
+		if(typeof c === 'number' && c > 0) found = c;
+	});
+	return found;
+}
 function graphArrays(n, names){ return rowArrays().filter(function(a){ return a.length === n && names.test(a.visual.name || ''); }); }
 function treeEdges(n){
 	var tree = {};
@@ -527,7 +601,7 @@ function graphEdges(table){
 			var j = p.shownData;
 			if(typeof j !== 'number' || j % 1 !== 0 || j < 0 || j >= n)
 				return null;                                  // not a vertex number: not a graph
-			if(!seen[i + ',' + j]){ seen[i + ',' + j] = true; edges.push({from: i, to: j, first: p === cells[i], weight: p.shownWeight}); }
+			if(!seen[i + ',' + j]){ seen[i + ',' + j] = true; edges.push({from: i, to: j, first: p === cells[i], weight: p.shownWeight, chosen: !!p.shownChosen}); }
 		}
 	return edges;
 }
@@ -550,7 +624,7 @@ function drawGraph(table, items){
 		var both = has[e.to + ',' + e.from];
 		if(both && e.from > e.to) return;                   // one line for the two directions
 		var focused = (isFocusedEdge(v, 'cell' + e.from) && e.first) || (both && isFocusedEdge(v, 'cell' + e.to) && edges.some(function(f){ return f.from === e.to && f.to === e.from && f.first; }));
-		var inTree = tree[e.from + ',' + e.to];
+		var inTree = tree[e.from + ',' + e.to] || e.chosen;
 		var color = focused ? PAL.changed : inTree ? PAL.named : PAL.stroke;
 		var dir = (at[e.to] - at[e.from]).normalize(VR + 2);
 		var start = at[e.from] + dir, end = at[e.to] - dir;
@@ -565,19 +639,19 @@ function drawGraph(table, items){
 	// the visited arrays of the same size: filled cells colour their vertex
 	var same = rowArrays().filter(function(a){ return a.length === n && VISITED_NAMES.test(a.visual.name || ''); });
 	var markers = {};
-	[table].concat(same).forEach(function(a){
-		Object.keys(a.visual.indexVars || {}).forEach(function(name){
-			var k = markerValue(name);
-			if(typeof k === 'number' && k % 1 === 0 && k >= 0 && k < n && (markers[k] = markers[k] || []).indexOf(name) < 0)
-				markers[k].push(name);
+	[table].concat(rowArrays().filter(function(a){ return a.length === n; })).forEach(function(a){ // the index variables of arrays with one cell per vertex
+		var at = markersOf(a.visual);
+		Object.keys(at).forEach(function(k){
+			if(Number(k) < n) at[k].forEach(function(name){ if((markers[k] = markers[k] || []).indexOf(name) < 0) markers[k].push(name); });
 		});
 	});
 	for(i = 0; i < n; i = i + 1){
 		var filled = same.some(function(a){ var c = a.visual.cells[i]; return c !== null && c !== undefined && c !== 0 && c !== false; });
-		var ring = isFocusedEdge(v, 'cell' + i) ? PAL.changed : filled ? PAL.named : PAL.stroke;
+		var comp = compOf(n, i), tint = comp ? COMP_COLORS[(comp - 1) % COMP_COLORS.length] : PAL.named;
+		var ring = isFocusedEdge(v, 'cell' + i) ? PAL.changed : (filled || comp) ? tint : PAL.stroke;
 		items.push(new Path.Circle({ center: at[i], radius: VR, strokeColor: ring, strokeWidth: ring !== PAL.stroke ? 3 : 2, fillColor: PAL.node }));
-		if(filled)
-			items.push(new Path.Circle({ center: at[i], radius: VR - 3, fillColor: PAL.named, opacity: 0.22 }));
+		if(filled || comp)
+			items.push(new Path.Circle({ center: at[i], radius: VR - 3, fillColor: tint, opacity: comp ? 0.45 : 0.22 }));
 		items.push(new PointText({ point: at[i] + [0, 5], justification: 'center', fontSize: 14+'px', fillColor: PAL.text, content: '' + i }));
 		var outward = (at[i] - new Point(cx, cy)).normalize(1);
 		if(markers[i])
@@ -614,7 +688,10 @@ function graphState(table){
 	var weights = {}, dist = [], tree = treeEdges(n);
 	edges.forEach(function(e){ if(e.weight !== undefined && e.weight !== null) weights[Math.min(e.from, e.to) + '-' + Math.max(e.from, e.to)] = e.weight; });
 	for(i = 0; i < n; i = i + 1) dist.push(distOf(n, i));
-	return {edges: out.sort(), visited: coloured, weights: weights, dist: dist, tree: Object.keys(tree).filter(function(k){ var a = k.split(','); return Number(a[0]) < Number(a[1]); }).map(function(k){ return k.replace(',', '-'); }).sort()};
+	var comps = [];
+	for(i = 0; i < n; i = i + 1) comps.push(compOf(n, i));
+	var chosen = edges.filter(function(e){ return e.chosen && e.from < e.to; }).map(function(e){ return e.from + '-' + e.to; }).sort();
+	return {edges: out.sort(), visited: coloured, weights: weights, dist: dist, comps: comps, chosen: chosen, tree: Object.keys(tree).filter(function(k){ var a = k.split(','); return Number(a[0]) < Number(a[1]); }).map(function(k){ return k.replace(',', '-'); }).sort()};
 }
 
 function drawBuckets(table, items){
@@ -2017,6 +2094,7 @@ function resetVisuals(){
 		n.shownData = n.firstData;
 		n.shownHeight = undefined;
 		n.shownWeight = undefined;
+		n.shownChosen = undefined;
 	});
 	lastPlaced = null;
 	doublyMode = false;
@@ -2246,6 +2324,11 @@ function drawGraphics(line, result){
 				res.target.render();
 				drawTable();
 			}
+			else if(res.prop == '.chosen' && res.target.boxDraw) // an edge of a graph taken into a tree: drawn thick and blue
+			{
+				res.target.shownChosen = !!res.value;
+				drawTable();
+			}
 		}
 		else if(line.type == 'object property right') // p1 = p1.next  /  max = p.data
 		{
@@ -2281,6 +2364,11 @@ function drawGraphics(line, result){
 			{
 				res.target.shownWeight = res.value;
 				res.target.render();
+				drawTable();
+			}
+			else if(res.prop == '.chosen' && res.target.boxDraw)
+			{
+				res.target.shownChosen = !!res.value;
 				drawTable();
 			}
 		}
@@ -2882,6 +2970,7 @@ window.dsvState = function(){
 			return {name: a.visual.name, kind: a.visual.kind === 'buckets' ? 'buckets' : 'row', markers: markers,
 			        cells: a.visual.cells.map(function(c){ return isNode(c) ? '[' + c.shownData + ']' : c; }),
 			        bars: barsOn(a),
+			        forest: forestOf(a) ? forestOf(a).parent : null,
 			        reads: a.visual.cells.map(function(c, i){ return isFocusedEdge(a.visual, 'read' + i) ? i : -1; }).filter(function(i){ return i >= 0; }),
 			        heap: heapLevels(a) ? a.visual.cells.slice(0, heapUsed(a)) : null, // the cells drawn as a tree
 			        graph: a.visual.graphCol !== undefined ? graphState(a) : null};    // the graph drawn beside the chains

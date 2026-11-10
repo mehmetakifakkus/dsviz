@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prim: en küçük kapsayan ağaç | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Prim: en küçük kapsayan ağaç</h1>
+<h1 data-lang="en">Prim: the minimum spanning tree</h1>
+<h1 data-lang="de">Prim: der minimale Spannbaum</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">En küçük kapsayan ağacı bulmanın ikinci yolu <em>Prim algoritmasıdır</em>. Kruskal kenarlara bakar ve ormanı birleştirir; Prim ise tek bir ağacı bir köşeden başlayarak <em>büyütür</em>: her adımda ağaca en ucuz kenarla bağlanabilen köşeyi alır. Kruskal sayfasındaki aynı grafı kuralım.</p>
+<p data-lang="en">The second way to find the minimum spanning tree is <em>Prim's algorithm</em>. Kruskal looks at the edges and merges a forest; Prim <em>grows</em> a single tree from one vertex: in every step it takes the vertex that can be joined to the tree by the cheapest edge. We build the same graph as on the Kruskal page.</p>
+<p data-lang="de">Der zweite Weg zum minimalen Spannbaum ist <em>Prims Algorithmus</em>. Kruskal sieht sich die Kanten an und verschmilzt einen Wald; Prim lässt einen einzigen Baum von einem Knoten aus <em>wachsen</em>: in jedem Schritt nimmt er den Knoten, der mit der billigsten Kante an den Baum angeschlossen werden kann. Wir bauen denselben Graphen wie auf der Kruskal-Seite.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(6)      // komşuluk listeleri: ağırlıklı yönsüz graf
+var n = 6                 // köşe sayısı
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // ağırlık kenar düğümünde
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(6)      // adjacency lists: a weighted undirected graph
+var n = 6                 // the number of vertices
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // the weight is in the edge's node
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(6)      // Adjazenzlisten: ein gewichteter ungerichteter Graph
+var n = 6                 // die Anzahl der Knoten
+function addEdge(u, v, w)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w            // das Gewicht steht im Kantenknoten
+  adj[u] = e
+  var f = new Node(u, adj[v])
+  f.weight = w
+  adj[v] = f
+}
+addEdge(0, 1, 4)
+addEdge(0, 2, 3)
+addEdge(1, 2, 1)
+addEdge(1, 3, 2)
+addEdge(2, 3, 4)
+addEdge(3, 4, 2)
+addEdge(3, 5, 5)
+addEdge(4, 5, 6)
+</script>
+
+<p data-lang="tr">Kod Dijkstra'ya çok benzer: <code>key[v]</code>, v'yi ağaca bağlayan en hafif kenarın ağırlığıdır ve köşenin içinde görünür; <code>parent</code> dizisinden oluşan ağaç kalın mavi çizilir. Fark: Dijkstra köşenin <em>başlangıçtan uzaklığına</em> bakar (<code>dist[u] + w</code>), Prim yalnızca <em>kenarın kendisine</em> (<code>w</code>). Burada da seçim her turda tüm köşelere bakar: O(<em>n</em>²); heap ile O(<em>m</em> log <em>n</em>). Sonuç Kruskal'la aynı ağaç: toplam 13.</p>
+<p data-lang="en">The code is very much like Dijkstra's: <code>key[v]</code> is the weight of the lightest edge joining v to the tree and shows inside the vertex; the tree formed by the array <code>parent</code> is drawn thick and blue. The difference: Dijkstra looks at the vertex's <em>distance from the start</em> (<code>dist[u] + w</code>), Prim only at the <em>edge itself</em> (<code>w</code>). Here too the choice looks at all vertices every round: O(<em>n</em>²); with a heap O(<em>m</em> log <em>n</em>). The result is the same tree as with Kruskal: total 13.</p>
+<p data-lang="de">Der Code ähnelt sehr dem von Dijkstra: <code>key[v]</code> ist das Gewicht der leichtesten Kante, die v an den Baum anschließt, und steht im Knoten; der Baum, den das Array <code>parent</code> bildet, wird dick und blau gezeichnet. Der Unterschied: Dijkstra sieht auf den <em>Abstand des Knotens vom Start</em> (<code>dist[u] + w</code>), Prim nur auf die <em>Kante selbst</em> (<code>w</code>). Auch hier sieht die Wahl jede Runde alle Knoten an: O(<em>n</em>²); mit einem Heap O(<em>m</em> log <em>n</em>). Das Ergebnis ist derselbe Baum wie bei Kruskal: insgesamt 13.</p>
+
+<textarea id="text2" class="deneme">
+var INF = 999                // "sonsuz": ağaca henüz bağlanamadı
+var key = new Array(6)       // key[v]: v'yi ağaca bağlayan en hafif kenarın ağırlığı
+var parent = new Array(6)    // ağaçta v'nin ebeveyni
+var visited = new Array(6)   // ağaca alınanlar
+for(var i = 0; i &lt; n; i++)
+{
+  key[i] = INF
+  parent[i] = -1
+  visited[i] = false
+}
+key[0] = 0
+for(var k = 0; k &lt; n; k++)
+{
+  var u = -1                 // ağaca alınmamış, anahtarı en küçük köşeyi seç
+  for(var j = 0; j &lt; n; j++)
+  {
+    if(!visited[j] &amp;&amp; (u == -1 || key[j] &lt; key[u]))
+    {
+      u = j
+    }
+  }
+  visited[u] = true          // ağaca al
+  var p = adj[u]             // komşuları güncelle
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v] &amp;&amp; p.weight &lt; key[v])   // v'ye daha hafif bir kenarla bağlanılabilir
+    {
+      key[v] = p.weight
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var i = 0; i &lt; n; i++)
+{
+  total = total + key[i]
+}
+print total
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var INF = 999                // "infinity": not joined to the tree yet
+var key = new Array(6)       // key[v]: the weight of the lightest edge joining v to the tree
+var parent = new Array(6)    // the parent of v in the tree
+var visited = new Array(6)   // those taken into the tree
+for(var i = 0; i < n; i++)
+{
+  key[i] = INF
+  parent[i] = -1
+  visited[i] = false
+}
+key[0] = 0
+for(var k = 0; k < n; k++)
+{
+  var u = -1                 // pick the vertex not in the tree with the smallest key
+  for(var j = 0; j < n; j++)
+  {
+    if(!visited[j] && (u == -1 || key[j] < key[u]))
+    {
+      u = j
+    }
+  }
+  visited[u] = true          // take it into the tree
+  var p = adj[u]             // update the neighbours
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v] && p.weight < key[v])   // v can be joined by a lighter edge
+    {
+      key[v] = p.weight
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var i = 0; i < n; i++)
+{
+  total = total + key[i]
+}
+print total
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var INF = 999                // „unendlich“: noch nicht an den Baum angeschlossen
+var key = new Array(6)       // key[v]: das Gewicht der leichtesten Kante, die v an den Baum anschließt
+var parent = new Array(6)    // der Elternknoten von v im Baum
+var visited = new Array(6)   // die in den Baum aufgenommenen
+for(var i = 0; i < n; i++)
+{
+  key[i] = INF
+  parent[i] = -1
+  visited[i] = false
+}
+key[0] = 0
+for(var k = 0; k < n; k++)
+{
+  var u = -1                 // den Knoten außerhalb des Baums mit dem kleinsten key wählen
+  for(var j = 0; j < n; j++)
+  {
+    if(!visited[j] && (u == -1 || key[j] < key[u]))
+    {
+      u = j
+    }
+  }
+  visited[u] = true          // in den Baum aufnehmen
+  var p = adj[u]             // die Nachbarn aktualisieren
+  while(p != null)
+  {
+    var v = p.data
+    if(!visited[v] && p.weight < key[v])   // v lässt sich mit einer leichteren Kante anschließen
+    {
+      key[v] = p.weight
+      parent[v] = u
+    }
+    p = p.next
+  }
+}
+var total = 0
+for(var i = 0; i < n; i++)
+{
+  total = total + key[i]
+}
+print total
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

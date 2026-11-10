@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bağlı bileşenler | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Bağlı bileşenler</h1>
+<h1 data-lang="en">Connected components</h1>
+<h1 data-lang="de">Zusammenhangskomponenten</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir graf tek parça olmak zorunda değildir. Birbirine yollarla bağlı köşe kümelerine <em>bağlı bileşen</em> denir: bir sosyal ağdaki arkadaş grupları, bir haritadaki adalar. İki köşenin aynı bileşende olması aralarında bir yol olması demektir. Sekiz köşeli, üç parçalı bir graf kuralım.</p>
+<p data-lang="en">A graph does not have to be in one piece. Sets of vertices that are joined by paths are called <em>connected components</em>: groups of friends in a social network, islands on a map. Two vertices are in the same component exactly when there is a path between them. We build a graph with eight vertices in three pieces.</p>
+<p data-lang="de">Ein Graph muss nicht aus einem Stück bestehen. Mengen von Knoten, die durch Wege verbunden sind, heißen <em>Zusammenhangskomponenten</em>: Freundesgruppen in einem sozialen Netz, Inseln auf einer Karte. Zwei Knoten liegen genau dann in derselben Komponente, wenn es einen Weg zwischen ihnen gibt. Wir bauen einen Graphen mit acht Knoten in drei Teilen.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(8)      // komşuluk listeleri
+var n = 8                 // köşe sayısı
+function addEdge(u, v)    // yönsüz kenar: iki listeye de
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(1, 2)
+addEdge(0, 2)
+addEdge(3, 4)
+addEdge(4, 5)
+addEdge(6, 7)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(8)      // adjacency lists
+var n = 8                 // the number of vertices
+function addEdge(u, v)    // an undirected edge: into both lists
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(1, 2)
+addEdge(0, 2)
+addEdge(3, 4)
+addEdge(4, 5)
+addEdge(6, 7)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(8)      // Adjazenzlisten
+var n = 8                 // die Anzahl der Knoten
+function addEdge(u, v)    // eine ungerichtete Kante: in beide Listen
+{
+  adj[u] = new Node(v, adj[u])
+  adj[v] = new Node(u, adj[v])
+}
+addEdge(0, 1)
+addEdge(1, 2)
+addEdge(0, 2)
+addEdge(3, 4)
+addEdge(4, 5)
+addEdge(6, 7)
+</script>
+
+<p data-lang="tr">Her köşeden gidebildiğimiz her yere aynı numarayı vermek için DFS kullanılır. Köşeleri sırayla gezeriz; henüz bileşeni olmayan bir köşe bulursak yeni bir bileşen başlar ve DFS ona bağlı herkese o numarayı yazar. <code>comp</code> dizisi grafta renk olarak görünür: aynı renk, aynı bileşen. Süre O(<em>n</em> + <em>m</em>).</p>
+<p data-lang="en">DFS gives the same number to everything we can reach from a vertex. We go through the vertices in order; when we find one that has no component yet, a new component starts and DFS writes that number on everything joined to it. The array <code>comp</code> shows in the graph as colour: the same colour, the same component. It takes O(<em>n</em> + <em>m</em>).</p>
+<p data-lang="de">Die Tiefensuche gibt allem, was wir von einem Knoten erreichen können, dieselbe Nummer. Wir gehen die Knoten der Reihe nach durch; finden wir einen ohne Komponente, beginnt eine neue, und die Tiefensuche schreibt diese Nummer auf alles, was mit ihm verbunden ist. Das Array <code>comp</code> erscheint im Graphen als Farbe: dieselbe Farbe, dieselbe Komponente. Es dauert O(<em>n</em> + <em>m</em>).</p>
+
+<textarea id="text2" class="deneme">
+var comp = new Array(8)     // comp[v]: v'nin bileşeni, 0: henüz yok
+for(var i = 0; i &lt; n; i++)
+{
+  comp[i] = 0
+}
+var count = 0                // bileşen sayısı
+function dfs(u, c)           // s'den ulaşılabilen herkese c numarasını ver
+{
+  comp[u] = c
+  var p = adj[u]
+  while(p != null)           // ulaşılan her komşuya geç
+  {
+    if(comp[p.data] == 0)
+    {
+      dfs(p.data, c)
+    }
+    p = p.next
+  }
+}
+for(var s = 0; s &lt; n; s++)
+{
+  if(comp[s] == 0)           // henüz hiçbir bileşende olmayan köşe: yeni bileşen
+  {
+    count++
+    dfs(s, count)
+  }
+}
+print count
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var comp = new Array(8)     // comp[v]: the component of v, 0: none yet
+for(var i = 0; i < n; i++)
+{
+  comp[i] = 0
+}
+var count = 0                // the number of components
+function dfs(u, c)           // give the number c to everything reachable from s
+{
+  comp[u] = c
+  var p = adj[u]
+  while(p != null)           // go on to every neighbour reached
+  {
+    if(comp[p.data] == 0)
+    {
+      dfs(p.data, c)
+    }
+    p = p.next
+  }
+}
+for(var s = 0; s < n; s++)
+{
+  if(comp[s] == 0)           // a vertex in no component yet: a new component
+  {
+    count++
+    dfs(s, count)
+  }
+}
+print count
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var comp = new Array(8)     // comp[v]: die Komponente von v, 0: noch keine
+for(var i = 0; i < n; i++)
+{
+  comp[i] = 0
+}
+var count = 0                // die Anzahl der Komponenten
+function dfs(u, c)           // allem, was von s erreichbar ist, die Nummer c geben
+{
+  comp[u] = c
+  var p = adj[u]
+  while(p != null)           // zu jedem erreichten Nachbarn weitergehen
+  {
+    if(comp[p.data] == 0)
+    {
+      dfs(p.data, c)
+    }
+    p = p.next
+  }
+}
+for(var s = 0; s < n; s++)
+{
+  if(comp[s] == 0)           // ein Knoten in noch keiner Komponente: neue Komponente
+  {
+    count++
+    dfs(s, count)
+  }
+}
+print count
+</script>
+
+<p data-lang="tr">Bundan sonra "bu iki köşe bağlı mı?" sorusu tek karşılaştırmayla cevaplanır: numaraları aynı mı?</p>
+<p data-lang="en">From now on the question "are these two vertices connected?" is answered by one comparison: do they have the same number?</p>
+<p data-lang="de">Von nun an wird die Frage „sind diese beiden Knoten verbunden?“ mit einem einzigen Vergleich beantwortet: haben sie dieselbe Nummer?</p>
+
+<textarea id="text3" class="deneme">
+// aynı bileşendeler mi? Aralarında yol var mı?
+if(comp[0] == comp[2])
+{
+  print "0, 2: bağlı"
+}
+if(comp[0] == comp[6])
+{
+  print "0, 6: bağlı"
+}
+else
+{
+  print "0, 6: bağlı değil"
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+// are they in the same component? Is there a path between them?
+if(comp[0] == comp[2])
+{
+  print "0, 2: connected"
+}
+if(comp[0] == comp[6])
+{
+  print "0, 6: connected"
+}
+else
+{
+  print "0, 6: not connected"
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+// liegen sie in derselben Komponente? Gibt es einen Weg zwischen ihnen?
+if(comp[0] == comp[2])
+{
+  print "0, 2: verbunden"
+}
+if(comp[0] == comp[6])
+{
+  print "0, 6: verbunden"
+}
+else
+{
+  print "0, 6: nicht verbunden"
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

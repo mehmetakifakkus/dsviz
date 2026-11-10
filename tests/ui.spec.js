@@ -581,12 +581,12 @@ test.describe('learning aids', () => {
 	test('an array of numbers is a row with index markers; an array of nodes stays buckets', async ({ page }) => {
 		const problems = await openPage(page, 'arrayStackQueue.html');
 		await runBlock(page, 0);
-		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, bars: false, reads: [], heap: null, graph: null }]); // no heap formulas: no tree; s is no array to sort: no bars
+		expect((await state(page)).arrays).toEqual([{ name: 's', kind: 'row', cells: [10, 20, null, null, null], markers: { size: 2 }, bars: false, reads: [], forest: null, heap: null, graph: null }]); // no heap formulas: no tree; s is no array to sort: no bars
 		await page.locator('.dsv-player button[title="Geri adım"]').click(); // before pop() finished: 30 still there
 		await runBlock(page, 1);
 		const both = (await state(page)).arrays;
 		expect(both.map(a => a.name)).toEqual(['s', 'q']);
-		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, bars: false, reads: [], heap: null, graph: null });
+		expect(both[1]).toEqual({ name: 'q', kind: 'row', cells: [6, null, 3, 4, 5], markers: { rear: 1, front: 2 }, bars: false, reads: [], forest: null, heap: null, graph: null });
 
 		await runCode(page, 'push(1)\npush(2)\npush(3)\npush(4)\n'); // the sixth value does not fit
 		await expect(page.locator('#output')).toContainText('s[5]: dizinin 5 hücresi var');
@@ -777,6 +777,27 @@ test.describe('learning aids', () => {
 		await page.locator('.dsv-timeline').evaluate(el => { el.value = Math.round(el.max * 0.5); el.dispatchEvent(new Event('input')); });
 		expect((await heap()).length).toBeGreaterThan(1);
 		expect((await heap()).length).toBeLessThanOrEqual(8);
+		expect(problems).toEqual([]);
+	});
+
+	test('graphs: components coloured, in-degrees in the vertices, chosen edges thick, a union-find array drawn as a forest', async ({ page }) => {
+		const problems = await openPage(page, 'connectedComponents.html');
+		await runBlock(page, 1);
+		const graph = async name => (await state(page)).arrays.find(a => a.name === name).graph;
+		expect((await graph('adj')).comps).toEqual([1, 1, 1, 2, 2, 2, 3, 3]);   // the same number, the same colour
+
+		await openPage(page, 'topologicalSort.html');
+		await runBlock(page, 1);
+		expect((await graph('adj')).dist).toEqual(['0', '0', '0', '0', '0', '0']); // indeg: every in-degree has fallen to 0
+		expect((await graph('adj')).edges).toEqual(['2>3', '3>1', '4>0', '4>1', '5>0', '5>2']); // directed: arrows, not lines
+
+		await openPage(page, 'kruskal.html');
+		await runBlock(page, 2);
+		expect((await graph('adj')).chosen).toEqual(['0-2', '1-2', '1-3', '3-4', '3-5']); // the edges of the tree
+		expect((await state(page)).arrays.find(a => a.name === 'leader').forest).toEqual([4, 4, 4, 4, 5, 5]);
+
+		await runCode(page, 'var uf = new Array(3)\nuf[0] = 1\nuf[1] = 0\nuf[2] = 2\n'); // a cycle of parents is no forest
+		expect((await state(page)).arrays.find(a => a.name === 'uf').forest).toBeNull();
 		expect(problems).toEqual([]);
 	});
 

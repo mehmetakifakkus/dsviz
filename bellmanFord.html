@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bellman-Ford: negatif ağırlıklı en kısa yol | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Bellman-Ford: negatif ağırlıklı en kısa yol</h1>
+<h1 data-lang="en">Bellman-Ford: shortest paths with negative weights</h1>
+<h1 data-lang="de">Bellman-Ford: kürzeste Wege mit negativen Gewichten</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Dijkstra algoritması kenar ağırlıkları negatif olunca yanılabilir: bir köşeyi "kesinleşti" saydıktan sonra, negatif bir kenar üzerinden ona daha kısa bir yol çıkabilir. <em>Bellman-Ford algoritması</em> bu durumda da doğru çalışır. Beş köşeli yönlü bir graf kuralım; bazı kenarların ağırlığı negatif (ör. 2 → 3: -3).</p>
+<p data-lang="en">Dijkstra's algorithm can go wrong when edge weights are negative: after a vertex has been declared "final", a shorter way to it can turn up through a negative edge. <em>The Bellman-Ford algorithm</em> works correctly in this case too. We build a directed graph with five vertices; some edges have a negative weight (e.g. 2 → 3: -3).</p>
+<p data-lang="de">Dijkstras Algorithmus kann bei negativen Kantengewichten falsch liegen: nachdem ein Knoten für „endgültig“ erklärt wurde, kann über eine negative Kante ein kürzerer Weg zu ihm auftauchen. <em>Der Bellman-Ford-Algorithmus</em> arbeitet auch dann richtig. Wir bauen einen gerichteten Graphen mit fünf Knoten; manche Kanten haben ein negatives Gewicht (z. B. 2 → 3: -3).</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(5)      // komşuluk listeleri: yönlü, ağırlıklı graf
+var n = 5                 // köşe sayısı
+function addEdge(u, v, w) // u → v, ağırlık w (negatif olabilir)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w
+  adj[u] = e
+}
+addEdge(0, 1, 6)
+addEdge(0, 2, 7)
+addEdge(1, 3, 5)
+addEdge(2, 1, 8)
+addEdge(2, 3, -3)
+addEdge(3, 4, 2)
+addEdge(4, 1, -2)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(5)      // adjacency lists: a directed, weighted graph
+var n = 5                 // the number of vertices
+function addEdge(u, v, w) // u → v with weight w (may be negative)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w
+  adj[u] = e
+}
+addEdge(0, 1, 6)
+addEdge(0, 2, 7)
+addEdge(1, 3, 5)
+addEdge(2, 1, 8)
+addEdge(2, 3, -3)
+addEdge(3, 4, 2)
+addEdge(4, 1, -2)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(5)      // Adjazenzlisten: ein gerichteter, gewichteter Graph
+var n = 5                 // die Anzahl der Knoten
+function addEdge(u, v, w) // u → v mit Gewicht w (kann negativ sein)
+{
+  var e = new Node(v, adj[u])
+  e.weight = w
+  adj[u] = e
+}
+addEdge(0, 1, 6)
+addEdge(0, 2, 7)
+addEdge(1, 3, 5)
+addEdge(2, 1, 8)
+addEdge(2, 3, -3)
+addEdge(3, 4, 2)
+addEdge(4, 1, -2)
+</script>
+
+<p data-lang="tr">Fikir basit: <em>bütün kenarları</em> tekrar tekrar gevşetiriz. En kısa yol en çok <em>n</em> - 1 kenar içerdiğinden <em>n</em> - 1 tur yeter; bir turda hiçbir şey değişmezse erken durulur. Bu örnekte 4 → 1 (-2) kenarı 1'e ikinci turda daha kısa bir yol açar: 0 → 2 → 3 → 4 → 1, toplam 4, ilk bulunan 6'dan kısa. Dijkstra 1'i 6 ile kesinleştirirdi. Süre O(<em>n</em> · <em>m</em>). <em>n</em>-inci turda hâlâ bir şey değişiyorsa grafta ulaşılabilir bir <em>negatif döngü</em> vardır ve en kısa yol tanımsızdır.</p>
+<p data-lang="en">The idea is simple: we relax <em>all edges</em> again and again. A shortest path has at most <em>n</em> - 1 edges, so <em>n</em> - 1 rounds are enough; if nothing changes in a round we stop early. In this example the edge 4 → 1 (-2) opens a shorter way to 1: 0 → 2 → 3 → 4 → 1, total 4, shorter than the 6 found first. Dijkstra would have made 1 final with 6. It takes O(<em>n</em> · <em>m</em>). If something still changes in round <em>n</em>, the graph has a reachable <em>negative cycle</em> and shortest paths are undefined.</p>
+<p data-lang="de">Die Idee ist einfach: wir verbessern <em>alle Kanten</em> immer wieder. Ein kürzester Weg hat höchstens <em>n</em> - 1 Kanten, also genügen <em>n</em> - 1 Runden; ändert sich in einer Runde nichts, hören wir früh auf. In diesem Beispiel öffnet die Kante 4 → 1 (-2) einen kürzeren Weg nach 1: 0 → 2 → 3 → 4 → 1, insgesamt 4, kürzer als die zuerst gefundenen 6. Dijkstra hätte 1 mit 6 endgültig gemacht. Es dauert O(<em>n</em> · <em>m</em>). Ändert sich in Runde <em>n</em> noch etwas, hat der Graph einen erreichbaren <em>negativen Zyklus</em> und kürzeste Wege sind nicht definiert.</p>
+
+<textarea id="text2" class="deneme">
+var INF = 999                // "sonsuz"
+var dist = new Array(5)      // başlangıçtan uzaklıklar
+var parent = new Array(5)    // en kısa yolda önceki köşe
+for(var i = 0; i &lt; n; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var round = 1; round &lt; n; round++)   // en fazla n - 1 tur
+{
+  var changed = false        // bu turda bir şey değişti mi?
+  for(var u = 0; u &lt; n; u++)
+  {
+    if(dist[u] != INF)       // u'ya ulaşıldıysa kenarları gevşet
+    {
+      var p = adj[u]
+      while(p != null)
+      {
+        var d = dist[u] + p.weight
+        if(d &lt; dist[p.data]) // daha kısa bir yol bulundu
+        {
+          dist[p.data] = d
+          parent[p.data] = u
+          changed = true
+        }
+        p = p.next
+      }
+    }
+  }
+  if(!changed)
+  {
+    break                    // hiçbir şey değişmediyse bitti
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var INF = 999                // "infinity"
+var dist = new Array(5)      // the distances from the start
+var parent = new Array(5)    // the previous vertex on the shortest path
+for(var i = 0; i < n; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var round = 1; round < n; round++)   // at most n - 1 rounds
+{
+  var changed = false        // did anything change in this round?
+  for(var u = 0; u < n; u++)
+  {
+    if(dist[u] != INF)       // if u was reached, relax its edges
+    {
+      var p = adj[u]
+      while(p != null)
+      {
+        var d = dist[u] + p.weight
+        if(d < dist[p.data]) // a shorter way was found
+        {
+          dist[p.data] = d
+          parent[p.data] = u
+          changed = true
+        }
+        p = p.next
+      }
+    }
+  }
+  if(!changed)
+  {
+    break                    // if nothing changed, we are done
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var INF = 999                // „unendlich“
+var dist = new Array(5)      // die Abstände vom Start
+var parent = new Array(5)    // der vorherige Knoten auf dem kürzesten Weg
+for(var i = 0; i < n; i++)
+{
+  dist[i] = INF
+  parent[i] = -1
+}
+dist[0] = 0
+for(var round = 1; round < n; round++)   // höchstens n - 1 Runden
+{
+  var changed = false        // hat sich in dieser Runde etwas geändert?
+  for(var u = 0; u < n; u++)
+  {
+    if(dist[u] != INF)       // wurde u erreicht, seine Kanten verbessern
+    {
+      var p = adj[u]
+      while(p != null)
+      {
+        var d = dist[u] + p.weight
+        if(d < dist[p.data]) // ein kürzerer Weg wurde gefunden
+        {
+          dist[p.data] = d
+          parent[p.data] = u
+          changed = true
+        }
+        p = p.next
+      }
+    }
+  }
+  if(!changed)
+  {
+    break                    // hat sich nichts geändert, sind wir fertig
+  }
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>

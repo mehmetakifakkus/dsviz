@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Topolojik sıralama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Topolojik sıralama</h1>
+<h1 data-lang="en">Topological sort</h1>
+<h1 data-lang="de">Topologische Sortierung</h1>
+<p class="lead" data-i18n="lessonLead">Blokları sırayla çalıştırın. Bir bloğu çalıştırdığınızda üstündeki bloklar da kendiliğinden yeniden çalışır ve çizim temiz başlar. Animasyonu sağdaki düğmelerle adım adım ileri ve geri oynatabilirsiniz.</p>
+
+<p data-lang="tr">Bir işin başlayabilmesi için başka işlerin bitmesi gerekiyorsa (dersler ve önkoşulları, bir yazılımın derleme sırası, giyinme sırası) bu bir <em>yönlü graftır</em>: <code>u → v</code> "u, v'den önce yapılmalı" demektir. <em>Topolojik sıralama</em>, bütün kenarlar soldan sağa gidecek biçimde köşeleri sıralar; yalnızca <em>döngüsüz</em> yönlü graflarda (DAG) vardır. Altı köşeli bir örnek kuralım; oklar tek yönlüdür.</p>
+<p data-lang="en">If some work can only start when other work is finished (courses and their prerequisites, the build order of a program, the order of getting dressed), this is a <em>directed graph</em>: <code>u → v</code> means "u must be done before v". A <em>topological sort</em> lines the vertices up so that every edge goes from left to right; it exists only for directed graphs <em>without a cycle</em> (DAGs). We build an example with six vertices; the arrows are one-way.</p>
+<p data-lang="de">Wenn manche Arbeiten erst beginnen können, wenn andere fertig sind (Kurse und ihre Voraussetzungen, die Build-Reihenfolge eines Programms, die Reihenfolge beim Anziehen), ist das ein <em>gerichteter Graph</em>: <code>u → v</code> heißt „u muss vor v erledigt sein“. Eine <em>topologische Sortierung</em> ordnet die Knoten so, dass jede Kante von links nach rechts geht; sie gibt es nur für gerichtete Graphen <em>ohne Zyklus</em> (DAGs). Wir bauen ein Beispiel mit sechs Knoten; die Pfeile sind einseitig.</p>
+
+<textarea id="text1" class="deneme">
+var adj = new Array(6)      // komşuluk listeleri: yönlü graf
+var n = 6                 // köşe sayısı
+function addEdge(u, v)    // u → v: u, v'den önce gelmeli
+{
+  adj[u] = new Node(v, adj[u])
+}
+addEdge(5, 2)
+addEdge(5, 0)
+addEdge(4, 0)
+addEdge(4, 1)
+addEdge(2, 3)
+addEdge(3, 1)
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var adj = new Array(6)      // adjacency lists: a directed graph
+var n = 6                 // the number of vertices
+function addEdge(u, v)    // u → v: u must come before v
+{
+  adj[u] = new Node(v, adj[u])
+}
+addEdge(5, 2)
+addEdge(5, 0)
+addEdge(4, 0)
+addEdge(4, 1)
+addEdge(2, 3)
+addEdge(3, 1)
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var adj = new Array(6)      // Adjazenzlisten: ein gerichteter Graph
+var n = 6                 // die Anzahl der Knoten
+function addEdge(u, v)    // u → v: u muss vor v kommen
+{
+  adj[u] = new Node(v, adj[u])
+}
+addEdge(5, 2)
+addEdge(5, 0)
+addEdge(4, 0)
+addEdge(4, 1)
+addEdge(2, 3)
+addEdge(3, 1)
+</script>
+
+<p data-lang="tr"><em>Kahn algoritması</em> önkoşulu olmayan köşelerle başlar: bir köşenin <em>girdi derecesi</em> (kendisine gelen kenar sayısı) 0 ise hazırdır. Köşeler köşenin içinde girdi derecesiyle gösterilir. Hazır bir köşe sıralamaya eklenir, çıkan kenarları silinir (hedeflerin girdi derecesi 1 azalır) ve derecesi 0'a inen hedefler kuyruğa girer. Çıktıdaki sıra bir topolojik sıradır. Süre O(<em>n</em> + <em>m</em>).</p>
+<p data-lang="en"><em>Kahn's algorithm</em> starts with the vertices that have no prerequisite: a vertex is ready if its <em>in-degree</em> (the number of edges coming into it) is 0. The in-degrees are shown inside the vertices. A ready vertex is added to the order, its outgoing edges are removed (the in-degrees of its targets fall by 1) and the targets whose in-degree falls to 0 join the queue. The order in the output is a topological order. It takes O(<em>n</em> + <em>m</em>).</p>
+<p data-lang="de"><em>Kahns Algorithmus</em> beginnt mit den Knoten ohne Voraussetzung: ein Knoten ist bereit, wenn sein <em>Eingangsgrad</em> (die Zahl der in ihn hineinlaufenden Kanten) 0 ist. Die Eingangsgrade stehen in den Knoten. Ein bereiter Knoten kommt in die Reihenfolge, seine ausgehenden Kanten werden entfernt (die Eingangsgrade seiner Ziele sinken um 1), und Ziele, deren Eingangsgrad auf 0 sinkt, kommen in die Warteschlange. Die Reihenfolge der Ausgabe ist eine topologische Ordnung. Es dauert O(<em>n</em> + <em>m</em>).</p>
+
+<textarea id="text2" class="deneme">
+var indeg = new Array(6)    // her köşeye gelen kenar sayısı
+var q = new Array(6)        // girdi derecesi 0 olanların kuyruğu
+function topo()
+{
+  for(var i = 0; i &lt; n; i++)
+  {
+    indeg[i] = 0
+  }
+  for(var u = 0; u &lt; n; u++)     // her kenar hedefinin girdi derecesini artırır
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] + 1
+      p = p.next
+    }
+  }
+  var front = 0
+  var rear = 0
+  for(var i = 0; i &lt; n; i++)     // önkoşulu olmayanlar hazır
+  {
+    if(indeg[i] == 0)
+    {
+      q[rear] = i
+      rear++
+    }
+  }
+  while(front &lt; rear)
+  {
+    var u = q[front]             // sıradaki hazır köşe: sıralamaya ekle
+    front++
+    print u
+    var p = adj[u]               // çıkan kenarları sil: hedefin girdi derecesi azalır
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] - 1
+      if(indeg[p.data] == 0)
+      {
+        q[rear] = p.data         // artık önkoşulu kalmadı: hazır
+        rear++
+      }
+      p = p.next
+    }
+  }
+  return front                   // kaç köşe sıralandı
+}
+var done = topo()
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+var indeg = new Array(6)    // the number of edges coming into every vertex
+var q = new Array(6)        // the queue of the vertices with in-degree 0
+function topo()
+{
+  for(var i = 0; i < n; i++)
+  {
+    indeg[i] = 0
+  }
+  for(var u = 0; u < n; u++)     // every edge raises the in-degree of its target
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] + 1
+      p = p.next
+    }
+  }
+  var front = 0
+  var rear = 0
+  for(var i = 0; i < n; i++)     // those without prerequisites are ready
+  {
+    if(indeg[i] == 0)
+    {
+      q[rear] = i
+      rear++
+    }
+  }
+  while(front < rear)
+  {
+    var u = q[front]             // the next ready vertex: add it to the order
+    front++
+    print u
+    var p = adj[u]               // remove its outgoing edges: the targets' in-degrees fall
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] - 1
+      if(indeg[p.data] == 0)
+      {
+        q[rear] = p.data         // no prerequisite left: ready
+        rear++
+      }
+      p = p.next
+    }
+  }
+  return front                   // how many vertices were sorted
+}
+var done = topo()
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+var indeg = new Array(6)    // die Anzahl der Kanten, die in jeden Knoten hineinlaufen
+var q = new Array(6)        // die Warteschlange der Knoten mit Eingangsgrad 0
+function topo()
+{
+  for(var i = 0; i < n; i++)
+  {
+    indeg[i] = 0
+  }
+  for(var u = 0; u < n; u++)     // jede Kante erhöht den Eingangsgrad ihres Ziels
+  {
+    var p = adj[u]
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] + 1
+      p = p.next
+    }
+  }
+  var front = 0
+  var rear = 0
+  for(var i = 0; i < n; i++)     // die ohne Voraussetzung sind bereit
+  {
+    if(indeg[i] == 0)
+    {
+      q[rear] = i
+      rear++
+    }
+  }
+  while(front < rear)
+  {
+    var u = q[front]             // der nächste bereite Knoten: in die Reihenfolge aufnehmen
+    front++
+    print u
+    var p = adj[u]               // seine ausgehenden Kanten entfernen: die Eingangsgrade der Ziele sinken
+    while(p != null)
+    {
+      indeg[p.data] = indeg[p.data] - 1
+      if(indeg[p.data] == 0)
+      {
+        q[rear] = p.data         // keine Voraussetzung mehr: bereit
+        rear++
+      }
+      p = p.next
+    }
+  }
+  return front                   // wie viele Knoten sortiert wurden
+}
+var done = topo()
+</script>
+
+<p data-lang="tr">İkinci yol <em>DFS</em>'tir: bir köşeden ulaşılabilen her şey bittikten <em>sonra</em> o köşe, sıranın sonundan başlayarak yerleştirilir. Böylece her köşe, ondan çıkan köşelerin soluna düşer. Özyineleme çağrı yığınında görünür. Sonuç, <code>order</code> dizisinde.</p>
+<p data-lang="en">The second way is <em>DFS</em>: after everything reachable from a vertex is finished, the vertex is placed in the order, starting from the end. So every vertex ends up to the left of the vertices it points to. The recursion shows in the call stack. The result is in the array <code>order</code>.</p>
+<p data-lang="de">Der zweite Weg ist die <em>Tiefensuche</em>: wenn alles, was von einem Knoten erreichbar ist, fertig ist, wird der Knoten von hinten beginnend in die Reihenfolge gesetzt. So landet jeder Knoten links von den Knoten, auf die er zeigt. Die Rekursion erscheint im Aufrufstapel. Das Ergebnis steht im Array <code>order</code>.</p>
+
+<textarea id="text3" class="deneme">
+var visited = new Array(6)   // ziyaret edilenler
+var order = new Array(6)     // topolojik sıra: sondan başa doldurulur
+var pos = n                  // sıranın boş kalan sonu
+function dfs(u)
+{
+  visited[u] = true
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])
+    {
+      dfs(p.data)
+    }
+    p = p.next
+  }
+  pos--                      // u'dan çıkan her şey bitti: u şimdi sıranın sonuna girer
+  order[pos] = u
+}
+for(var s = 0; s &lt; n; s++)
+{
+  if(!visited[s])
+  {
+    dfs(s)
+  }
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="en">
+var visited = new Array(6)   // the visited vertices
+var order = new Array(6)     // the topological order: filled from the end
+var pos = n                  // the free end of the order
+function dfs(u)
+{
+  visited[u] = true
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])
+    {
+      dfs(p.data)
+    }
+    p = p.next
+  }
+  pos--                      // everything reachable from u is finished: u now goes in at the end of the order
+  order[pos] = u
+}
+for(var s = 0; s < n; s++)
+{
+  if(!visited[s])
+  {
+    dfs(s)
+  }
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text3" data-lang="de">
+var visited = new Array(6)   // die besuchten Knoten
+var order = new Array(6)     // die topologische Reihenfolge: von hinten gefüllt
+var pos = n                  // das freie Ende der Reihenfolge
+function dfs(u)
+{
+  visited[u] = true
+  var p = adj[u]
+  while(p != null)
+  {
+    if(!visited[p.data])
+    {
+      dfs(p.data)
+    }
+    p = p.next
+  }
+  pos--                      // alles, was von u erreichbar ist, ist fertig: u kommt jetzt am Ende in die Reihenfolge
+  order[pos] = u
+}
+for(var s = 0; s < n; s++)
+{
+  if(!visited[s])
+  {
+    dfs(s)
+  }
+}
+</script>
+
+<p data-lang="tr">Graf <em>döngü</em> içeriyorsa topolojik sıra yoktur: döngüdeki hiçbir köşenin girdi derecesi 0'a inmez. Kahn algoritması bunu bedavaya bulur: sıralanabilen köşe sayısı <em>n</em>'den azsa döngü vardır. <code>1 → 5</code> kenarını ekleyelim.</p>
+<p data-lang="en">If the graph has a <em>cycle</em>, there is no topological order: no vertex on the cycle ever reaches in-degree 0. Kahn's algorithm finds this for free: if fewer than <em>n</em> vertices could be sorted, there is a cycle. Let us add the edge <code>1 → 5</code>.</p>
+<p data-lang="de">Hat der Graph einen <em>Zyklus</em>, gibt es keine topologische Ordnung: kein Knoten auf dem Zyklus erreicht je den Eingangsgrad 0. Kahns Algorithmus findet das umsonst: konnten weniger als <em>n</em> Knoten sortiert werden, gibt es einen Zyklus. Fügen wir die Kante <code>1 → 5</code> hinzu.</p>
+
+<textarea id="text4" class="deneme">
+addEdge(1, 5)                // 1 → 5: artık 5 → 2 → 3 → 1 → 5 bir döngü
+done = topo()
+if(done &lt; n)                 // hepsi sıralanamadıysa döngü var
+{
+  print "döngü var: topolojik sıra yok"
+}
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="en">
+addEdge(1, 5)                // 1 → 5: now 5 → 2 → 3 → 1 → 5 is a cycle
+done = topo()
+if(done < n)                 // if not all could be sorted, there is a cycle
+{
+  print "there is a cycle: no topological order"
+}
+</script>
+<script type="text/plain" class="code-variant" data-for="text4" data-lang="de">
+addEdge(1, 5)                // 1 → 5: jetzt ist 5 → 2 → 3 → 1 → 5 ein Zyklus
+done = topo()
+if(done < n)                 // konnten nicht alle sortiert werden, gibt es einen Zyklus
+{
+  print "es gibt einen Zyklus: keine topologische Reihenfolge"
+}
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+</body>
+</html>
