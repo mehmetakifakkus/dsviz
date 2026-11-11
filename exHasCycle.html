@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: listede döngü var mı? | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: listede döngü var mı?</h1>
+<h1 data-lang="en">Exercise: does the list have a cycle?</h1>
+<h1 data-lang="de">Übung: hat die Liste einen Zyklus?</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>hasCycle(head)</code> fonksiyonunu yaz: bir düğümün <code>next</code>'i listenin önceki bir düğümüne dönüyorsa (döngü) <code>true</code>, liste <code>null</code> ile bitiyorsa <code>false</code> döndürsün. Döngülü listede kodun sonsuza kadar dönmemeli. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>hasCycle(head)</code>: it returns <code>true</code> if the <code>next</code> of some node leads back to an earlier node of the list (a cycle), and <code>false</code> if the list ends with <code>null</code>. With a cycle your code must not run forever. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>hasCycle(head)</code>: sie gibt <code>true</code> zurück, wenn das <code>next</code> eines Knotens zu einem früheren Knoten der Liste zurückführt (ein Zyklus), und <code>false</code>, wenn die Liste mit <code>null</code> endet. Bei einem Zyklus darf dein Code nicht ewig laufen. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // örnek liste
+x.next.next.next.next.next = x.next.next      // 5. düğüm 3. düğüme döner: döngü
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // a sample list
+x.next.next.next.next.next = x.next.next      // the 5th node leads back to the 3rd: a cycle
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var x = new Node(1, new Node(2, new Node(3, new Node(4, new Node(5)))))   // eine Beispielliste
+x.next.next.next.next.next = x.next.next      // der 5. Knoten führt zum 3. zurück: ein Zyklus
+</script>
+
+<textarea id="text2" class="deneme">
+function hasCycle(head)
+{
+  // buraya yaz
+  return false
+}
+print hasCycle(x)      // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function hasCycle(head)
+{
+  // write here
+  return false
+}
+print hasCycle(x)      // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function hasCycle(head)
+{
+  // hier schreiben
+  return false
+}
+print hasCycle(x)      // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Listeyi iki pointer ile dolaş: biri her turda bir, diğeri iki düğüm ilerlesin.</li><li>Döngü varsa hızlı olan yavaş olana yetişir, yani ikisi aynı düğümü gösterir: <code>true</code>.</li><li>Hızlı olan <code>null</code>'a ulaşırsa (ya da <code>next</code>'i <code>null</code> ise) döngü yoktur: <code>false</code>.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Walk the list with two pointers: one moves one node per round, the other two nodes.</li><li>If there is a cycle the fast one catches up with the slow one, so both point to the same node: <code>true</code>.</li><li>If the fast one reaches <code>null</code> (or its <code>next</code> is <code>null</code>) there is no cycle: <code>false</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Laufe mit zwei Zeigern durch die Liste: einer geht pro Runde einen Knoten weiter, der andere zwei.</li><li>Gibt es einen Zyklus, holt der schnelle den langsamen ein, beide zeigen auf denselben Knoten: <code>true</code>.</li><li>Erreicht der schnelle <code>null</code> (oder ist sein <code>next</code> <code>null</code>), gibt es keinen Zyklus: <code>false</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "var c1 = new Node(1, new Node(2, new Node(3, new Node(4))))\nc1.next.next.next.next = c1.next\nvar c2 = new Node(1, new Node(2))\nvar c3 = new Node(7)\nc3.next = c3\n",
+ "expect": [
+  [
+   "hasCycle(c1)",
+   true,
+   "Sonu ikinci düğüme dönen liste",
+   "A list whose end leads back to the second node",
+   "Eine Liste, deren Ende zum zweiten Knoten zurückführt"
+  ],
+  [
+   "hasCycle(c2)",
+   false,
+   "Döngüsüz liste",
+   "A list without a cycle",
+   "Eine Liste ohne Zyklus"
+  ],
+  [
+   "hasCycle(c3)",
+   true,
+   "Kendine dönen düğüm",
+   "A node that leads back to itself",
+   "Ein Knoten, der zu sich selbst zurückführt"
+  ],
+  [
+   "hasCycle(null)",
+   false,
+   "Boş liste",
+   "An empty list",
+   "Eine leere Liste"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function hasCycle(head)
+{
+  var slow = head
+  var fast = head
+  while(fast != null && fast.next != null)
+  {
+    slow = slow.next
+    fast = fast.next.next
+    if(slow == fast)
+    {
+      return true
+    }
+  }
+  return false
+}
+print hasCycle(x)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

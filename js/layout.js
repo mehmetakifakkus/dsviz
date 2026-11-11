@@ -115,7 +115,15 @@
 			['exDedupe.html', {tr: 'Yinelenenleri sil', en: 'Remove duplicates', de: 'Duplikate entfernen'}],
 			['exRowSum.html', {tr: 'Matriste satır toplamı', en: 'The sum of a matrix row', de: 'Die Summe einer Matrixzeile'}],
 			['exPascal.html', {tr: 'Pascal üçgeni', en: "Pascal's triangle", de: 'Pascalsches Dreieck'}],
-			['exGridPaths.html', {tr: 'Izgarada yol sayısı', en: 'Paths in a grid', de: 'Wege im Gitter'}]
+			['exGridPaths.html', {tr: 'Izgarada yol sayısı', en: 'Paths in a grid', de: 'Wege im Gitter'}],
+			['exArrayMax.html', {tr: 'Dizide en büyük değer', en: 'The largest value of an array', de: 'Der größte Wert eines Arrays'}],
+			['exBinarySearch.html', {tr: 'İkili arama', en: 'Binary search', de: 'Binäre Suche'}],
+			['exBubbleSort.html', {tr: 'Kabarcık sıralama', en: 'Bubble sort', de: 'Bubblesort'}],
+			['exTreeHeight.html', {tr: 'Ağacın yüksekliği', en: 'The height of a tree', de: 'Die Höhe eines Baums'}],
+			['exTreeSum.html', {tr: 'Ağaçtaki değerlerin toplamı', en: 'The sum of the values in a tree', de: 'Die Summe der Werte eines Baums'}],
+			['exStack.html', {tr: 'Bağlı listeyle yığın', en: 'A stack with a linked list', de: 'Ein Stapel mit einer verketteten Liste'}],
+			['exIsSorted.html', {tr: 'Liste sıralı mı?', en: 'Is the list sorted?', de: 'Ist die Liste sortiert?'}],
+			['exHasCycle.html', {tr: 'Listede döngü var mı?', en: 'Does the list have a cycle?', de: 'Hat die Liste einen Zyklus?'}]
 		]}
 	];
 

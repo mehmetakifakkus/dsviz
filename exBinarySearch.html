@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: ikili arama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: ikili arama</h1>
+<h1 data-lang="en">Exercise: binary search</h1>
+<h1 data-lang="de">Übung: binäre Suche</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>search(x)</code> fonksiyonunu yaz: sıralı <code>a</code> dizisinde <code>x</code> değerini <em>ikili arama</em> ile arasın ve bulunduğu indisi döndürsün; yoksa -1. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>search(x)</code>: it looks for the value <code>x</code> in the sorted array <code>a</code> with <em>binary search</em> and returns its index, or -1 if it is not there. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>search(x)</code>: sie sucht den Wert <code>x</code> im sortierten Array <code>a</code> mit <em>binärer Suche</em> und gibt seinen Index zurück, sonst -1. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(11)      // sıralı dizi
+var n = 11
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(11)      // a sorted array
+var n = 11
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(11)      // ein sortiertes Array
+var n = 11
+a[0] = 2
+a[1] = 5
+a[2] = 8
+a[3] = 12
+a[4] = 16
+a[5] = 23
+a[6] = 38
+a[7] = 45
+a[8] = 56
+a[9] = 67
+a[10] = 78
+</script>
+
+<textarea id="text2" class="deneme">
+function search(x)
+{
+  // buraya yaz
+  return -1
+}
+print search(56)       // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function search(x)
+{
+  // write here
+  return -1
+}
+print search(56)       // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function search(x)
+{
+  // hier schreiben
+  return -1
+}
+print search(56)       // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Aranacak aralığı iki sınırla tut: <code>low</code> ve <code>high</code>; başta 0 ve <code>n - 1</code>.</li><li>Ortadaki hücreye bak: <code>mid = taban((low + high) / 2)</code>. Eşitse bulundu; aranan küçükse <code>high = mid - 1</code>, büyükse <code>low = mid + 1</code>.</li><li>Aralık boşalınca (<code>low > high</code>) değer yoktur: -1 döndür.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Keep the range to search between two bounds: <code>low</code> and <code>high</code>, at first 0 and <code>n - 1</code>.</li><li>Look at the middle cell: <code>mid = taban((low + high) / 2)</code>. If it is equal you found it; if the value is smaller set <code>high = mid - 1</code>, if larger <code>low = mid + 1</code>.</li><li>When the range is empty (<code>low > high</code>) the value is not there: return -1.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Halte den Suchbereich zwischen zwei Grenzen: <code>low</code> und <code>high</code>, anfangs 0 und <code>n - 1</code>.</li><li>Sieh dir die mittlere Zelle an: <code>mid = taban((low + high) / 2)</code>. Ist sie gleich, hast du ihn gefunden; ist der Wert kleiner, setze <code>high = mid - 1</code>, ist er größer, <code>low = mid + 1</code>.</li><li>Ist der Bereich leer (<code>low > high</code>), ist der Wert nicht da: gib -1 zurück.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "",
+ "expect": [
+  [
+   "search(56)",
+   8,
+   "56 aranınca",
+   "Searching for 56",
+   "Suche nach 56"
+  ],
+  [
+   "search(2)",
+   0,
+   "İlk değer",
+   "The first value",
+   "Der erste Wert"
+  ],
+  [
+   "search(78)",
+   10,
+   "Son değer",
+   "The last value",
+   "Der letzte Wert"
+  ],
+  [
+   "search(7)",
+   -1,
+   "Olmayan değer",
+   "A value that is not there",
+   "Ein Wert, der nicht da ist"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function search(x)
+{
+  var low = 0
+  var high = n - 1
+  while(low <= high)
+  {
+    var mid = taban((low + high) / 2)
+    if(a[mid] == x)
+    {
+      return mid
+    }
+    else if(a[mid] < x)
+    {
+      low = mid + 1
+    }
+    else
+    {
+      high = mid - 1
+    }
+  }
+  return -1
+}
+print search(56)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

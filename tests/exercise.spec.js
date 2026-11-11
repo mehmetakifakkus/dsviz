@@ -13,8 +13,9 @@ const progress = page => page.evaluate(() => JSON.parse(localStorage.getItem('ds
 const check = page => page.locator('.ex-check').click();
 const planLink = (plan, file, i) => '/' + file + '#plan=' + Buffer.from(JSON.stringify(plan)).toString('base64url') + '&i=' + i;
 
-test('there are eight exercises and the menu lists them', () => {
-	expect(FILES).toEqual(['exAppend.html', 'exDedupe.html', 'exGridPaths.html', 'exLength.html', 'exMiddle.html', 'exPascal.html', 'exReverse.html', 'exRowSum.html']);
+test('there are sixteen exercises and the menu lists them', () => {
+	expect(FILES).toEqual(['exAppend.html', 'exArrayMax.html', 'exBinarySearch.html', 'exBubbleSort.html', 'exDedupe.html', 'exGridPaths.html', 'exHasCycle.html', 'exIsSorted.html',
+		'exLength.html', 'exMiddle.html', 'exPascal.html', 'exReverse.html', 'exRowSum.html', 'exStack.html', 'exTreeHeight.html', 'exTreeSum.html']);
 });
 
 for (const file of FILES) {
@@ -192,20 +193,20 @@ test('the check leaves the student\'s own animation drawn', async ({ page }) => 
 	expect(problems).toEqual([]);
 });
 
-for (const lang of ['turkce', 'cpp', 'java']) {
-	test(`exReverse is solved in ${lang} code too`, async ({ page }) => {
-		const problems = await openPage(page, 'exReverse.html', { codeLang: lang });
-		const w = solutionOf('exReverse.html');
-		const shown = await page.evaluate(([code, id]) => window.dsvCode.langs[id].to([code])[0], [w, lang]);
-		await setStudent(page, shown);
-		await check(page);
-		await expect(page.locator('.ex-result.ok')).toBeVisible();
-		await page.locator('.ex-solution-btn').click();
-		const text = await page.locator('.ex-solution pre').textContent();
-		if (lang !== 'turkce') expect(text).not.toMatch(/\bvar\b/);
-		expect(problems).toEqual([]);
-	});
-}
+for (const lang of ['turkce', 'cpp', 'java'])
+	for (const file of FILES)
+		test(`${file} is solved in ${lang} code too`, async ({ page }) => {
+			const problems = await openPage(page, file, { codeLang: lang });
+			const w = solutionOf(file);
+			const shown = await page.evaluate(([code, id]) => window.dsvCode.langs[id].to([code])[0], [w, lang]);
+			await setStudent(page, shown);
+			await check(page);
+			await expect(page.locator('.ex-result.ok')).toBeVisible();
+			await page.locator('.ex-solution-btn').click();
+			const text = await page.locator('.ex-solution pre').textContent();
+			if (lang !== 'turkce') expect(text).not.toMatch(/\bvar\b/);
+			expect(problems).toEqual([]);
+		});
 
 test('in a lesson plan an exercise counts when it is solved, not when it is run', async ({ page }) => {
 	const plan = { v: 1, t: 'Deneme', d: '', i: [['exReverse.html'], ['stack.html']], c: 'dugum', m: 0 };

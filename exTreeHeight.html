@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: ağacın yüksekliği | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: ağacın yüksekliği</h1>
+<h1 data-lang="en">Exercise: the height of a tree</h1>
+<h1 data-lang="de">Übung: die Höhe eines Baums</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>height(node)</code> fonksiyonunu yaz: <code>node</code> kökünden başlayan ağacın yüksekliğini (en uzun yoldaki düğüm sayısını) döndürsün. Boş ağacın yüksekliği 0, tek düğümün 1. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>height(node)</code>: it returns the height of the tree that starts at <code>node</code> (the number of nodes on the longest path). An empty tree has height 0, a single node 1. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>height(node)</code>: sie gibt die Höhe des Baums ab <code>node</code> zurück (die Anzahl der Knoten auf dem längsten Pfad). Ein leerer Baum hat die Höhe 0, ein einzelner Knoten 1. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // örnek ağaç
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // a sample tree
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // ein Beispielbaum
+</script>
+
+<textarea id="text2" class="deneme">
+function height(node)
+{
+  // buraya yaz
+  return 0
+}
+print height(root)     // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function height(node)
+{
+  // write here
+  return 0
+}
+print height(root)     // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function height(node)
+{
+  // hier schreiben
+  return 0
+}
+print height(root)     // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Özyineleme kullan: bir ağacın yüksekliği, alt ağaçlarının yüksekliklerinden birine bağlıdır.</li><li>Boş ağaç (<code>node == null</code>) için 0 döndür; bu özyinelemenin durma koşulu.</li><li>Sol ve sağ alt ağacın yüksekliğini hesapla, büyüğünü al ve 1 ekle.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Use recursion: the height of a tree depends on the heights of its subtrees.</li><li>For an empty tree (<code>node == null</code>) return 0; that is where the recursion stops.</li><li>Compute the height of the left and the right subtree, take the larger one and add 1.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Benutze Rekursion: die Höhe eines Baums hängt von den Höhen seiner Teilbäume ab.</li><li>Für einen leeren Baum (<code>node == null</code>) gib 0 zurück; dort endet die Rekursion.</li><li>Berechne die Höhe des linken und des rechten Teilbaums, nimm die größere und addiere 1.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "var t1 = new Node(1)\nvar t2 = new Node(1)\nt2.left = new Node(2)\nt2.left.left = new Node(3)\n",
+ "expect": [
+  [
+   "height(root)",
+   4,
+   "Örnek ağaç",
+   "The sample tree",
+   "Der Beispielbaum"
+  ],
+  [
+   "height(null)",
+   0,
+   "Boş ağaç",
+   "An empty tree",
+   "Ein leerer Baum"
+  ],
+  [
+   "height(t1)",
+   1,
+   "Tek düğüm",
+   "A single node",
+   "Ein einzelner Knoten"
+  ],
+  [
+   "height(t2)",
+   3,
+   "Yalnızca sola uzanan ağaç",
+   "A tree that only goes left",
+   "Ein Baum, der nur nach links geht"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function height(node)
+{
+  if(node == null)
+  {
+    return 0
+  }
+  var l = height(node.left)
+  var r = height(node.right)
+  if(l > r)
+  {
+    return l + 1
+  }
+  return r + 1
+}
+print height(root)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

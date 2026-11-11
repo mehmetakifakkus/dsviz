@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: dizide en büyük değer | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: dizide en büyük değer</h1>
+<h1 data-lang="en">Exercise: the largest value of an array</h1>
+<h1 data-lang="de">Übung: der größte Wert eines Arrays</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>findMax()</code> fonksiyonunu yaz: <code>a</code> dizisinin <code>n</code> hücresindeki en büyük değeri döndürsün. Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>findMax()</code>: it returns the largest value among the <code>n</code> cells of the array <code>a</code>. Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>findMax()</code>: sie gibt den größten Wert der <code>n</code> Zellen des Arrays <code>a</code> zurück. Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // örnek dizi
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // a sample array
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // ein Beispiel-Array
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<textarea id="text2" class="deneme">
+function findMax()
+{
+  var m = a[0]
+  // buraya yaz
+  return m
+}
+print findMax()        // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function findMax()
+{
+  var m = a[0]
+  // write here
+  return m
+}
+print findMax()        // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function findMax()
+{
+  var m = a[0]
+  // hier schreiben
+  return m
+}
+print findMax()        // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Şimdiye kadarki en büyük değeri bir değişkende tut (ilk hücreyle başla).</li><li>Dizinin geri kalanını dolaş; daha büyük bir değer görünce değişkeni güncelle.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Keep the largest value so far in a variable (start with the first cell).</li><li>Walk over the rest of the array; when you see a larger value, update the variable.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Halte den bisher größten Wert in einer Variablen (beginne mit der ersten Zelle).</li><li>Laufe über den Rest des Arrays; siehst du einen größeren Wert, aktualisiere die Variable.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function load1()\n{\n  a[0] = 1\n  a[1] = 2\n  a[2] = 3\n  a[3] = 4\n  a[4] = 5\n  a[5] = 6\n  a[6] = 7\n  a[7] = 9\n}\nfunction load2()\n{\n  a[0] = 9\n  a[1] = 1\n  a[2] = 2\n  a[3] = 3\n  a[4] = 4\n  a[5] = 5\n  a[6] = 6\n  a[7] = 7\n}\n",
+ "expect": [
+  [
+   "findMax()",
+   41,
+   "Örnek dizi",
+   "The sample array",
+   "Das Beispiel-Array"
+  ],
+  [
+   "(load1(), findMax())",
+   9,
+   "En büyük değer sonda",
+   "The largest value at the end",
+   "Der größte Wert am Ende"
+  ],
+  [
+   "(load2(), findMax())",
+   9,
+   "En büyük değer başta",
+   "The largest value at the start",
+   "Der größte Wert am Anfang"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function findMax()
+{
+  var m = a[0]
+  for(var i = 1; i < n; i++)
+  {
+    if(a[i] > m)
+    {
+      m = a[i]
+    }
+  }
+  return m
+}
+print findMax()
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

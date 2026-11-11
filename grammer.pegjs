@@ -298,7 +298,7 @@ node_value
 /////////////////////////       Object properties        ////////////////
   
 left_right_object_poperty   												// pointer hareketi icin p1 = p1.next
- = propL: object_poperty _ "=" _ propR: object_poperty _ nl{
+ = propL: object_poperty _ "=" _ propR: object_poperty !(_ [-+*/%]) _ nl{   // p1 = p1.next, but not p = p.data + 1
  	return {'type': 'object property left-right', '#evaluation': 0, 'lhs': propL.variable, 'propertyLeft': propL.property, 'rhs': propR.variable, 'propertyRight': propR.property, 'lineNumber': location().start.line}
   } 
 
@@ -308,7 +308,7 @@ left_object_poperty												// bağ kurmak icin x.next = q;  x.next = Node(11
   } 
 
 right_object_poperty   												// pointer hareketi icin p1 = p1.next
- = left:name _ "=" _ prop:object_poperty _ nl{
+ = left:name _ "=" _ prop:object_poperty !(_ [-+*/%]) _ nl{   // p1 = p1.next, but not s = p.data + 1
  	return {'type': 'object property right', '#evaluation': 0, 'lhs': left, 'property': prop.property, 'rhs': prop.variable, 'lineNumber': location().start.line}
   }  
 
@@ -387,7 +387,7 @@ comparison
 
 condition_operand
  = "(" _ c:or_condition _ ")" !(_ ('+' / '-' / '*' / '/' / '%')) { return '(' + c + ')'; }
- / o:object_poperty { return o.text; }
+ / o:object_poperty !(_ [-+*/%]) { return o.text; }   // node.data + 1 is an expression, not a lone field
  / e:expression_statement { return e.text; }
 
 logical_and
