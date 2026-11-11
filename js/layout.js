@@ -143,7 +143,7 @@
 	function exerciseProgress(){
 		try {
 			var all = JSON.parse(localStorage.getItem('dsv-exercises') || '{}');
-			return all && typeof all === 'object' ? all : {};
+			return all && typeof all === 'object' && !Array.isArray(all) ? all : {};
 		} catch(e) { return {}; }
 	}
 	window.dsvExerciseProgress = exerciseProgress;

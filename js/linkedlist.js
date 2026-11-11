@@ -3102,6 +3102,10 @@ function runBlock(k){
 function quietly(work){
 	var add = player.add, play = player.play, editor = window.activeEditor;
 	var output = document.getElementById('output'), text = output ? output.textContent : '';
+	// what running code changes in the engine besides the program itself: put back afterwards, so hidden code
+	// does not change how the student's own animation is drawn (drawing modes, index markers, open calls)
+	var kept = {doubly: doublyRequested, tree: treeRequested, heap: heapRequested, uses: JSON.stringify(indexUses),
+	            cols: JSON.stringify(gridColUses), open: unfinishedCalls.slice(), frames: frames.slice()};
 	player.add = function(){};
 	player.play = function(){};
 	window.activeEditor = null;
@@ -3110,6 +3114,14 @@ function quietly(work){
 		player.add = add;
 		player.play = play;
 		window.activeEditor = editor;
+		doublyRequested = kept.doubly;
+		treeRequested = kept.tree;
+		heapRequested = kept.heap;
+		indexUses = JSON.parse(kept.uses);
+		gridColUses = JSON.parse(kept.cols);
+		unfinishedCalls = kept.open;
+		frames = kept.frames;
+		clearErrorLines();   // a hidden run that failed inside the student's function must not mark the student's line
 		if(output) output.textContent = text;
 	}
 }

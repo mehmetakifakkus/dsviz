@@ -123,6 +123,7 @@
 		exSolution: {tr: 'Çözümü göster', en: 'Show the solution', de: 'Lösung zeigen'},
 		exSolutionTitle: {tr: 'Örnek çözüm', en: 'Example solution', de: 'Beispiellösung'},
 		exDone: {tr: 'Yapıldı ✓', en: 'Done ✓', de: 'Geschafft ✓'},
+		exAttemptOne: {tr: '1 deneme', en: '1 attempt', de: '1 Versuch'},
 		exAttempts: {tr: '{n} deneme', en: '{n} attempts', de: '{n} Versuche'},
 		exRunError: {tr: 'Kodunda bir hata var; önce onu düzelt (Çıktı panelinde yazıyor).', en: 'There is an error in your code; fix it first (it is in the Output panel).', de: 'In deinem Code ist ein Fehler; behebe ihn zuerst (er steht im Ausgabe-Bereich).'},
 		exTestError: {tr: 'Kontrol çalışırken kodun bir hata verdi: {error}', en: 'Your code failed while it was checked: {error}', de: 'Dein Code ist bei der Prüfung fehlgeschlagen: {error}'},
