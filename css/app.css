@@ -525,3 +525,5 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .ex-solution pre { margin: 8px 0 0; padding: 10px 12px; overflow: auto; border-radius: 9px; background: var(--code-bg); border: 1px solid var(--border); font-size: 13px; }
 .ex-hints, .ex-solution-source { display: none; }
 .ex-mark { color: #16a34a; font-weight: 700; margin-left: 4px; }
+.ex-hint-note { align-self: center; color: var(--muted); font-size: 13px; }
+.ex-hint-note[hidden] { display: none; }

@@ -1193,4 +1193,13 @@ test.describe('quiet runs', () => {
 		expect(right).toEqual({ ok: true, error: '' });
 		expect(problems).toEqual([]);
 	});
+	test('a quiet run leaves the drawing mode and the index markers of the student\'s program alone', async ({ page }) => {
+		const problems = await openPage(page, 'index.html');
+		await page.evaluate(() => window.dsvRunQuiet('var d = new Node(1)\nvar e = new Node(2)\nd.prev = e\nvar t = new Array(3)\nvar k = 1\nt[k] = 5\n'));
+		await page.evaluate(() => { window.activeEditor = null; window.parse('var x = new Node(1)\n'); });
+		await skipToEnd(page);
+		expect((await state(page)).doubly).toBe(false);                      // the hidden code used .prev: it must not turn this program doubly linked
+		expect((await state(page)).arrays).toEqual([]);                      // nor draw its own arrays
+		expect(problems).toEqual([]);
+	});
 });

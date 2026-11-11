@@ -87,6 +87,7 @@ test('a student function that fails only in the hidden test is a failed attempt 
 	await check(page);
 	await expect(page.locator('.ex-result.bad')).toBeVisible();
 	expect((await progress(page))['exMiddle.html'].attempts).toBe(1);
+	await expect(page.locator('.dsv-error-line')).toHaveCount(0);       // the hidden test's failure does not mark the student's line
 	expect(problems).toEqual([]);
 });
 
@@ -126,6 +127,42 @@ test('a misnamed function is explained without a line number of the hidden test'
 	const text = await page.locator('.ex-result').textContent();
 	expect(text).toContain('"middle" tanımlı değil');
 	expect(text).not.toMatch(/Satır \d+: "middle"/);
+	expect(problems).toEqual([]);
+});
+
+test('Pascal and grid paths cannot be passed by writing only the checked cells', async ({ page }) => {
+	let problems = await openPage(page, 'exGridPaths.html');
+	await setStudent(page, 'dp[2][3] = 10\ndp[4][4] = 70\ndp[1][1] = 2\n');
+	await check(page);
+	await expect(page.locator('.ex-result.bad')).toBeVisible();
+	expect(problems).toEqual([]);
+	problems = await openPage(page, 'exPascal.html');
+	await setStudent(page, 'p[5][0] = 1\np[5][1] = 5\np[5][2] = 10\np[5][3] = 10\np[5][4] = 5\np[5][5] = 1\np[2][1] = 2\np[3][3] = 1\n');
+	await check(page);
+	await expect(page.locator('.ex-result.bad')).toBeVisible();
+	expect(problems).toEqual([]);
+});
+
+test('Pascal: filling the cells beyond the triangle is wrong too', async ({ page }) => {
+	const problems = await openPage(page, 'exPascal.html');
+	await setStudent(page, solutionOf('exPascal.html') + 'p[0][5] = 0\n');
+	await check(page);
+	await expect(page.locator('.ex-result.bad')).toBeVisible();
+	expect(problems).toEqual([]);
+});
+
+test('small things: "1 deneme", the locked-hint reason is written next to the button, the menu mark is live, walk of a number', async ({ page }) => {
+	const problems = await openPage(page, 'exReverse.html');
+	await expect(page.locator('.ex-hint-note')).toHaveText('Bir sonraki ipucu bir denemeden sonra açılır.');
+	await setStudent(page, 'function reverse(head)\n{\n  return 5\n}\n');
+	await check(page);
+	await expect(page.locator('.ex-attempts')).toHaveText('1 deneme');
+	await expect(page.locator('.ex-result')).toContainText('senin sonucun "5"');   // not an empty text
+	await expect(page.locator('.ex-hint-note')).toBeHidden();
+	await expect(page.locator('.drawer a[href="exReverse.html"] .ex-mark')).toHaveCount(0);
+	await setStudent(page, solutionOf('exReverse.html'));
+	await check(page);
+	await expect(page.locator('.drawer a[href="exReverse.html"] .ex-mark')).toHaveCount(1);   // without a reload
 	expect(problems).toEqual([]);
 });
 

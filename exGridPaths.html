@@ -57,25 +57,47 @@ for(var i = 0; i < 5; i++)
  "test": "",
  "expect": [
   [
-   "dp[2][3]",
-   10,
-   "dp[2][3]",
-   "dp[2][3]",
-   "dp[2][3]"
-  ],
-  [
-   "dp[4][4]",
-   70,
-   "sağ alt hücre",
-   "the bottom right cell",
-   "die Zelle unten rechts"
-  ],
-  [
-   "dp[1][1]",
-   2,
-   "dp[1][1]",
-   "dp[1][1]",
-   "dp[1][1]"
+   "Array.from(dp).map(function(r){ return Array.from(r); })",
+   [
+    [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    [
+     1,
+     3,
+     6,
+     10,
+     15
+    ],
+    [
+     1,
+     4,
+     10,
+     20,
+     35
+    ],
+    [
+     1,
+     5,
+     15,
+     35,
+     70
+    ]
+   ],
+   "Tablonun tamamı",
+   "The whole table",
+   "Die ganze Tabelle"
   ]
  ]
 }

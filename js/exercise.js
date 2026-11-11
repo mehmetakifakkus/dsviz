@@ -61,7 +61,8 @@
 		var actions = mk('div', 'ex-actions');
 		var hintBtn = mk('button', 'ex-hint-btn'), solutionBtn = mk('button', 'ex-solution-btn', t('exSolution'));
 		hintBtn.type = solutionBtn.type = 'button';
-		actions.appendChild(hintBtn); actions.appendChild(solutionBtn);
+		var hintNote = mk('span', 'ex-hint-note', t('exHintLocked'));
+		actions.appendChild(hintBtn); actions.appendChild(hintNote); actions.appendChild(solutionBtn);
 		var hintList = mk('ol', 'ex-hint-list');
 		var solution = mk('details', 'ex-solution');
 		solution.hidden = true;
@@ -79,12 +80,12 @@
 		function refresh(){
 			var rec = mine();
 			status.textContent = rec.done ? t('exDone') : '';
-			attemptsText.textContent = rec.attempts ? t('exAttempts', {n: rec.attempts}) : '';
+			attemptsText.textContent = rec.attempts ? (rec.attempts === 1 ? t('exAttemptOne') : t('exAttempts', {n: rec.attempts})) : '';
 			var unlocked = Math.min(hints.length, rec.done ? hints.length : rec.attempts);
 			hintBtn.hidden = hints.length === 0;
 			hintBtn.textContent = t('exHint', {i: Math.min(shown + 1, hints.length), n: hints.length});
 			hintBtn.disabled = shown >= unlocked;
-			hintBtn.title = shown >= unlocked && shown < hints.length ? t('exHintLocked') : '';
+			hintNote.hidden = !(hintBtn.disabled && shown < hints.length);   // say why the button waits (a tooltip does not reach touch or screen readers)
 			solutionBtn.hidden = !(rec.attempts >= 2 || rec.done) || !solutionText();
 		}
 
@@ -110,6 +111,7 @@
 		});
 
 		function walk(h, field){
+			if(h !== null && h !== undefined && typeof h !== 'object') return String(h);   // a number, a string, true...: not a list, say what it is
 			var out = [];
 			for(var n = h; n && out.length < 50; n = n[field || 'next']) out.push(n.data);
 			return out.join('>');
@@ -152,6 +154,12 @@
 				rec.done = true;
 				save(rec);
 				show(true, t('exOk'));
+				var link = document.querySelector('.drawer a[href="' + file + '"]');          // the menu shows it now, not at the next load
+				if(link && !link.querySelector('.ex-mark')){
+					var mark = mk('span', 'ex-mark', ' ✓');
+					mark.title = t('exDone');
+					link.appendChild(mark);
+				}
 				if(window.dsvPlanDone) window.dsvPlanDone();
 			}
 			else {
