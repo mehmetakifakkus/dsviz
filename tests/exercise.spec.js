@@ -226,3 +226,73 @@ test('in a lesson plan an exercise counts when it is solved, not when it is run'
 	expect(await page.evaluate(() => localStorage.getItem('dsv-plan-progress'))).toContain('exReverse.html');
 	expect(problems).toEqual([]);
 });
+
+test.describe('comparison drawing', () => {
+	const draw = (page, args) => page.evaluate(a => {
+		const el = window.dsvCompare.draw(...a);
+		if (!el) return null;
+		const side = s => {
+			const box = el.querySelector(`.ex-cmp-side[data-side="${s}"]`);
+			return {
+				items: box.querySelectorAll('.ex-cmp-item').length,
+				diff: box.querySelectorAll('.ex-cmp-item.diff').length,
+				extra: box.querySelectorAll('.ex-cmp-item.extra').length,
+				missing: box.querySelectorAll('.ex-cmp-item.missing').length,
+				values: [...box.querySelectorAll('.ex-cmp-value')].map(v => v.textContent),
+				empty: box.querySelectorAll('.ex-cmp-empty').length
+			};
+		};
+		return { expected: side('expected'), actual: side('actual') };
+	}, args);
+
+	test('the shape of an expectation comes from the expression and the expected value', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		expect(await page.evaluate(() => [
+			window.dsvCompare.shape('walk(reverse(build(4)))', '4>3>2>1'),
+			window.dsvCompare.shape('back(t)', '1'),
+			window.dsvCompare.shape('Array.from(a)', [1, 2]),
+			window.dsvCompare.shape('Array.from(p).map(function(r){ return Array.from(r); })', [[1], [2]]),
+			window.dsvCompare.shape('search(7)', -1)
+		])).toEqual(['list', 'list', 'array', 'grid', 'value']);
+		expect(problems).toEqual([]);
+	});
+
+	test('lists: different, missing and extra nodes are marked; an empty list is "empty"', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		let d = await draw(page, ['list', '4>3>2>1', '1>2>3>4', false]);
+		expect(d.expected).toMatchObject({ items: 4, diff: 4 });
+		expect(d.actual).toMatchObject({ items: 4, diff: 4 });
+		d = await draw(page, ['list', '1>2>3', '1>2', false]);
+		expect(d.expected).toMatchObject({ items: 3, missing: 1, diff: 0 });
+		expect(d.actual).toMatchObject({ missing: 1 });
+		d = await draw(page, ['list', '1>2', '1>2>3', false]);
+		expect(d.actual).toMatchObject({ items: 3, extra: 1, diff: 0 });
+		d = await draw(page, ['list', '', '1', false]);
+		expect(d.expected).toMatchObject({ items: 0, empty: 1 });
+		expect(d.actual).toMatchObject({ items: 1, extra: 1 });
+		d = await draw(page, ['list', '4>3>2>1', 5, true]);                       // not a list: one value per side
+		expect(d.expected.values).toEqual(['"4>3>2>1"']);
+		expect(d.actual.values).toEqual(['5']);
+		expect(problems).toEqual([]);
+	});
+
+	test('grids, arrays, values and the limits', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		let d = await draw(page, ['grid', [[1, null], [1, 1]], [[1, 0], [1, 1]], false]);
+		expect(d.expected).toMatchObject({ items: 4, diff: 1 });
+		expect(d.actual).toMatchObject({ items: 4, diff: 1 });
+		d = await draw(page, ['grid', [[1], [2]], [[1]], false]);
+		expect(d.expected).toMatchObject({ missing: 1 });
+		d = await draw(page, ['array', [3, 7, 12], [7, 3, 12], false]);
+		expect(d.expected).toMatchObject({ items: 3, diff: 2 });
+		d = await draw(page, ['array', [1, 2], 7, false]);                         // an array was expected, a number came
+		expect(d.actual.values).toEqual(['7']);
+		d = await draw(page, ['value', 9, 8, false]);
+		expect(d.expected.values).toEqual(['9']);
+		expect(d.actual.values).toEqual(['8']);
+		expect(await draw(page, ['list', '1', undefined, false])).toBeNull();      // no value: nothing to draw
+		expect(await draw(page, ['list', Array.from({ length: 51 }, (_, i) => i).join('>'), '1', false])).toBeNull();
+		expect(await draw(page, ['grid', Array.from({ length: 13 }, () => [1]), [[1]], false])).toBeNull();
+		expect(problems).toEqual([]);
+	});
+});

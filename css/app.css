@@ -527,3 +527,22 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .ex-mark { color: #16a34a; font-weight: 700; margin-left: 4px; }
 .ex-hint-note { align-self: center; color: var(--muted); font-size: 13px; }
 .ex-hint-note[hidden] { display: none; }
+
+/* exercises: expected next to the student's result (js/exercise-compare.js) */
+.ex-compare { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 8px 0 4px; max-width: 100%; }
+.ex-cmp-side { min-width: 0; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+.ex-cmp-caption { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.ex-cmp-row { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.ex-cmp-grid { display: inline-flex; flex-direction: column; gap: 3px; }
+.ex-cmp-item, .ex-cmp-gap, .ex-cmp-value {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 26px; padding: 0 6px;
+  border: 2px solid var(--viz-stroke); border-radius: 4px; background: var(--viz-node); color: var(--viz-text);
+  font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; box-sizing: border-box;
+}
+.ex-cmp-gap { border-color: transparent; background: transparent; }
+.ex-cmp-item.diff, .ex-cmp-value.diff { border-color: var(--viz-changed); box-shadow: 0 0 0 2px color-mix(in srgb, var(--viz-changed) 35%, transparent); }
+.ex-cmp-item.extra { border-color: var(--viz-pointer); background: color-mix(in srgb, var(--viz-pointer) 14%, var(--viz-node)); }
+.ex-cmp-item.missing { border-style: dashed; border-color: var(--viz-pointer); }
+.ex-cmp-arrow { color: var(--muted); font-size: 13px; }
+.ex-cmp-empty { color: var(--muted); font-style: italic; font-size: 13px; }
+@media (max-width: 600px) { .ex-compare { flex-direction: column; } }
