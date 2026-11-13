@@ -208,9 +208,7 @@
 		}
 		function toClass(h){
 			if(!member || !h) return;
-			var progress = {};
-			progress[file] = mine();
-			C.send(file, h, progress).then(classResult);
+			C.send(file, h).then(classResult);   // the class counts the checks made since joining (not this browser's earlier work)
 		}
 		if(member && (function(){ try { return (JSON.parse(localStorage.getItem('dsv-class-queue') || '[]') || []).length > 0; } catch(e) { return false; } })())
 			C.flush().then(classResult);   // what could not be sent last time

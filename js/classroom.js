@@ -125,6 +125,14 @@
 				return withToken(holder, function(tok){ return http('PATCH', base() + '/' + path + '?' + mask + '&currentDocument.exists=true', {fields: toFields(data)}, tok); });
 			},
 			remove: function(holder, path){ return withToken(holder, function(tok){ return http('DELETE', base() + '/' + path, undefined, tok); }); },
+			// many deletes in a few requests (a commit holds up to 500 writes)
+			removeMany: function(holder, paths){
+				var root = 'projects/' + config().projectId + '/databases/(default)/documents/', chunks = [];
+				for(var i = 0; i < paths.length; i += 400) chunks.push(paths.slice(i, i + 400));
+				return chunks.reduce(function(p, chunk){
+					return p.then(function(){ return withToken(holder, function(tok){ return http('POST', base() + ':commit', {writes: chunk.map(function(x){ return {delete: root + x}; })}, tok); }); });
+				}, Promise.resolve());
+			},
 			query: function(holder, parent, collection, where){
 				var q = {from: [{collectionId: collection}]};
 				if(where) q.where = {fieldFilter: {field: {fieldPath: where[0]}, op: 'EQUAL', value: toValue(where[1])}};
@@ -136,7 +144,7 @@
 
 	// ---------------------------------------------------------------- the fake backend (tests)
 	var fake = (function(){
-		var api = {offline: false, failAfterDeletes: null};
+		var api = {offline: false, failAfterDeletes: null, delay: 0, denyWrites: false};
 		var deletes = 0;
 		function db(){ var d = load(FKEY); return d && d.docs ? d : {docs: {}, users: {}}; }
 		function put(d){ save(FKEY, d); }
@@ -160,15 +168,15 @@
 			var mine = p[3] === s.uid, cls = d.docs['classes/' + p[1]];
 			if(p.length === 4){
 				if(op === 'create') return mine && !!cls && cls.open === true && typeof data.nick === 'string' && data.nick.length >= 1 && data.nick.length <= 30;
-				if(op === 'update') return mine;
+				if(op === 'update') return mine && !!cls;
 				return mine || owner(d, p[1], s.uid);
 			}
-			if(op === 'create') return mine && !!d.docs[p.slice(0, 4).join('/')] && String(data.code || '').length <= CODE_MAX && /^(pass|fail|error)$/.test(data.kind);
+			if(op === 'create') return mine && !!cls && !!d.docs[p.slice(0, 4).join('/')] && String(data.code || '').length <= CODE_MAX && /^(pass|fail|error)$/.test(data.kind);
 			if(op === 'update') return false;
 			return mine || owner(d, p[1], s.uid);
 		}
 		function session(uid, email){ return {uid: uid, email: email || null, idToken: 'fake-' + uid, refreshToken: 'fake', expires: Date.now() + 3600000}; }
-		function go(work){ return new Promise(function(resolve){ resolve(work()); }); }
+		function go(work){ return new Promise(function(resolve){ if(api.delay) setTimeout(function(){ resolve(); }, api.delay); else resolve(); }).then(work); }
 		var n = 0;
 		function newId(){ n++; return 'id' + Date.now().toString(36) + n + Math.random().toString(36).slice(2, 6); }
 
@@ -184,7 +192,7 @@
 			return go(function(){
 				net(); var s = who(holder), d = db(), key = (parent ? parent + '/' : '') + collection + '/' + (id || newId());
 				if(d.docs[key]) throw fail('exists');
-				if(!canWrite(d, 'create', key, data, s)) throw fail('denied');
+				if(api.denyWrites || !canWrite(d, 'create', key, data, s)) throw fail('denied');
 				d.docs[key] = JSON.parse(JSON.stringify(data)); put(d); return key.split('/').pop();
 			});
 		};
@@ -192,7 +200,7 @@
 			return go(function(){
 				net(); var s = who(holder), d = db();
 				if(!d.docs[path]) throw fail('not-found');
-				if(!canWrite(d, 'update', path, data, s)) throw fail('denied');
+				if(api.denyWrites || !canWrite(d, 'update', path, data, s)) throw fail('denied');
 				Object.keys(data).forEach(function(k){ d.docs[path][k] = JSON.parse(JSON.stringify(data[k])); }); put(d); return null;
 			});
 		};
@@ -210,6 +218,7 @@
 			return go(function(){
 				net(); var s = who(holder), d = db(), prefix = (parent ? parent + '/' : '') + collection + '/', out = [];
 				if(parent && !canRead(d, parent + '/' + collection + '/x', s.uid)) throw fail('denied');
+				if(!parent && collection === 'classes' && !(where && where[0] === 'ownerUid' && where[1] === s.uid)) throw fail('denied'); // only one's own classes
 				Object.keys(d.docs).forEach(function(k){
 					if(k.indexOf(prefix) !== 0 || k.slice(prefix.length).indexOf('/') >= 0) return;
 					var v = d.docs[k];
@@ -219,6 +228,7 @@
 				return out;
 			});
 		};
+		api.removeMany = function(holder, paths){ return paths.reduce(function(p, x){ return p.then(function(){ return api.remove(holder, x); }); }, Promise.resolve()); };
 		// test hooks
 		api.verify = function(email){ var d = db(); for(var k in d.users) if(d.users[k].email === email) d.users[k].verified = true; put(d); };
 		api.dump = function(){ return db(); };
@@ -272,9 +282,11 @@
 		deleteStudent: function(code, uid){ return run(function(b){ return removeStudent(b, teacherHolder, code, uid); }); },
 		deleteClass: function(code){
 			return run(function(b){
-				return b.query(teacherHolder, 'classes/' + code, 'students').then(function(rows){
-					return rows.reduce(function(p, r){ return p.then(function(){ return removeStudent(b, teacherHolder, code, r.id); }); }, Promise.resolve());
-				}).then(function(){ return b.remove(teacherHolder, 'classes/' + code); }).then(function(){ return null; });
+				// joining closes first, so nobody comes in while the students are being deleted
+				return b.patch(teacherHolder, 'classes/' + code, {open: false}).catch(function(e){ if(e.code !== 'not-found') throw e; })
+					.then(function(){ return b.query(teacherHolder, 'classes/' + code, 'students'); })
+					.then(function(rows){ return rows.reduce(function(p, r){ return p.then(function(){ return removeStudent(b, teacherHolder, code, r.id); }); }, Promise.resolve()); })
+					.then(function(){ return b.remove(teacherHolder, 'classes/' + code); }).then(function(){ return null; });
 			});
 		},
 
@@ -304,32 +316,30 @@
 			if(!m || !deleteMine) return Promise.resolve(forget());
 			return run(function(b){ return removeStudent(b, studentHolder, m.code, m.uid).then(forget, forget); });
 		},
-		send: function(file, record, progress){
-			if(!load(CKEY)) return Promise.resolve({skipped: true});
+		// a check of the class plan's exercise: the class counts what was done since joining (never this browser's
+		// earlier work: on a shared computer that may be someone else's); the attempt waits in the queue until sent
+		send: function(file, record){
+			var m = load(CKEY);
+			if(!m) return Promise.resolve({skipped: true});
+			var r = record || {}, p = (m.progress = m.progress || {})[file] || {done: false, attempts: 0};
+			if(r.kind !== 'error'){ p.attempts = (p.attempts || 0) + 1; if(r.kind === 'pass') p.done = true; }
+			m.progress[file] = p;
+			save(CKEY, m);
 			var q = load(QKEY) || [];
-			q.push({file: file, record: record, progress: progress || {}});
+			q.push({file: file, record: r});
 			save(QKEY, q.slice(-50));
 			return C.flush();
 		},
+		// one sending at a time per page: a check made meanwhile waits for it, then goes
 		flush: function(){
-			var b = backend();
-			if(!b || !load(CKEY)) return Promise.resolve({skipped: true});
-			function next(){
-				var q = load(QKEY) || [], m = load(CKEY);
-				if(!q.length || !m) return Promise.resolve({sent: true});
-				var item = q[0], r = item.record || {};
-				var base = 'classes/' + m.code + '/students/' + m.uid;
-				Object.keys(item.progress || {}).forEach(function(k){ m.progress = m.progress || {}; m.progress[k] = item.progress[k]; });
-				return b.create(studentHolder, base, 'attempts', null, {file: String(item.file).slice(0, 80), t: r.t || now(), lang: r.lang || 'dugum', code: String(r.code || '').slice(0, CODE_MAX),
-				                                                       kind: /^(pass|fail|error)$/.test(r.kind) ? r.kind : 'fail', error: r.error ? String(r.error).slice(0, 4000) : null, results: resultsText(r.results)})
-					.then(function(){ return b.patch(studentHolder, base, {progress: m.progress || {}, updatedAt: now()}); })
-					.then(function(){ save(CKEY, Object.assign(load(CKEY) || {}, {progress: m.progress})); return prune(b, studentHolder, m.code, m.uid, item.file); })
-					.then(function(){ var rest2 = load(QKEY) || []; rest2.shift(); save(QKEY, rest2); return next(); });
-			}
-			return next().catch(function(e){
-				if(e.code === 'denied' || e.code === 'not-found'){ save(CKEY, null); save(QKEY, null); return {removed: true}; }
-				return {queued: true};
+			if(inflight){ again = true; return inflight; }
+			inflight = flushNow().then(function(result){
+				inflight = null;
+				if(again && result.sent){ again = false; return C.flush(); }
+				again = false;
+				return result;
 			});
+			return inflight;
 		},
 		_fake: fake
 	};
@@ -337,11 +347,42 @@
 	// the limits of firestore.rules: results as JSON text of at most 60000 characters (a larger one is left out)
 	function resultsText(results){ var text = JSON.stringify(results || []); return text.length <= 60000 ? text : '[]'; }
 
+	var inflight = null, again = false;
+	function flushNow(){
+		var b = backend();
+		if(!b || !load(CKEY)) return Promise.resolve({skipped: true});
+		function next(){
+			var q = load(QKEY) || [], m = load(CKEY);
+			if(!q.length || !m) return Promise.resolve({sent: true});
+			var item = q[0], r = item.record || {}, base = 'classes/' + m.code + '/students/' + m.uid;
+			var made = item.created ? Promise.resolve() : b.create(studentHolder, base, 'attempts', null, {
+				file: String(item.file).slice(0, 80), t: String(r.t || now()).slice(0, 40), lang: /^(dugum|turkce|cpp|java)$/.test(r.lang) ? r.lang : 'dugum',
+				code: String(r.code || '').slice(0, CODE_MAX), kind: /^(pass|fail|error)$/.test(r.kind) ? r.kind : 'fail',
+				error: r.error ? String(r.error).slice(0, 4000) : null, results: resultsText(r.results)
+			}).then(function(){ var q2 = load(QKEY) || []; if(q2[0]) { q2[0].created = true; save(QKEY, q2); } }); // written: never sent twice
+			return made
+				.then(function(){ return b.patch(studentHolder, base, {progress: (load(CKEY) || {}).progress || {}, updatedAt: now()}); })
+				.then(function(){ return prune(b, studentHolder, m.code, m.uid, item.file); })
+				.then(function(){ var q3 = load(QKEY) || []; q3.shift(); save(QKEY, q3); return next(); });
+		}
+		return next().catch(function(e){
+			if(e.code !== 'denied' && e.code !== 'not-found') return {queued: true};
+			// refused: removed by the teacher (the student's record or the class is gone), or a setting is wrong
+			var m = load(CKEY);
+			if(!m) return {removed: true};
+			return b.get(studentHolder, 'classes/' + m.code + '/students/' + m.uid).then(function(rec){
+				if(rec) return {queued: true};
+				save(CKEY, null); save(QKEY, null); return {removed: true};
+			}, function(){ return {queued: true}; });
+		});
+	}
+
 	function attemptsOf(b, holder, code, uid, file){
 		return b.query(holder, 'classes/' + code + '/students/' + uid, 'attempts', file ? ['file', file] : null).then(function(rows){
 			return rows.map(function(r){
 				var rec = r.data, results;
 				try { results = JSON.parse(rec.results || '[]'); } catch(e) { results = []; }
+				if(!Array.isArray(results)) results = [];
 				return {id: r.id, record: {file: rec.file, t: rec.t, lang: rec.lang, code: rec.code, kind: rec.kind, error: rec.error, results: results}};
 			}).sort(function(a, x){ return String(x.record.t).localeCompare(String(a.record.t)); });
 		});
@@ -351,10 +392,16 @@
 			return rows.slice(KEEP).reduce(function(p, r){ return p.then(function(){ return b.remove(holder, 'classes/' + code + '/students/' + uid + '/attempts/' + r.id); }); }, Promise.resolve());
 		});
 	}
+	// the attempts, then the student's record (after it no attempt can be added), then once more the attempts
+	// that came in meanwhile; in a few requests. A delete that stopped halfway can simply be run again.
 	function removeStudent(b, holder, code, uid){
-		return attemptsOf(b, holder, code, uid, null).then(function(rows){
-			return rows.reduce(function(p, r){ return p.then(function(){ return b.remove(holder, 'classes/' + code + '/students/' + uid + '/attempts/' + r.id); }); }, Promise.resolve());
-		}).then(function(){ return b.remove(holder, 'classes/' + code + '/students/' + uid); }).then(function(){ return null; });
+		var base = 'classes/' + code + '/students/' + uid;
+		function sweep(){
+			return attemptsOf(b, holder, code, uid, null).then(function(rows){
+				return rows.length ? b.removeMany(holder, rows.map(function(r){ return base + '/attempts/' + r.id; })) : null;
+			});
+		}
+		return sweep().then(function(){ return b.removeMany(holder, [base]); }).then(sweep).then(function(){ return null; });
 	}
 
 	window.dsvClassroom = C;

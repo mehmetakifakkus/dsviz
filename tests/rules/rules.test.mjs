@@ -96,3 +96,25 @@ test('deleting: the owner or the student; once the owner removed the student, th
 	await assertFails(addDoc(collection(student('S1'), 'classes/ABC234/students/S1/attempts'), ATTEMPT));
 	await assertFails(updateDoc(doc(student('S1'), 'classes/ABC234/students/S1'), { updatedAt: 'z' }));
 });
+
+test("the class list: only one's own classes; a class is read one at a time by code", async () => {
+	await seedClass();
+	await assertFails(getDocs(collection(student('S9'), 'classes')));                                   // nobody lists every class
+	await assertFails(getDocs(query(collection(otherTeacher(), 'classes'), where('ownerUid', '==', 'T1'))));
+	await assertSucceeds(getDocs(query(collection(teacher(), 'classes'), where('ownerUid', '==', 'T1'))));
+	await assertSucceeds(getDoc(doc(student('S9'), 'classes/ABC234')));
+});
+
+test('a deleted class takes no more attempts; fields are typed and bounded', async () => {
+	await seedClass();
+	await seedStudent('S1');
+	const mine = collection(student('S1'), 'classes/ABC234/students/S1/attempts');
+	await assertFails(addDoc(mine, Object.assign({}, ATTEMPT, { lang: 'x'.repeat(900) })));
+	await assertFails(addDoc(mine, Object.assign({}, ATTEMPT, { t: 'x'.repeat(41) })));
+	await assertFails(addDoc(mine, Object.assign({}, ATTEMPT, { results: '{"not":"array"}' })));
+	await assertFails(updateDoc(doc(student('S1'), 'classes/ABC234/students/S1'), { updatedAt: 'x'.repeat(41) }));
+	await assertSucceeds(addDoc(mine, ATTEMPT));
+	await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), 'classes/ABC234')); });
+	await assertFails(addDoc(mine, ATTEMPT));                                                           // the student record is still there, the class is not
+	await assertFails(updateDoc(doc(student('S1'), 'classes/ABC234/students/S1'), { updatedAt: 'y' }));
+});

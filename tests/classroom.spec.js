@@ -118,6 +118,43 @@ test.describe('data layer', () => {
 		expect(problems).toEqual([]);
 	});
 
+	test('quick checks are stored once each; a refused write with the student still in the class does not drop the class', async ({ page }) => {
+		const problems = await layer(page);
+		const code = await classWithTeacher(page);
+		const m = (await call(page, 'join', code, 'Ayşe')).ok;
+		await page.evaluate(() => { window.dsvClassroom._fake.delay = 30; });
+		await page.evaluate(([rec]) => Promise.all([window.dsvClassroom.send('exReverse.html', rec), window.dsvClassroom.send('exReverse.html', Object.assign({}, rec, { t: '2026-11-13T11:00:00.000Z' })), window.dsvClassroom.flush()]), [RECORD]);
+		expect((await call(page, 'listAttempts', code, m.uid, 'exReverse.html')).ok).toHaveLength(2);
+		expect((await call(page, 'listStudents', code)).ok[0].progress['exReverse.html']).toEqual({ done: false, attempts: 2 });
+
+		await page.evaluate(() => { window.dsvClassroom._fake.delay = 0; window.dsvClassroom._fake.denyWrites = true; });   // e.g. a wrong project setting
+		expect((await call(page, 'send', 'exReverse.html', RECORD)).ok).toEqual({ queued: true });
+		expect(await page.evaluate(() => window.dsvClassroom.membership() !== null)).toBe(true);
+		expect(problems).toEqual([]);
+	});
+
+	test('deleting a class closes joining first', async ({ page }) => {
+		const problems = await layer(page);
+		const code = await classWithTeacher(page);
+		await call(page, 'join', code, 'Ayşe');
+		await page.evaluate(() => { window.dsvClassroom._fake.failAfterDeletes = 0; });
+		expect((await call(page, 'deleteClass', code)).error).toBe('network');
+		expect((await call(page, 'getClass', code)).ok.open).toBe(false);
+		expect(problems).toEqual([]);
+	});
+
+	test('an attempt record that is not what the page writes does not break the teacher\'s view', async ({ page }) => {
+		const problems = await layer(page);
+		await page.addScriptTag({ path: 'js/exercise-compare.js' });
+		const ok = await page.evaluate(() => {
+			const el = window.dsvAttemptView({ t: 'x', lang: 'dugum', code: 'a', kind: 'fail', error: null, results: { not: 'array' } },
+				{ label: r => r.label, issue: () => '', when: () => '', load: null, note: null });
+			return !!el;
+		});
+		expect(ok).toBe(true);
+		expect(problems).toEqual([]);
+	});
+
 	test('the REST backend: sign-in, class creation with typed fields, one token refresh on 401, results as a string', async ({ page }) => {
 		const seen = [];
 		let firstCreate = true;
@@ -160,6 +197,11 @@ test.describe('data layer', () => {
 
 		await call(page, 'join', code, 'Ayşe');
 		await call(page, 'send', 'exReverse.html', RECORD, {});
+		const attempt0 = seen.find(s => s.url.includes('/attempts') && s.method === 'POST');
+		void attempt0;
+		await call(page, 'deleteStudent', code, 'STU');
+		const commit = seen.find(s => s.url.endsWith('/documents:commit'));
+		expect(commit && JSON.parse(commit.body).writes.every(w => typeof w.delete === 'string')).toBe(true);
 		const attempt = seen.find(s => s.url.includes('/attempts') && s.method === 'POST');
 		expect(JSON.parse(attempt.body).fields.results).toEqual({ stringValue: JSON.stringify(RECORD.results) });
 		expect(problems).toEqual([]);
@@ -360,6 +402,28 @@ test.describe('students', () => {
 		await page.waitForFunction(() => window.dsvReady === true);
 		await expect(page.locator('.ex-class-status')).toHaveText('Öğretmenine gönderildi.');
 		expect((await teacherSees(page, code))[0].progress['exReverse.html']).toEqual({ done: false, attempts: 1 });
+		expect(problems).toEqual([]);
+	});
+
+	test('on a shared browser the next student starts from zero: progress counts the checks made in the class', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		const code = await aClass(page);
+		await joinAs(page, code, 'Ayşe');
+		await openExercise(page, 'exReverse.html');
+		await setStudentCode(page, exSolution('exReverse.html'));
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-class-status')).toHaveText('Öğretmenine gönderildi.');
+		await page.goto('/plan.html#' + FRAGMENT + '&class=' + code);
+		await page.click('#pp-change');
+		await page.fill('#pp-nick', 'Mehmet');
+		await page.click('#pp-join-btn');
+		await openExercise(page, 'exReverse.html');
+		await setStudentCode(page, 'function reverse(head)\n{\n  return head\n}\n');
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-class-status')).toHaveText('Öğretmenine gönderildi.');
+		const rows = await teacherSees(page, code);
+		expect(rows.find(r => r.nick === 'Mehmet').progress['exReverse.html']).toEqual({ done: false, attempts: 1 });
+		expect(rows.find(r => r.nick === 'Ayşe').progress['exReverse.html']).toEqual({ done: true, attempts: 1 });
 		expect(problems).toEqual([]);
 	});
 

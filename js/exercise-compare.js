@@ -122,7 +122,8 @@
 		sum.appendChild(mk('span', 'ex-hist-issue', o.issue(h)));
 		item.appendChild(sum);
 		item.appendChild(mk('pre', 'ex-hist-code', h.code));
-		(h.results || []).forEach(function(r){
+		(Array.isArray(h.results) ? h.results : []).forEach(function(r){
+			if(!r || typeof r !== 'object') return;
 			item.appendChild(mk('div', 'ex-hist-label', o.label(r)));
 			var d = !r.failed && r.actual !== undefined ? draw(r.shape, r.expected, r.actual, r.nonList) : null;
 			if(d) item.appendChild(d);
