@@ -270,6 +270,8 @@ test.describe('comparison drawing', () => {
 		d = await draw(page, ['list', '', '1', false]);
 		expect(d.expected).toMatchObject({ items: 0, empty: 1 });
 		expect(d.actual).toMatchObject({ items: 1, extra: 1 });
+		d = await draw(page, ['list', '1', '', false]);                           // the student's list is empty: said so
+		expect(d.actual).toMatchObject({ empty: 1, missing: 1 });
 		d = await draw(page, ['list', '4>3>2>1', 5, true]);                       // not a list: one value per side
 		expect(d.expected.values).toEqual(['"4>3>2>1"']);
 		expect(d.actual.values).toEqual(['5']);

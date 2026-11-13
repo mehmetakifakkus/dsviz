@@ -38,8 +38,8 @@
 	function sequence(box, e, a, side, joiner){
 		var mine = side === 'expected' ? e : a, other = side === 'expected' ? a : e;
 		var n = Math.max(e.length, a.length), row = mk('div', 'ex-cmp-row');
-		if(!mine.length && side === 'expected' && joiner)
-			row.appendChild(mk('span', 'ex-cmp-empty', t('exCmpEmpty')));
+		if(!mine.length && joiner)
+			row.appendChild(mk('span', 'ex-cmp-empty', t('exCmpEmpty')));   // an empty list says so (the student's side also shows the missing places)
 		for(var i = 0; i < n; i++){
 			var item;
 			if(i < mine.length){
@@ -54,8 +54,6 @@
 			if(joiner && row.querySelector('.ex-cmp-item')) row.appendChild(mk('span', 'ex-cmp-arrow', '→'));
 			row.appendChild(item);
 		}
-		if(!mine.length && side === 'actual' && joiner && !e.length)
-			row.appendChild(mk('span', 'ex-cmp-empty', t('exCmpEmpty')));
 		box.appendChild(row);
 	}
 
