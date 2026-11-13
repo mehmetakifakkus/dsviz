@@ -97,7 +97,7 @@
 			if(big(e) || big(a)) return null;
 		}
 
-		var wrap = mk('div', 'ex-compare ex-cmp-' + mode);
+		var wrap = mk('div', 'ex-compare ex-cmp-shape-' + mode);
 		['expected', 'actual'].forEach(function(side){
 			var box = mk('div', 'ex-cmp-side');
 			box.setAttribute('data-side', side);

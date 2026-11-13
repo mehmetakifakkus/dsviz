@@ -295,4 +295,45 @@ test.describe('comparison drawing', () => {
 		expect(await draw(page, ['grid', Array.from({ length: 13 }, () => [1]), [[1]], false])).toBeNull();
 		expect(problems).toEqual([]);
 	});
+	test('a failed check draws each failing expectation under its text', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		await setStudent(page, 'function reverse(head)\n{\n  return head\n}\n');
+		await check(page);
+		const first = page.locator('.ex-result li').first();
+		await expect(first).toContainText('beklenen "4>3>2>1", senin sonucun "1>2>3>4"');   // the text stays
+		await expect(first.locator('.ex-cmp-side[data-side="expected"] .ex-cmp-item.diff')).toHaveCount(4);
+		await expect(first.locator('.ex-cmp-side[data-side="actual"] .ex-cmp-item.diff')).toHaveCount(4);
+
+		await setStudent(page, 'function reverse(head)\n{\n  return 5\n}\n');                // not a list: values
+		await check(page);
+		await expect(page.locator('.ex-result li').first().locator('.ex-cmp-side[data-side="actual"] .ex-cmp-value')).toHaveText('5');
+		expect(problems).toEqual([]);
+	});
+
+	test('arrays and grids are drawn too, and nothing hidden shows', async ({ page }) => {
+		let problems = await openPage(page, 'exBubbleSort.html');
+		await setStudent(page, 'function sortArray()\n{\n}\n');
+		await check(page);
+		const sample = page.locator('.ex-result li').first();
+		await expect(sample.locator('.ex-cmp-shape-array')).toHaveCount(1);
+		expect(await sample.locator('.ex-cmp-side[data-side="actual"] .ex-cmp-item.diff').count()).toBeGreaterThan(0);
+		expect(problems).toEqual([]);
+
+		problems = await openPage(page, 'exPascal.html');
+		await setStudent(page, 'p[0][0] = 1\n');
+		await check(page);
+		await expect(page.locator('.ex-result .ex-cmp-grid')).toHaveCount(2);
+		expect(await page.locator('.ex-result .ex-cmp-item.missing, .ex-result .ex-cmp-item.diff').count()).toBeGreaterThan(0);
+		expect(await page.locator('.ex-result').textContent()).not.toMatch(/Array\.from|build|load\d/);
+		expect(problems).toEqual([]);
+	});
+
+	test('no drawing when the student\'s function has no value to show', async ({ page }) => {
+		const problems = await openPage(page, 'exMiddle.html');
+		await setStudent(page, 'function middle(head)\n{\n  return head.next.next.next.next.next\n}\n');
+		await check(page);
+		await expect(page.locator('.ex-result.bad')).toBeVisible();
+		await expect(page.locator('.ex-result .ex-compare')).toHaveCount(0);
+		expect(problems).toEqual([]);
+	});
 });

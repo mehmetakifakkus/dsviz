@@ -110,8 +110,9 @@
 			solution.open = true;
 		});
 
+		var sawNonList = false, nonListValue; // walk() was given something that is not a list: the drawing shows that value
 		function walk(h, field){
-			if(h !== null && h !== undefined && typeof h !== 'object') return String(h);   // a number, a string, true...: not a list, say what it is
+			if(h !== null && h !== undefined && typeof h !== 'object'){ sawNonList = true; nonListValue = h; return String(h); }   // a number, a string, true...: not a list, say what it is
 			var out = [];
 			for(var n = h; n && out.length < 50; n = n[field || 'next']) out.push(n.data);
 			return out.join('>');
@@ -126,9 +127,20 @@
 			result.textContent = text;
 			if(lines && lines.length){
 				var ul = mk('ul');
-				lines.forEach(function(l){ ul.appendChild(mk('li', '', l)); });
+				lines.forEach(function(l){
+					var li = mk('li', '', typeof l === 'string' ? l : l.text);
+					var drawing = typeof l === 'string' ? null : drawingOf(l.result);
+					if(drawing) li.appendChild(drawing);
+					ul.appendChild(li);
+				});
 				result.appendChild(ul);
 			}
+		}
+
+		// a failing expectation, as drawn and kept in the history: {i, label, expected, actual, shape, nonList}
+		function drawingOf(r){
+			if(!r || !window.dsvCompare || r.actual === null) return null;
+			return window.dsvCompare.draw(r.shape, r.expected, r.actual, r.nonList);
 		}
 
 		check.addEventListener('click', function(){
@@ -143,11 +155,17 @@
 			if(!ran.ok)
 				failures.push(t('exTestError', {error: ran.error}));
 			else
-				(spec.expect || []).forEach(function(e){
+				(spec.expect || []).forEach(function(e, i){
+					sawNonList = false;
 					var got = window.dsvEvalQuiet(e[0], {walk: walk, back: function(h){ return walk(h, 'prev'); }, output: function(){ return typed; }});
 					var actual = got.ok ? plain(got.value) : got.error;
-					if(!got.ok || actual !== plain(e[1]))
-						failures.push(t('exExpected', {label: e[langIndex] || e[2] || e[0], expected: plain(e[1]), actual: actual}));
+					if(!got.ok || actual !== plain(e[1])){
+						var label = e[langIndex] || e[2] || e[0];
+						var shape = window.dsvCompare ? window.dsvCompare.shape(e[0], e[1]) : 'value';
+						var raw = sawNonList && shape === 'list' ? nonListValue : got.value;   // a list check that got a number shows the number
+						var res = {i: i, label: label, expected: e[1], actual: got.ok ? JSON.parse(plain(raw)) : null, shape: shape, nonList: sawNonList};
+						failures.push({text: t('exExpected', {label: label, expected: plain(e[1]), actual: actual}), result: res});
+					}
 				});
 			rec.attempts += 1;
 			if(!failures.length){
