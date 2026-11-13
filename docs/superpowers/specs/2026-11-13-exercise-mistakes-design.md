@@ -54,7 +54,7 @@ Bu iş sunucusuz yapılır: her şey öğrencinin tarayıcısında. Öğretmen t
   - Beklenen değer dizilerden oluşan bir diziyse **ızgara** (matris).
   - Beklenen değer bir diziyse **dizi** (hücre satırı).
   - Aksi halde **tek değer** kutusu (sayı, `true`/`false`, `null`).
-  - Öğrencinin değeri beklenenin şekline uymuyorsa (ör. liste yerine sayı) ikisi de tek değer kutusu olarak, ayrı ayrı çizilir.
+  - Öğrencinin değeri beklenenin şekline uymuyorsa (ör. liste yerine sayı) ikisi de tek değer kutusu olarak, ayrı ayrı çizilir. Liste beklentilerinde `walk()` düğüm olmayan bir değeri bugün metne çeviriyor (`5` → `"5"`); geçme/kalma kararı **bugünkü gibi kalır**, yalnızca çizim için `walk()`'a gelen değerin düğüm olup olmadığı ayrıca not edilir ve düğüm değilse çizim tek değer kutusu olur.
   - Öğrencinin ifadesi hata verdiyse (çizilecek değer yok) çizim yapılmaz, hata yazısı kalır.
 - **Fark işaretleri** (konuma göre):
   - Aynı konumda farklı değer: iki tarafta da turuncu çerçeve (sayfadaki "bu adımda değişen" rengi).
@@ -75,7 +75,8 @@ Dört düğümlü listeyi ters çevirince: beklenen "4>3>2>1", senin sonucun "1>
 - **Ne kaydedilir:** her **Kontrol et** basışı, sonucu ne olursa olsun:
   - geçti (`pass`), kaldı (`fail`), ya da öğrencinin kodu çalışmadı (`error`). Hata kaydı deneme sayısını artırmaz (bugünkü kural), ama geçmişte görünür: öğrencinin en sık gördüğü "kendi hatası" bu.
 - **Kayıt biçimi** (`localStorage['dsv-attempts']`, `dsv-exercises`'ten ayrı):
-  `{ "<dosya>": [ {"t": "<ISO zaman>", "lang": "dugum|turkce|cpp|java", "code": "<öğrenci bloğunun metni, gösterildiği dilde>", "kind": "pass|fail|error", "error": "<açıklanan hata metni ya da null>", "results": [{"label": "...", "expected": <JSON>, "actual": <JSON ya da null>, "shape": "list|grid|array|value"}]} ] }`
+  `{ "<dosya>": [ {"t": "<ISO zaman>", "lang": "dugum|turkce|cpp|java", "code": "<öğrenci bloğunun metni, gösterildiği dilde>", "kind": "pass|fail|error", "error": "<açıklanan hata metni ya da null>", "results": [{"i": <beklentinin sırası>, "label": "...", "expected": <JSON>, "actual": <JSON ya da null>, "shape": "list|grid|array|value"}]} ] }`
+  - `i`, beklentinin `expect` içindeki sırasıdır: geçmiş gösterilirken etiket o anki arayüz dilinde yeniden alınır (öğrenci dil değiştirse de geçmiş karışık dilde görünmez); `label` yalnızca sayfa değişirse diye yedektir.
   - `results` yalnızca tutmayan beklentileri içerir; gizli test kodu ya da ifadesi kaydedilmez, yalnızca etiket ve değerler.
   - En yeni başta; alıştırma başına en çok **10** kayıt (eskisi düşer); kod en çok 5000 karakter (fazlası kesilir).
   - Depolama kapalıysa bellekte tutulur (bugünkü ilerleme kaydı gibi); bozuk JSON görmezden gelinir.
@@ -89,6 +90,7 @@ Dört düğümlü listeyi ters çevirince: beklenen "4>3>2>1", senin sonucun "1>
 
 - A + B, sunucusuz; öğretmen tarafı ve veritabanı sonraya: **kullanıcının kararı**.
 - HTML/CSS ile çizim, şeklin beklentiden çıkarılması, 10 kayıt sınırı, hata kayıtlarının da geçmişe girmesi, `dsv-attempts` anahtarı: **benim önerim** (kullanıcı onayına sunulur).
+- Etiketin kayıtta sırasıyla (`i`) tutulup gösterilirken o anki dilde alınması; liste beklentisinde düğüm olmayan değerin çizimde tek değer kutusu olması, geçme/kalmanın değişmemesi: **benim kararım** (yapıcı incelemesinden sonra).
 
 ## Yapıcıya kalanlar
 
