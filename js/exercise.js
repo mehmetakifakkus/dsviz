@@ -117,6 +117,14 @@
 			for(var n = h; n && out.length < 50; n = n[field || 'next']) out.push(n.data);
 			return out.join('>');
 		}
+		// a value as JSON data for the drawing and the history: something that is not JSON (a function, a node with
+		// a cycle) or very large comes back as its text
+		function asData(v){
+			var p = plain(v);
+			if(p === undefined) return String(v);
+			if(p.length > 2000) return p.slice(0, 2000) + '…';
+			try { return JSON.parse(p); } catch(e) { return p; }
+		}
 		function plain(v){
 			try { return JSON.stringify(v === undefined ? null : v, function(k, x){ return x === undefined ? null : x; }); }
 			catch(e) { return String(v); }
@@ -139,7 +147,7 @@
 
 		// a failing expectation, as drawn and kept in the history: {i, label, expected, actual, shape, nonList}
 		function drawingOf(r){
-			if(!r || !window.dsvCompare || r.actual === null) return null;
+			if(!r || !window.dsvCompare || r.failed) return null;   // no value: the expression itself failed
 			return window.dsvCompare.draw(r.shape, r.expected, r.actual, r.nonList);
 		}
 
@@ -150,7 +158,14 @@
 			try { var all = JSON.parse(localStorage.getItem(HKEY) || '{}'); return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
 			catch(e) { return {}; }
 		}
-		var history = (function(){ var h = readHistory()[file]; return Array.isArray(h) ? h : []; })(); // kept here too: a browser that stores nothing still shows the visit's attempts
+		// a saved entry that is not what this page writes (edited by hand, an older format) is left out
+		function cleanEntry(h){
+			if(!h || typeof h !== 'object' || Array.isArray(h)) return null;
+			var results = Array.isArray(h.results) ? h.results.filter(function(r){ return r && typeof r === 'object' && !Array.isArray(r); }) : [];
+			return {t: String(h.t || ''), lang: String(h.lang || 'dugum'), code: String(h.code || ''), kind: h.kind === 'pass' || h.kind === 'error' ? h.kind : 'fail',
+			        error: h.error ? String(h.error) : null, results: results};
+		}
+		var history = (function(){ var h = readHistory()[file]; return Array.isArray(h) ? h.map(cleanEntry).filter(Boolean).slice(0, HMAX) : []; })(); // kept here too: a browser that stores nothing still shows the visit's attempts
 		function editorOf(){ var cm = card.querySelector('.CodeMirror'); return cm && cm.CodeMirror; }
 		function remember(kind, error, results){
 			var ed = editorOf();
@@ -170,6 +185,7 @@
 		}
 		function when(iso){
 			var d = new Date(iso);
+			if(isNaN(d.getTime())) return '';
 			try { return d.toLocaleString(window.dsv.settings.lang || 'tr', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); }
 			catch(e) { return d.toISOString().slice(0, 16).replace('T', ' '); }
 		}
@@ -206,6 +222,7 @@
 					item.appendChild(mk('div', 'ex-hist-label', labelOf(r)));
 					var d = drawingOf(r);
 					if(d) item.appendChild(d);
+					else if(r.error && r.error !== h.error) item.appendChild(mk('p', 'ex-hist-error', r.error));
 				});
 				if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
 				if(h.lang === (window.dsvCodeLang || 'dugum')){
@@ -244,7 +261,8 @@
 						var label = e[langIndex] || e[2] || e[0];
 						var shape = window.dsvCompare ? window.dsvCompare.shape(e[0], e[1]) : 'value';
 						var raw = sawNonList && shape === 'list' ? nonListValue : got.value;   // a list check that got a number shows the number
-						var res = {i: i, label: label, expected: e[1], actual: got.ok ? JSON.parse(plain(raw)) : null, shape: shape, nonList: sawNonList};
+						var res = {i: i, label: label, expected: e[1], actual: got.ok ? asData(raw) : null, shape: shape, nonList: sawNonList};
+						if(!got.ok){ res.failed = true; res.error = got.error; }   // its own explained error (a real null result is drawn)
 						failures.push({text: t('exExpected', {label: label, expected: plain(e[1]), actual: actual}), result: res});
 					}
 				});
@@ -264,7 +282,9 @@
 			}
 			else {
 				save(rec);
-				remember('fail', testError, failures.map(function(f){ return f.result; }).filter(Boolean));
+				var kept = failures.map(function(f){ return f.result; }).filter(Boolean);
+				var firstError = testError || (kept.filter(function(r){ return r.error; })[0] || {}).error || null;
+				remember('fail', firstError, kept);
 				show(false, t('exBad'), failures);
 			}
 			refresh();

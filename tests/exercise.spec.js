@@ -440,3 +440,60 @@ test.describe('attempt history', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+test.describe('mistakes: review fixes', () => {
+	test('a value that cannot be written as JSON (a function, a node with a cycle) still gives a result and a history entry', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		await setStudent(page, 'function reverse(head)\n{\n  return reverse\n}\n');
+		await check(page);
+		await expect(page.locator('.ex-result.bad')).toBeVisible();
+		await expect(page.locator('.ex-history .ex-hist-item')).toHaveCount(1);
+		expect(problems).toEqual([]);
+	});
+
+	test('an error in a checked call keeps its explained message in the history', async ({ page }) => {
+		const problems = await openPage(page, 'exMiddle.html');
+		await setStudent(page, 'function middle(head)\n{\n  return head.next.next.next.next.next\n}\n');
+		await check(page);
+		const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('dsv-attempts'))['exMiddle.html'][0]);
+		expect(JSON.stringify(stored)).toContain('pointer');                  // the explained null-pointer message
+		await page.locator('.ex-history > summary').click();
+		await page.locator('.ex-hist-item summary').first().click();
+		await expect(page.locator('.ex-hist-item').first()).toContainText('pointer');
+		expect(problems).toEqual([]);
+	});
+
+	test('a null result is drawn like any other value', async ({ page }) => {
+		const problems = await openPage(page, 'exStack.html');
+		await check(page);                                                  // the starter's pop() returns null
+		const first = page.locator('.ex-result li').first();
+		await expect(first.locator('.ex-cmp-side[data-side="expected"] .ex-cmp-value')).toHaveText('3');
+		await expect(first.locator('.ex-cmp-side[data-side="actual"] .ex-cmp-value')).toHaveText('null');
+		expect(problems).toEqual([]);
+	});
+
+	test('broken history entries do not stop the exercise', async ({ page }) => {
+		await page.addInitScript(() => localStorage.setItem('dsv-attempts', JSON.stringify({ 'exLength.html': [null, { results: 'x' }, { results: [null], kind: 'fail', code: 'a' }, 5,
+			{ t: '2026-11-13T10:00:00Z', lang: 'dugum', code: 'print 1\n', kind: 'fail', error: null, results: [] }] })));
+		const problems = await openPage(page, 'exLength.html');
+		await check(page);
+		await expect(page.locator('.ex-result.bad')).toBeVisible();
+		expect(await page.locator('.ex-history .ex-hist-item').count()).toBeGreaterThan(1);
+		expect(problems).toEqual([]);
+	});
+
+	test('on a phone long values and long result lines stay inside the page', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 900 });
+		const problems = await openPage(page, 'exReverse.html');
+		await setStudent(page, 'function reverse(head)\n{\n  var p = head\n  while(p.next != null)\n  {\n    p = p.next\n  }\n  p.next = head\n  return head\n}\n');   // a cycle: a 50-node text
+		await check(page);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+		const box = await page.evaluate(() => {
+			const el = window.dsvCompare.draw('value', 3, { data: 1, next: { data: 2, next: { data: 3, next: null } }, note: 'x'.repeat(80) }, false).querySelector('[data-side="actual"] .ex-cmp-value');
+			document.querySelector('.exercise-panel').appendChild(el);
+			return { scroll: el.scrollHeight, client: el.clientHeight };
+		});
+		expect(box.scroll).toBeLessThanOrEqual(box.client + 1);               // the text fits its box
+		expect(problems).toEqual([]);
+	});
+});
