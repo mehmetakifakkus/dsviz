@@ -184,6 +184,9 @@
 		openLink.style.textDecoration = 'none';
 		linkRow.appendChild(copyBtn);
 		linkRow.appendChild(openLink);
+		var classLink = el('a', {'class': 'tp-btn', id: 'tp-class'}, t('tpClass'));   // the teacher's class page, with this plan
+		classLink.style.textDecoration = 'none';
+		linkRow.appendChild(classLink);
 		linkBox.appendChild(linkRow);
 		root.appendChild(linkBox);
 
@@ -241,6 +244,9 @@
 			var url = state.items.length ? planUrl(state) : '';
 			linkInput.value = url;
 			openLink.href = url || '#';
+			classLink.href = url ? 'class.html#' + url.slice(url.indexOf('#') + 1) : '#';
+			classLink.style.pointerEvents = url ? '' : 'none';
+			classLink.style.opacity = url ? '' : '.45';
 			copyBtn.disabled = !url;
 			openLink.style.pointerEvents = url ? '' : 'none';
 			openLink.style.opacity = url ? '' : '.45';

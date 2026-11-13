@@ -165,3 +165,110 @@ test.describe('data layer', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+// ---------------------------------------------------------------- the teacher page
+const PLAN = { v: 1, t: 'Hafta 5', d: '', i: [['exReverse.html'], ['stack.html'], ['exMiddle.html']], c: 'dugum', m: 0 };
+const planStr = plan => Buffer.from(JSON.stringify(plan)).toString('base64url');
+
+async function classPage(page, hash = '', { fake = true } = {}) {
+	const problems = [];
+	page.on('pageerror', e => problems.push('page error: ' + e.message));
+	page.on('dialog', d => d.accept());
+	await page.addInitScript(fake => {
+		localStorage.setItem('dsv-tour-done', '1');
+		localStorage.setItem('dsv-settings', JSON.stringify({ lang: 'tr' }));
+		if (fake) window.dsvClassroomFake = true;
+	}, fake);
+	await page.goto('/class.html' + hash);
+	await page.waitForSelector('#class-app > *', { state: 'attached' });
+	return problems;
+}
+async function signedUpTeacher(page) {
+	await page.fill('#cl-email', 'ogretmen@okul.tr');
+	await page.fill('#cl-password', 'gizli123');
+	await page.click('#cl-signup');
+	await expect(page.locator('#cl-verify')).toBeVisible();
+	await page.evaluate(() => window.dsvClassroom._fake.verify('ogretmen@okul.tr'));
+	await page.click('#cl-recheck');
+	await expect(page.locator('#cl-verify')).toBeHidden();
+}
+
+test.describe('teacher page', () => {
+	test('without a configuration the page says so and asks nothing from outside', async ({ page }) => {
+		const outside = [];
+		page.on('request', r => { if (!/localhost/.test(r.url())) outside.push(r.url()); });
+		const problems = await classPage(page, '', { fake: false });
+		await expect(page.locator('.class-setup-note')).toBeVisible();
+		expect(outside).toEqual([]);
+		expect(problems).toEqual([]);
+	});
+
+	test('a new teacher verifies the e-mail before opening a class; the class link carries the plan and the class', async ({ page }) => {
+		const problems = await classPage(page, '#plan=' + planStr(PLAN) + '&c=dugum');
+		await page.fill('#cl-email', 'ogretmen@okul.tr');
+		await page.fill('#cl-password', 'gizli123');
+		await page.click('#cl-signup');
+		await expect(page.locator('#cl-verify')).toBeVisible();
+		await expect(page.locator('#cl-create')).toBeDisabled();
+		await page.evaluate(() => window.dsvClassroom._fake.verify('ogretmen@okul.tr'));
+		await page.click('#cl-recheck');
+		await expect(page.locator('#cl-create')).toBeEnabled();
+		await expect(page.locator('#cl-plan')).toHaveValue(/^plan=/);           // came from the teacher's plan page
+		await page.fill('#cl-name', '10-A Veri Yapıları');
+		await page.click('#cl-create');
+		const link = await page.locator('#cl-view .cl-link').inputValue();
+		expect(link).toMatch(/\/plan\.html#plan=[A-Za-z0-9_-]+&c=dugum&class=[A-Z0-9]{6}$/);
+		await expect(page.locator('#cl-view h2')).toContainText('10-A Veri Yapıları');
+		expect(problems).toEqual([]);
+	});
+
+	test('the table shows each student\'s exercises; a cell opens the attempts with their drawings', async ({ page }) => {
+		const problems = await classPage(page, '#plan=' + planStr(PLAN) + '&c=dugum');
+		await signedUpTeacher(page);
+		await page.fill('#cl-name', 'Sınıf A');
+		await page.click('#cl-create');
+		const code = (await page.locator('#cl-view .cl-link').inputValue()).slice(-6);
+		await page.evaluate(([code, rec]) => window.dsvClassroom.join(code, 'Ayşe').then(() => window.dsvClassroom.send('exReverse.html', rec, { 'exReverse.html': { done: false, attempts: 1 } })), [code, RECORD]);
+		await page.click('#cl-refresh');
+		const row = page.locator('.cl-table tbody tr').first();
+		await expect(row.locator('th')).toContainText('Ayşe');
+		await expect(page.locator('.cl-table thead th')).toHaveCount(3);             // the student, then the plan's two exercises (stack.html is not one)
+		await expect(row.locator('td.cl-cell[data-file="exReverse.html"]')).toContainText('1');
+		await expect(row.locator('td.cl-cell[data-file="exMiddle.html"]')).toHaveText('—');
+		await row.locator('td.cl-cell[data-file="exReverse.html"]').click();
+		const item = page.locator('#cl-attempts .ex-hist-item').first();
+		await item.locator('summary').click();
+		await expect(item.locator('.ex-compare')).toHaveCount(1);
+		await expect(item.locator('pre.ex-hist-code')).toContainText('return head');
+		expect(problems).toEqual([]);
+	});
+
+	test('closing joining, deleting a student, deleting the class (also after it stopped halfway)', async ({ page }) => {
+		const problems = await classPage(page, '#plan=' + planStr(PLAN) + '&c=dugum');
+		await signedUpTeacher(page);
+		await page.fill('#cl-name', 'Sınıf A');
+		await page.click('#cl-create');
+		const code = (await page.locator('#cl-view .cl-link').inputValue()).slice(-6);
+		await page.evaluate(([code, rec]) => window.dsvClassroom.join(code, 'Ayşe').then(() => window.dsvClassroom.send('exReverse.html', rec, {})), [code, RECORD]);
+		await page.click('#cl-refresh');
+
+		await page.click('#cl-toggle-open');
+		await expect(page.locator('#cl-view .cl-closed')).toBeVisible();
+		expect((await page.evaluate(() => window.dsvClassroom.myClasses()))[0].open).toBe(false);
+
+		await page.locator('.cl-table tbody tr').first().locator('.cl-del-student').click();   // confirm() is accepted
+		await expect(page.locator('.cl-table tbody tr')).toHaveCount(0);
+
+		await page.evaluate(([code, rec]) => window.dsvClassroom._fake.becomeStudent(code, 'none'), [code, RECORD]);
+		await page.click('#cl-delete-class');
+		await expect(page.locator('#cl-confirm-delete')).toBeDisabled();
+		await page.fill('#cl-confirm-code', code);
+		await page.evaluate(() => { window.dsvClassroom._fake.failAfterDeletes = 0; });
+		await page.click('#cl-confirm-delete');
+		await expect(page.locator('#cl-msg')).toContainText('bağlan');                // could not finish: says so
+		await page.evaluate(() => { window.dsvClassroom._fake.failAfterDeletes = null; });
+		await page.click('#cl-confirm-delete');
+		await expect(page.locator('#cl-classes .cl-class')).toHaveCount(0);
+		expect(problems).toEqual([]);
+	});
+});

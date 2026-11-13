@@ -210,29 +210,10 @@
 			historySummary.textContent = t('exHistory', {n: history.length});
 			historyList.textContent = '';
 			history.forEach(function(h){
-				var item = mk('details', 'ex-hist-item');
-				item.setAttribute('data-kind', h.kind);
-				var sum = mk('summary');
-				sum.appendChild(mk('span', 'ex-hist-icon', h.kind === 'pass' ? '✓' : h.kind === 'error' ? '⚠' : '✗'));
-				sum.appendChild(mk('span', 'ex-hist-when', when(h.t)));
-				sum.appendChild(mk('span', 'ex-hist-issue', firstIssue(h)));
-				item.appendChild(sum);
-				item.appendChild(mk('pre', 'ex-hist-code', h.code));
-				(h.results || []).forEach(function(r){
-					item.appendChild(mk('div', 'ex-hist-label', labelOf(r)));
-					var d = drawingOf(r);
-					if(d) item.appendChild(d);
-					else if(r.error && r.error !== h.error) item.appendChild(mk('p', 'ex-hist-error', r.error));
-				});
-				if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
-				if(h.lang === (window.dsvCodeLang || 'dugum')){
-					var load = mk('button', 'ex-hist-load', t('exHistLoad'));
-					load.type = 'button';
-					load.addEventListener('click', function(){ var ed = editorOf(); if(ed){ ed.setValue(h.code); ed.focus(); } });
-					item.appendChild(load);
-				}
-				else
-					item.appendChild(mk('p', 'ex-hist-lang', t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})));
+				var same = h.lang === (window.dsvCodeLang || 'dugum');
+				var item = window.dsvAttemptView(h, {label: labelOf, issue: firstIssue, when: when,
+					load: same ? function(x){ var ed = editorOf(); if(ed){ ed.setValue(x.code); ed.focus(); } } : null,
+					note: same ? null : t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})});
 				historyList.appendChild(item);
 			});
 		}
