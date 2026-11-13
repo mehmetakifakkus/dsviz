@@ -6,8 +6,8 @@ const path = require('path');
 const { expect, openPage, runAllBlocks, valueOf, stepCounter } = require('./helpers');
 
 const ROOT = path.resolve(__dirname, '..');
-// the lesson plan pages (teacher.html, plan.html) hold no code: they are not examples (see tests/plan.spec.js)
-const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && !['teacher.html', 'plan.html'].includes(f) && !/^ex[A-Z]/.test(f)).sort();
+// the lesson plan pages (teacher.html, plan.html) and the class page (class.html) hold no code: they are not examples (see tests/plan.spec.js, tests/classroom.spec.js)
+const PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && !['teacher.html', 'plan.html', 'class.html'].includes(f) && !/^ex[A-Z]/.test(f)).sort();
 // the exercise pages (ex*.html) end in whatever state the student's code leaves: see tests/exercise.spec.js
 const EXERCISES = fs.readdirSync(ROOT).filter(f => /^ex[A-Z].*\.html$/.test(f)).sort();
 
