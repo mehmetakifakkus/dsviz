@@ -9,6 +9,7 @@
 - Veritabanı **Firebase (Firestore)**, **yeni bir proje** açılacak. Projeyi kullanıcı kendi Google hesabıyla açar; bu oturum onun hesabına giremez.
 - Öğretmen **e-posta ve şifreyle** giriş yapar; hangi cihazdan girerse girsin sınıflarını görür.
 - **Dönem sonunda öğretmen silebilir:** sınıfın (ve tek tek öğrencilerin) bütün verisini.
+- **Öğretmen olmak:** kayıt herkese açık, ama sınıf açmak için **e-posta adresinin doğrulanmış** olması gerekir (Firebase doğrulama e-postası); başkasının adresiyle öğretmen olunamaz.
 
 ## Hedefler
 
@@ -51,21 +52,24 @@
 
 ### Kimlik
 
-- **Öğretmen:** Firebase Authentication, e-posta/şifre. Kayıt, giriş, "şifremi unuttum" (Firebase'in sıfırlama e-postası). Oturum, yenileme jetonuyla tarayıcıda tutulur; "Çıkış" düğmesi.
+- **Öğretmen:** Firebase Authentication, e-posta/şifre. Kayıt, giriş, "şifremi unuttum" (Firebase'in sıfırlama e-postası). Kayıttan sonra doğrulama e-postası gönderilir; doğrulanmamış hesap giriş yapabilir ama sınıf açamaz (sayfa "e-postanı doğrula" der, "yeniden gönder" düğmesi). Oturum, yenileme jetonuyla tarayıcıda tutulur; "Çıkış" düğmesi.
 - **Öğrenci:** Firebase **anonim** oturum. Takma ad (en çok 30 karakter) öğrenci kaydında durur. Katılma bilgisi (`sınıf kodu`, `uid`, yenileme jetonu, takma ad) tarayıcıda `localStorage['dsv-class']`'ta tutulur.
+- **Ortak bilgisayar:** öğrencinin sayfalarında hangi takma adla gönderdiği görünür ("Ayşe olarak gönderiliyor · Değiştir"); "Değiştir" sınıftan ayrılıp yeni takma adla katılmayı sağlar. Katılmadan önceki yerel ilerleme ve denemeler **buluta yüklenmez** (başka birine ait olabilir); buluta yalnızca katıldıktan sonraki kontroller gider.
+- **Tek sınıf:** bir tarayıcı aynı anda bir sınıfa bağlıdır; başka bir sınıfın bağlantısıyla katılırken onay sorulur ve eski bağlantı bırakılır. Yalnızca o sınıfın planındaki alıştırmaların kontrolleri gönderilir.
 - **Bilinen sınır:** öğrenci tarayıcısını temizlerse ya da başka bir cihaza geçerse yeni bir öğrenci olarak katılır (eski kaydı öğretmende ayrı bir satır olarak kalır). Hesapsız öğrencinin bedeli bu.
 
 ### Veri (Firestore)
 
-- `classes/{kod}`: `{name, ownerUid, plan (plan bağlantısının #plan=… kısmı), createdAt}`. `kod`: 6 karakter, karışmayan harf ve rakamlardan (ör. `K7M2QX`), çakışırsa yeniden üretilir.
+- `classes/{kod}`: `{name, ownerUid, plan (plan bağlantısının #plan=… kısmı), open (yeni katılım açık mı), createdAt}`. `kod`: 6 karakter, karışmayan harf ve rakamlardan (ör. `K7M2QX`), çakışırsa yeniden üretilir.
 - `classes/{kod}/students/{uid}`: `{nick, joinedAt, updatedAt, progress: {dosya: {done, attempts}}}`.
-- `classes/{kod}/students/{uid}/attempts/{otomatik}`: tarayıcıdaki deneme kaydının aynısı ve dosya adı: `{file, t, lang, code, kind, error, results}` (kod en çok 5000 karakter).
+- `classes/{kod}/students/{uid}/attempts/{otomatik}`: tarayıcıdaki deneme kaydının aynısı ve dosya adı: `{file, t, lang, code, kind, error, results}` (kod en çok 5000 karakter). Tarayıcıdaki gibi **öğrenci başına alıştırma başına son 10 deneme** tutulur: öğrenci yeni denemeyi yazarken o alıştırmanın 10'dan eski denemelerini siler. Böylece dönem sonu silme de sınırlı kalır.
 - Bölge: kullanıcı proje açarken bir Avrupa bölgesi seçer (KVKK/GDPR açısından yakın; kurulum adımlarında yazılı).
 
 ### Güvenlik kuralları (özet; tam metni depoda `firestore.rules`)
 
-- Sınıf belgesi: oturum açmış herkes okuyabilir (öğrencinin katılırken sınıfın adını görmesi için; kişisel veri içermez). Yalnızca e-postalı (öğretmen) bir hesap, kendini sahip yazarak oluşturabilir; yalnızca sahibi değiştirir/siler.
+- Sınıf belgesi: oturum açmış herkes okuyabilir (öğrencinin katılırken sınıfın adını görmesi için; kişisel veri içermez). Yalnızca **e-postası doğrulanmış** bir hesap (`email_verified`), kendini sahip yazarak oluşturabilir; yalnızca sahibi değiştirir (ad, `open`) ya da siler.
 - Öğrenci belgesi ve denemeleri: yalnızca o öğrenci (kendi `uid`'i) yazar; o öğrenci ve sınıfın sahibi okur; öğrenci ya da sahibi siler. Denemeler değiştirilemez (yalnızca eklenir/silinir).
+- **Silme kalıcıdır:** öğrenci belgesi yalnızca sınıf varken ve `open` ise **oluşturulabilir**; denemeler ve güncellemeler yalnızca öğrenci belgesi **varken** yazılabilir. Öğretmen bir öğrenciyi silerse o öğrencinin sonraki gönderimleri reddedilir; tarayıcı izin hatasını görünce katılma kaydını ve bekleyen gönderimleri siler ve "öğretmenin seni sınıftan çıkardı ya da sınıf silindi" der. Sınıf açıksa öğrenci yeniden katılabilir (yeni satır); öğretmen sınıfı kapatarak bunu önler. Silinen bir sınıfın kodu, yeni sınıf için rastgele yeniden üretilirse çakışma denetimiyle tekrar kullanılabilir; eski öğrencilerin kayıtları o zamana kadar zaten bırakılmış olur.
 - Alan sınırları kurallarda: takma ad ≤ 30, kod ≤ 5000 karakter, `kind` üç değerden biri.
 
 ### Öğretmen: `class.html` (yeni sayfa, menüde öğretmen bağlantısının yanında)
@@ -74,11 +78,12 @@
 - "Sınıflarım" listesi (ad, kod, öğrenci sayısı).
 - "Yeni sınıf": ad + plan bağlantısı (öğretmen sayfasından gelir: `teacher.html`'de "Bu planla sınıf aç" düğmesi `class.html`'e planı taşır; ya da bağlantı yapıştırılır). Sonuç: öğrencilere verilecek bağlantı `plan.html#plan=…&class=KOD` (kopyala düğmesi).
 - Sınıf görünümü: satırlar öğrenciler (takma ad), sütunlar plandaki alıştırma sayfaları (`ex*.html`); hücre: ✓ (çözdü), deneme sayısı, yoksa —. Hücreye tıklayınca o öğrencinin o alıştırmadaki son denemeleri açılır (kod, karşılaştırma çizimi, hata; tarayıcıdaki geçmişle aynı görünüm). "Yenile" düğmesi.
+- "Yeni katılımı kapat / aç" (sınıfın `open` alanı).
 - Silme: "Öğrenciyi sil" ve "Sınıfı ve bütün verisini sil" (onay için sınıf kodunu yazdırır). Firestore alt koleksiyonları kendiliğinden silmediği için istemci önce denemeleri, sonra öğrencileri, en son sınıfı siler.
 
 ### Öğrenci: katılma ve gönderme
 
-- `plan.html` bağlantısında `class=KOD` varsa ve öğrenci henüz katılmamışsa: sınıfın adı, "Sınıfa katıl" kutusu (takma ad), ne gönderileceğini anlatan kısa bir not ("alıştırma sonuçların ve denemelerin öğretmenine gider; adın değil, yazdığın takma ad görünür"). Katılınca yerel ilerleme de (yalnızca plandaki alıştırmalar) bir kez gönderilir.
+- `plan.html` bağlantısında `class=KOD` varsa ve öğrenci henüz katılmamışsa: sınıfın adı, "Sınıfa katıl" kutusu (takma ad), ne gönderileceğini anlatan kısa bir not ("alıştırma sonuçların ve denemelerin öğretmenine gider; adın değil, yazdığın takma ad görünür"). Katılmadan önceki yerel ilerleme gönderilmez.
 - Katılmış öğrencinin alıştırma sayfasında her kontrolden sonra deneme kaydı ve güncel ilerleme sınıfa yazılır. Gönderilemeyen kayıtlar `localStorage['dsv-class-queue']`'da bekler ve sonraki sayfa açılışında/kontrolde yeniden denenir. Panelde küçük bir durum yazısı: "Öğretmenine gönderildi" / "Gönderilemedi, sonra denenecek".
 - Plan sayfasında "Sınıftan ayrıl" (göndermeyi durdurur; isteğe bağlı olarak "verilerimi sil").
 
@@ -97,7 +102,9 @@
 ## Kararlaştırılanlar (kimin kararı)
 
 - Firebase, yeni proje, öğretmen e-posta/şifre, dönem sonu silme: **kullanıcı**.
+- Öğretmen kaydı açık, sınıf açmak için doğrulanmış e-posta: **kullanıcı**.
 - REST ile bağlanmak (kütüphane yok), öğrenci takma ad + anonim oturum, sınıf kodunun plan bağlantısına eklenmesi, canlı değil "Yenile", çevrimdışı kuyruk, `class.html`: **benim önerim** (onaya sunulur).
+- Ortak bilgisayar için "… olarak gönderiliyor · Değiştir" ve katılmadan önceki verinin yüklenmemesi; tek sınıf; yalnızca plandaki alıştırmalar; bulutta son 10 deneme; `open` alanı; silmenin kalıcı olması için kurallar ve istemcinin izin hatasında temizlik: **benim kararım** (yapıcı incelemesinden sonra).
 
 ## Yapıcıya kalanlar
 
