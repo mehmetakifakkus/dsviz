@@ -368,3 +368,14 @@ test('matrices are shown in C++, Java and Türkçe and translate back', () => {
 	expect(w.dsvCode.toTurkish([dugum])[0]).toContain('değişken g = yeni Dizi(3, 4)');
 	expect(w.dsvCode.fromTurkish(w.dsvCode.toTurkish([dugum])[0])).toBe(dugum);
 });
+
+test('a field can be the first operand of a sum, in a return or an assignment', () => {
+	for (const code of ['return node.data + f(node.left)', 'return node.data + node.data', 'return p.data * 2 + 1', 'return a.next.data - b.data', 'x = p.data + 1', 'x = p.data - q.data'])
+		expect(() => parser.parse('function f(node)\n{\n  ' + code + '\n}\n'), code).not.toThrow();
+	expect(parser.parse('function f(node)\n{\n  return node.data + f(node.left)\n}\n')[0].body[0].text).toBe('node.data + f(node.left)');
+	// the pointer moves and lone fields are what they were
+	expect(parser.parse('p = p.next\n')[0].type).toBe('object property right');
+	expect(parser.parse('p.next = q.next\n')[0].type).toBe('object property left-right');
+	expect(parser.parse('function f(node)\n{\n  return node.left\n}\n')[0].body[0].text.trim()).toBe('node.left');
+	expect(parser.parse('x = p.data + 1\n')[0]).toMatchObject({ type: 'assignment', rhs: 'p.data + 1' });
+});

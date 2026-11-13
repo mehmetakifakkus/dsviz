@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: ağaçtaki değerlerin toplamı | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: ağaçtaki değerlerin toplamı</h1>
+<h1 data-lang="en">Exercise: the sum of the values in a tree</h1>
+<h1 data-lang="de">Übung: die Summe der Werte eines Baums</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>treeSum(node)</code> fonksiyonunu yaz: <code>node</code> kökünden başlayan ağaçtaki bütün düğümlerin <code>data</code> değerlerinin toplamını döndürsün (boş ağaç için 0). Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>treeSum(node)</code>: it returns the sum of the <code>data</code> values of all nodes of the tree that starts at <code>node</code> (0 for an empty tree). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>treeSum(node)</code>: sie gibt die Summe der <code>data</code>-Werte aller Knoten des Baums ab <code>node</code> zurück (0 für einen leeren Baum). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // örnek ağaç
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // a sample tree
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var root = new Node(8)
+root.left = new Node(4)
+root.right = new Node(12)
+root.left.left = new Node(2)
+root.left.right = new Node(6)
+root.left.right.left = new Node(5)   // ein Beispielbaum
+</script>
+
+<textarea id="text2" class="deneme">
+function treeSum(node)
+{
+  // buraya yaz
+  return 0
+}
+print treeSum(root)    // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function treeSum(node)
+{
+  // write here
+  return 0
+}
+print treeSum(root)    // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function treeSum(node)
+{
+  // hier schreiben
+  return 0
+}
+print treeSum(root)    // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Toplam = düğümün kendi değeri + sol alt ağacın toplamı + sağ alt ağacın toplamı.</li><li>Boş ağaç (<code>node == null</code>) için 0 döndür: özyinelemenin durma koşulu.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>The sum = the value of the node itself + the sum of the left subtree + the sum of the right subtree.</li><li>For an empty tree (<code>node == null</code>) return 0: that is where the recursion stops.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Summe = Wert des Knotens selbst + Summe des linken Teilbaums + Summe des rechten Teilbaums.</li><li>Für einen leeren Baum (<code>node == null</code>) gib 0 zurück: dort endet die Rekursion.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "var t1 = new Node(1)\nvar t2 = new Node(1)\nt2.left = new Node(2)\nt2.left.left = new Node(3)\n",
+ "expect": [
+  [
+   "treeSum(root)",
+   37,
+   "Örnek ağaç",
+   "The sample tree",
+   "Der Beispielbaum"
+  ],
+  [
+   "treeSum(null)",
+   0,
+   "Boş ağaç",
+   "An empty tree",
+   "Ein leerer Baum"
+  ],
+  [
+   "treeSum(t1)",
+   1,
+   "Tek düğüm",
+   "A single node",
+   "Ein einzelner Knoten"
+  ],
+  [
+   "treeSum(t2)",
+   6,
+   "Yalnızca sola uzanan ağaç",
+   "A tree that only goes left",
+   "Ein Baum, der nur nach links geht"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function treeSum(node)
+{
+  if(node == null)
+  {
+    return 0
+  }
+  return node.data + treeSum(node.left) + treeSum(node.right)
+}
+print treeSum(root)
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: kabarcık sıralama | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: kabarcık sıralama</h1>
+<h1 data-lang="en">Exercise: bubble sort</h1>
+<h1 data-lang="de">Übung: Bubblesort</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> <code>sortArray()</code> fonksiyonunu yaz: <code>a</code> dizisinin <code>n</code> hücresini küçükten büyüğe sıralasın (dizinin kendisini değiştirerek). Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Write the function <code>sortArray()</code>: it sorts the <code>n</code> cells of the array <code>a</code> from small to large (changing the array itself). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Schreibe die Funktion <code>sortArray()</code>: sie sortiert die <code>n</code> Zellen des Arrays <code>a</code> von klein nach groß (indem sie das Array selbst ändert). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var a = new Array(8)      // örnek dizi
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var a = new Array(8)      // a sample array
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var a = new Array(8)      // ein Beispiel-Array
+var n = 8
+a[0] = 34
+a[1] = 12
+a[2] = 41
+a[3] = 7
+a[4] = 25
+a[5] = 19
+a[6] = 3
+a[7] = 28
+</script>
+
+<textarea id="text2" class="deneme">
+function sortArray()
+{
+  // buraya yaz
+}
+sortArray()            // deneme çağrısı
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function sortArray()
+{
+  // write here
+}
+sortArray()            // a trial call
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function sortArray()
+{
+  // hier schreiben
+}
+sortArray()            // ein Probeaufruf
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li>Yan yana iki hücreyi karşılaştır: soldaki büyükse yerlerini değiştir.</li><li>Bunu dizinin başından sonuna kadar yap; en büyük değer sona "kabarır". Sonra sondaki sıralı kısmı bir azaltıp yine yap.</li><li>Yer değiştirmek için geçici bir değişken kullan: <code>var t = a[j]</code>, <code>a[j] = a[j + 1]</code>, <code>a[j + 1] = t</code>.</li></ol>
+<ol class="ex-hints" data-lang="en"><li>Compare two neighbouring cells: if the left one is larger, swap them.</li><li>Do this from the start of the array to the end; the largest value "bubbles" to the end. Then do it again with the sorted part at the end one shorter.</li><li>Use a temporary variable to swap: <code>var t = a[j]</code>, <code>a[j] = a[j + 1]</code>, <code>a[j + 1] = t</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li>Vergleiche zwei benachbarte Zellen: ist die linke größer, tausche sie.</li><li>Tu das vom Anfang bis zum Ende des Arrays; der größte Wert „blubbert“ ans Ende. Dann noch einmal, mit einem um eins kürzeren sortierten Teil am Ende.</li><li>Benutze zum Tauschen eine Hilfsvariable: <code>var t = a[j]</code>, <code>a[j] = a[j + 1]</code>, <code>a[j + 1] = t</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "function load1()\n{\n  a[0] = 8\n  a[1] = 7\n  a[2] = 6\n  a[3] = 5\n  a[4] = 4\n  a[5] = 3\n  a[6] = 2\n  a[7] = 1\n}\nfunction load2()\n{\n  a[0] = 1\n  a[1] = 2\n  a[2] = 3\n  a[3] = 4\n  a[4] = 5\n  a[5] = 6\n  a[6] = 7\n  a[7] = 8\n}\nfunction load3()\n{\n  a[0] = 5\n  a[1] = 5\n  a[2] = 1\n  a[3] = 9\n  a[4] = 1\n  a[5] = 9\n  a[6] = 5\n  a[7] = 2\n}\n",
+ "expect": [
+  [
+   "Array.from(a)",
+   [
+    3,
+    7,
+    12,
+    19,
+    25,
+    28,
+    34,
+    41
+   ],
+   "Örnek dizi",
+   "The sample array",
+   "Das Beispiel-Array"
+  ],
+  [
+   "(load1(), sortArray(), Array.from(a))",
+   [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "Tersten sıralı dizi",
+   "A reversed array",
+   "Ein umgekehrt sortiertes Array"
+  ],
+  [
+   "(load2(), sortArray(), Array.from(a))",
+   [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "Zaten sıralı dizi",
+   "An array that is sorted already",
+   "Ein bereits sortiertes Array"
+  ],
+  [
+   "(load3(), sortArray(), Array.from(a))",
+   [
+    1,
+    1,
+    2,
+    5,
+    5,
+    5,
+    9,
+    9
+   ],
+   "Aynı değerler olan dizi",
+   "An array with equal values",
+   "Ein Array mit gleichen Werten"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function sortArray()
+{
+  for(var i = 0; i < n - 1; i++)
+  {
+    for(var j = 0; j < n - 1 - i; j++)
+    {
+      if(a[j] > a[j + 1])
+      {
+        var t = a[j]
+        a[j] = a[j + 1]
+        a[j + 1] = t
+      }
+    }
+  }
+}
+sortArray()
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>

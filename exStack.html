@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alıştırma: bağlı listeyle yığın | Bağlı Listeler</title>
+<script src="js/i18n.js"></script> <!-- settings, language and theme, before the page is drawn -->
+<link rel="stylesheet" href="vendor/codemirror-5.25.2/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="lesson">
+<h1 data-lang="tr">Alıştırma: bağlı listeyle yığın</h1>
+<h1 data-lang="en">Exercise: a stack with a linked list</h1>
+<h1 data-lang="de">Übung: ein Stapel mit einer verketteten Liste</h1>
+
+<p data-lang="tr"><strong>Görev.</strong> Yığını bağlı listeyle kur: <code>topNode</code> en üstteki düğümü göstersin. <code>push(v)</code> yeni bir düğümü yığının üstüne koysun; <code>pop()</code> en üstteki değeri çıkarıp döndürsün (yığın boşsa <code>null</code>). Çalıştır ile denemeni izle, Kontrol et ile cevabını sına.</p>
+<p data-lang="en"><strong>Task.</strong> Build a stack with a linked list: <code>topNode</code> points to the top node. <code>push(v)</code> puts a new node on top of the stack; <code>pop()</code> removes the top value and returns it (<code>null</code> if the stack is empty). Use Run to watch your attempt and Check to test your answer.</p>
+<p data-lang="de"><strong>Aufgabe.</strong> Baue einen Stapel mit einer verketteten Liste: <code>topNode</code> zeigt auf den obersten Knoten. <code>push(v)</code> legt einen neuen Knoten oben auf den Stapel; <code>pop()</code> entfernt den obersten Wert und gibt ihn zurück (<code>null</code>, wenn der Stapel leer ist). Mit Ausführen siehst du deinen Versuch, mit Prüfen testest du deine Antwort.</p>
+
+<textarea id="text1" class="deneme">
+var topNode = null      // boş yığın
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="en">
+var topNode = null      // an empty stack
+</script>
+<script type="text/plain" class="code-variant" data-for="text1" data-lang="de">
+var topNode = null      // ein leerer Stapel
+</script>
+
+<textarea id="text2" class="deneme">
+function push(v)
+{
+  // buraya yaz
+}
+function pop()
+{
+  // buraya yaz
+  return null
+}
+push(10)               // deneme çağrısı
+push(20)
+print pop()
+</textarea>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="en">
+function push(v)
+{
+  // write here
+}
+function pop()
+{
+  // write here
+  return null
+}
+push(10)               // a trial call
+push(20)
+print pop()
+</script>
+<script type="text/plain" class="code-variant" data-for="text2" data-lang="de">
+function push(v)
+{
+  // hier schreiben
+}
+function pop()
+{
+  // hier schreiben
+  return null
+}
+push(10)               // ein Probeaufruf
+push(20)
+print pop()
+</script>
+
+<ol class="ex-hints" data-lang="tr"><li><code>push</code>: yeni düğümün <code>next</code>'ini şimdiki <code>topNode</code> yap, sonra <code>topNode</code>'u yeni düğüm yap.</li><li><code>pop</code>: önce yığının boş olup olmadığına bak. Değilse <code>topNode</code>'un değerini bir değişkende sakla ve <code>topNode = topNode.next</code> yap.</li></ol>
+<ol class="ex-hints" data-lang="en"><li><code>push</code>: make the <code>next</code> of the new node the current <code>topNode</code>, then make <code>topNode</code> the new node.</li><li><code>pop</code>: first check whether the stack is empty. If not, save the value of <code>topNode</code> in a variable and do <code>topNode = topNode.next</code>.</li></ol>
+<ol class="ex-hints" data-lang="de"><li><code>push</code>: mache das <code>next</code> des neuen Knotens zum aktuellen <code>topNode</code>, dann den neuen Knoten zum <code>topNode</code>.</li><li><code>pop</code>: prüfe zuerst, ob der Stapel leer ist. Wenn nicht, merke dir den Wert von <code>topNode</code> in einer Variablen und setze <code>topNode = topNode.next</code>.</li></ol>
+
+<script type="application/json" id="exercise">
+{
+ "block": 2,
+ "test": "topNode = null\n",
+ "expect": [
+  [
+   "(push(1), push(2), push(3), pop())",
+   3,
+   "Üç değer koyup birini çıkarınca",
+   "After pushing three values and popping one",
+   "Nach drei push und einem pop"
+  ],
+  [
+   "pop()",
+   2,
+   "Bir daha çıkarınca",
+   "Popping again",
+   "Noch ein pop"
+  ],
+  [
+   "walk(topNode)",
+   "1",
+   "Yığında kalan",
+   "What is left in the stack",
+   "Was im Stapel übrig ist"
+  ],
+  [
+   "[pop(), pop()]",
+   [
+    1,
+    null
+   ],
+   "Yığın boşalınca ve boşken çıkarınca",
+   "Emptying the stack and popping an empty one",
+   "Den Stapel leeren und von einem leeren pop"
+  ]
+ ]
+}
+</script>
+<script type="text/plain" id="ex-solution">
+function push(v)
+{
+  var node = new Node(v)
+  node.next = topNode
+  topNode = node
+}
+function pop()
+{
+  if(topNode == null)
+  {
+    return null
+  }
+  var v = topNode.data
+  topNode = topNode.next
+  return v
+}
+push(10)
+push(20)
+print pop()
+</script>
+</main>
+
+<script src="js/grammar.js"></script> <!-- the parser, compiled from grammer.pegjs (npm run build:grammar) -->
+<script src="js/codelang.js"></script> <!-- C++ <-> Düğüm -->
+<script src="js/layout.js"></script>
+<script src="vendor/codemirror-5.25.2/codemirror.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/javascript/javascript.js"></script>
+<script src="vendor/codemirror-5.25.2/mode/clike/clike.js"></script>
+<script src="vendor/codemirror-5.25.2/addon/edit/closetag.js"></script>
+<script src="js/addon/active-line.js"></script>
+<script src="js/addon/closebrackets.js"></script>
+<script src="js/editorSettings.js"></script>
+<script src="js/paper.js"></script>
+<script type="text/paperscript" src="js/linkedlist.js" canvas="myCanvas0"></script>
+<script src="js/exercise.js"></script>
+</body>
+</html>
