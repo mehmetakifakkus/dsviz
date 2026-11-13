@@ -7,3 +7,5 @@
 /test-results/
 /playwright-report/
 /blob-report/
+firebase-debug.log
+firestore-debug.log

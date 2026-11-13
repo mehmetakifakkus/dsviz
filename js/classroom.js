@@ -254,6 +254,7 @@
 				var t = load(TKEY);
 				if(!t) throw fail('auth', 'signed out');
 				if(t.emailVerified !== true) throw fail('unverified');
+				if(String(plan || '').length > 8000) throw fail('denied', 'plan too long');
 				var tries = 0;
 				function attempt(){
 					var code = newCode();
@@ -319,8 +320,8 @@
 				var item = q[0], r = item.record || {};
 				var base = 'classes/' + m.code + '/students/' + m.uid;
 				Object.keys(item.progress || {}).forEach(function(k){ m.progress = m.progress || {}; m.progress[k] = item.progress[k]; });
-				return b.create(studentHolder, base, 'attempts', null, {file: item.file, t: r.t || now(), lang: r.lang || 'dugum', code: String(r.code || '').slice(0, CODE_MAX),
-				                                                       kind: /^(pass|fail|error)$/.test(r.kind) ? r.kind : 'fail', error: r.error || null, results: JSON.stringify(r.results || [])})
+				return b.create(studentHolder, base, 'attempts', null, {file: String(item.file).slice(0, 80), t: r.t || now(), lang: r.lang || 'dugum', code: String(r.code || '').slice(0, CODE_MAX),
+				                                                       kind: /^(pass|fail|error)$/.test(r.kind) ? r.kind : 'fail', error: r.error ? String(r.error).slice(0, 4000) : null, results: resultsText(r.results)})
 					.then(function(){ return b.patch(studentHolder, base, {progress: m.progress || {}, updatedAt: now()}); })
 					.then(function(){ save(CKEY, Object.assign(load(CKEY) || {}, {progress: m.progress})); return prune(b, studentHolder, m.code, m.uid, item.file); })
 					.then(function(){ var rest2 = load(QKEY) || []; rest2.shift(); save(QKEY, rest2); return next(); });
@@ -332,6 +333,9 @@
 		},
 		_fake: fake
 	};
+
+	// the limits of firestore.rules: results as JSON text of at most 60000 characters (a larger one is left out)
+	function resultsText(results){ var text = JSON.stringify(results || []); return text.length <= 60000 ? text : '[]'; }
 
 	function attemptsOf(b, holder, code, uid, file){
 		return b.query(holder, 'classes/' + code + '/students/' + uid, 'attempts', file ? ['file', file] : null).then(function(rows){

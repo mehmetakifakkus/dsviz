@@ -6,10 +6,14 @@
   "scripts": {
     "start": "node tests/server.js",
     "test": "playwright test",
-    "build:grammar": "node tools/build-grammar.js"
+    "build:grammar": "node tools/build-grammar.js",
+    "test:rules": "firebase emulators:exec --project demo-dsviz --only firestore \"node --test tests/rules/rules.test.mjs\""
   },
   "license": "UNLICENSED",
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "1.63.0",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.36.0"
   }
 }
