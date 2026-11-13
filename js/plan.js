@@ -304,6 +304,58 @@
 		window.dsvTeacherState = function(){ return JSON.parse(JSON.stringify(state)); }; // for the tests
 	}
 
+	// ---------------------------------------------------------------------- the class of a plan link (class=CODE)
+	// The student joins with a nickname; then the checks of this plan's exercises go to the teacher
+	// (js/classroom.js, js/exercise.js). Nothing is requested before the student presses "join".
+	function classBox(found){
+		var m = /(?:^#|&)class=([A-Z0-9]{6})(?:&|$)/.exec(location.hash), C = window.dsvClassroom;
+		if(!m) return;
+		var code = m[1];
+		var box = el('div', {'class': 'tp-box pp-class', id: 'pp-class'});
+		root.appendChild(box);
+		function msg(text){ var p = box.querySelector('.pp-class-msg'); if(p) p.textContent = text || ''; }
+		function draw(){
+			box.textContent = '';
+			box.appendChild(el('h2', {}, t('ppClassTitle')));
+			if(!C || !C.enabled()){ box.appendChild(el('p', {}, t('ppClassOff'))); return; }
+			var me = C.membership();
+			if(me && me.code === code){
+				box.appendChild(el('p', {id: 'pp-member'}, t('ppMember', {name: me.className || code, nick: me.nick})));
+				var row = el('div', {'class': 'tp-row'});
+				var change = el('button', {type: 'button', 'class': 'tp-btn', id: 'pp-change'}, t('ppChange'));
+				var leave = el('button', {type: 'button', 'class': 'tp-btn', id: 'pp-leave'}, t('ppLeave'));
+				var wipe = el('button', {type: 'button', 'class': 'tp-btn danger', id: 'pp-leave-delete'}, t('ppLeaveDelete'));
+				change.addEventListener('click', function(){ C.leave(false).then(draw); });
+				leave.addEventListener('click', function(){ C.leave(false).then(draw); });
+				wipe.addEventListener('click', function(){ C.leave(true).then(draw); });
+				[change, leave, wipe].forEach(function(b){ row.appendChild(b); });
+				box.appendChild(row);
+				return;
+			}
+			box.appendChild(el('p', {}, t('ppClassCode', {code: code})));
+			var nick = el('input', {type: 'text', id: 'pp-nick', maxlength: '30', placeholder: t('ppNick'), 'aria-label': t('ppNick'), 'class': 'pp-nick'});
+			var join = el('button', {type: 'button', 'class': 'tp-btn primary', id: 'pp-join-btn'}, t('ppJoin'));
+			box.appendChild(nick);
+			box.appendChild(join);
+			box.appendChild(el('p', {'class': 'pp-class-msg', role: 'status', 'aria-live': 'polite'}));
+			join.addEventListener('click', function(){
+				if(!nick.value.trim()) return nick.focus();
+				var other = C.membership();
+				var ready = Promise.resolve();
+				if(other && other.code !== code){
+					if(!window.confirm(t('ppSwitchQ', {name: other.className || other.code}))) return;
+					ready = C.leave(false);
+				}
+				join.disabled = true;
+				ready.then(function(){ return C.join(code, nick.value.trim()); }).then(draw, function(e){
+					join.disabled = false;
+					msg(e && e.code === 'not-found' ? t('ppJoinNoClass') : e && e.code === 'denied' ? t('ppJoinClosed') : t('clErrNetwork'));
+				});
+			});
+		}
+		draw();
+	}
+
 	// ---------------------------------------------------------------------- the student's plan page
 	function buildPlan(){
 		var found = PLAN.fromHash(location.hash);
@@ -330,6 +382,8 @@
 		if(plan.dropped)
 			head.appendChild(el('p', {'class': 'pp-meta tp-warn'}, t('ppDropped', {n: plan.dropped})));
 		root.appendChild(head);
+
+		classBox(found);
 
 		var doneCount = plan.items.filter(function(x){ return doneMap[x.file]; }).length;
 		var bar = el('div', {'class': 'pp-progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(n), 'aria-valuenow': String(doneCount)});
@@ -372,5 +426,8 @@
 	}
 
 	if(kind === 'teacher') buildTeacher();
-	else if(kind === 'plan') buildPlan();
+	else if(kind === 'plan'){
+		buildPlan();
+		window.addEventListener('hashchange', function(){ location.reload(); }); // another plan or class link pasted into the same tab
+	}
 })();

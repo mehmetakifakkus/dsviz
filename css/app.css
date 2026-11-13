@@ -597,3 +597,10 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .cl-del-student { margin-left: 6px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .cl-del-student:hover { color: var(--viz-pointer); }
 .tp-hint { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+
+/* the class line of a joined student (exercise panel) and the class box of the plan page */
+.ex-class { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ex-class-status { color: var(--accent-text); font-weight: 600; }
+.pp-class h2 { margin-top: 0; }
+.pp-nick { display: block; width: 100%; max-width: 320px; box-sizing: border-box; margin: 6px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 14px; }
+.pp-class-msg { min-height: 1.2em; margin: 6px 0 0; color: var(--viz-pointer); font-size: 14px; }

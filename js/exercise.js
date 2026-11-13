@@ -172,11 +172,49 @@
 			history.unshift({t: new Date().toISOString(), lang: window.dsvCodeLang || 'dugum', code: (ed ? ed.getValue() : '').slice(0, CODE_MAX),
 			                 kind: kind, error: error || null, results: results || []});
 			history = history.slice(0, HMAX);
+			var made = history[0];
 			var all = readHistory();
 			all[file] = history;
 			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
 			renderHistory();
+			toClass(made);
 		}
+
+		// ---- the class: a student who joined one (plan.html#…&class=CODE) sends the checks of the class plan's
+		// exercises to the teacher (js/classroom.js). Without a membership nothing is requested.
+		var C = window.dsvClassroom;
+		var member = C && C.enabled() ? C.membership() : null;
+		if(member){
+			var inPlan = window.dsvPlan && window.dsvPlan.fromHash('#' + (member.plan || ''));
+			if(!inPlan || inPlan.plan.items.map(function(x){ return x.file; }).indexOf(file) < 0) member = null;
+		}
+		var classLine = null, classStatus = null;
+		if(member){
+			classLine = mk('div', 'ex-class');
+			classLine.appendChild(mk('span', 'ex-class-who', t('exClassSending', {nick: member.nick})));
+			var change = mk('a', 'ex-class-change', t('exClassChange'));
+			change.href = 'plan.html#' + member.plan + '&class=' + member.code;
+			classLine.appendChild(change);
+			classStatus = mk('span', 'ex-class-status');
+			classStatus.setAttribute('role', 'status');
+			classLine.appendChild(classStatus);
+			panel.appendChild(classLine);
+		}
+		function classResult(r){
+			if(!classStatus || !r) return;
+			if(r.removed){ classStatus.textContent = t('exClassRemoved'); classLine.querySelector('.ex-class-who').hidden = true; classLine.querySelector('.ex-class-change').hidden = true; member = null; }
+			else if(r.queued) classStatus.textContent = t('exClassQueued');
+			else if(r.sent) classStatus.textContent = t('exClassSent');
+		}
+		function toClass(h){
+			if(!member || !h) return;
+			var progress = {};
+			progress[file] = mine();
+			C.send(file, h, progress).then(classResult);
+		}
+		if(member && (function(){ try { return (JSON.parse(localStorage.getItem('dsv-class-queue') || '[]') || []).length > 0; } catch(e) { return false; } })())
+			C.flush().then(classResult);   // what could not be sent last time
+
 		function labelOf(r){ var e = (spec.expect || [])[r.i]; return (e && (e[langIndex] || e[2])) || r.label; } // in today's language
 		function firstIssue(h){
 			if(h.results && h.results.length) return labelOf(h.results[0]);

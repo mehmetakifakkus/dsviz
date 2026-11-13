@@ -272,3 +272,141 @@ test.describe('teacher page', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+// ---------------------------------------------------------------- students
+const FRAGMENT = 'plan=' + planStr(PLAN) + '&c=dugum';
+const exSolution = file => /<script type="text\/plain" id="ex-solution">\n([\s\S]*?)<\/script>/.exec(require('fs').readFileSync(require('path').join(__dirname, '..', file), 'utf8'))[1];
+
+async function studentBrowser(page, { fake = true } = {}) {
+	const problems = [];
+	page.on('pageerror', e => problems.push('page error: ' + e.message));
+	page.on('dialog', d => d.accept());
+	await page.addInitScript(fake => {
+		localStorage.setItem('dsv-tour-done', '1');
+		if (!sessionStorage.getItem('dsv-test-lang')) { sessionStorage.setItem('dsv-test-lang', '1'); localStorage.setItem('dsv-settings', JSON.stringify({ lang: 'tr' })); }
+		if (fake) window.dsvClassroomFake = true;
+	}, fake);
+	return problems;
+}
+// a verified teacher with a class (made through the data layer on the plan page)
+async function aClass(page, name = 'Sınıf A') {
+	await page.goto('/plan.html#' + FRAGMENT);
+	await page.waitForSelector('#plan-app > *', { state: 'attached' });
+	return page.evaluate(async ([name, fragment]) => {
+		const C = window.dsvClassroom;
+		if (!C.teacher()) { await C.signUp('ogretmen@okul.tr', 'gizli123').catch(() => C.signIn('ogretmen@okul.tr', 'gizli123')); C._fake.verify('ogretmen@okul.tr'); await C.refreshTeacher(); }
+		return C.createClass(name, fragment);
+	}, [name, FRAGMENT]);
+}
+async function joinAs(page, code, nick) {
+	await page.goto('/plan.html#' + FRAGMENT + '&class=' + code);
+	await page.waitForSelector('#pp-class');
+	await page.fill('#pp-nick', nick);
+	await page.click('#pp-join-btn');
+	await expect(page.locator('#pp-member')).toContainText(nick);
+}
+async function openExercise(page, file) {
+	await page.goto('/' + file + '#plan=' + planStr(PLAN) + '&c=dugum');
+	await page.waitForFunction(() => window.dsvReady === true);
+}
+const setStudentCode = (page, code) => page.evaluate(code => document.querySelectorAll('.CodeMirror')[1].CodeMirror.setValue(code), code);
+const teacherSees = (page, code) => page.evaluate(code => window.dsvClassroom.listStudents(code), code);
+
+test.describe('students', () => {
+	test('a student joins from the class link with a nickname; work from before joining stays at home', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		await page.addInitScript(() => localStorage.setItem('dsv-exercises', JSON.stringify({ 'exReverse.html': { done: true, attempts: 3 } })));
+		const code = await aClass(page);
+		await page.goto('/plan.html#' + FRAGMENT + '&class=' + code);
+		await expect(page.locator('#pp-class')).toContainText(code);
+		await expect(page.locator('#pp-class')).toContainText('takma ad');        // says what is sent and that only a nickname shows
+		await page.fill('#pp-nick', 'Ayşe');
+		await page.click('#pp-join-btn');
+		await expect(page.locator('#pp-member')).toContainText('Ayşe');
+		await expect(page.locator('#pp-member')).toContainText('Sınıf A');
+		const students = await teacherSees(page, code);
+		expect(students).toEqual([expect.objectContaining({ nick: 'Ayşe', progress: {} })]);
+		expect(problems).toEqual([]);
+	});
+
+	test('checks of the plan\'s exercises reach the teacher; other exercises send nothing', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		const code = await aClass(page);
+		await joinAs(page, code, 'Ayşe');
+		await openExercise(page, 'exReverse.html');
+		await expect(page.locator('.ex-class')).toContainText('Ayşe');
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-class-status')).toHaveText('Öğretmenine gönderildi.');
+		let s = (await teacherSees(page, code))[0];
+		expect(s.progress['exReverse.html']).toEqual({ done: false, attempts: 1 });
+		await openExercise(page, 'exLength.html');                              // not in the plan
+		await expect(page.locator('.ex-class')).toHaveCount(0);
+		await page.click('.ex-check');
+		s = (await teacherSees(page, code))[0];
+		expect(s.progress['exLength.html']).toBeUndefined();
+		expect(problems).toEqual([]);
+	});
+
+	test('without the network the check waits and is sent at the next visit', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		const code = await aClass(page);
+		await joinAs(page, code, 'Ayşe');
+		await openExercise(page, 'exReverse.html');
+		await page.evaluate(() => { window.dsvClassroom._fake.offline = true; });
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-class-status')).toContainText('sonra');
+		await expect(page.locator('.ex-result.bad')).toBeVisible();              // the check itself is unaffected
+		await page.reload();                                                    // the next visit, back online: the queue goes
+		await page.waitForFunction(() => window.dsvReady === true);
+		await expect(page.locator('.ex-class-status')).toHaveText('Öğretmenine gönderildi.');
+		expect((await teacherSees(page, code))[0].progress['exReverse.html']).toEqual({ done: false, attempts: 1 });
+		expect(problems).toEqual([]);
+	});
+
+	test('a student the teacher removed is told so, forgets the class and keeps working alone', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		const code = await aClass(page);
+		await joinAs(page, code, 'Ayşe');
+		const uid = await page.evaluate(() => window.dsvClassroom.membership().uid);
+		await page.evaluate(([code, uid]) => window.dsvClassroom.deleteStudent(code, uid), [code, uid]);
+		await openExercise(page, 'exReverse.html');
+		await setStudentCode(page, exSolution('exReverse.html'));
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-result.ok')).toBeVisible();
+		await expect(page.locator('.ex-class-status')).toContainText('çıkardı');
+		expect(await page.evaluate(() => localStorage.getItem('dsv-class'))).toBeNull();
+		expect(problems).toEqual([]);
+	});
+
+	test('"Değiştir" lets another student join on the same browser; a closed class and a second class are handled', async ({ page }) => {
+		const problems = await studentBrowser(page);
+		const code = await aClass(page);
+		await joinAs(page, code, 'Ayşe');
+		await page.click('#pp-change');
+		await page.fill('#pp-nick', 'Mehmet');
+		await page.click('#pp-join-btn');
+		await expect(page.locator('#pp-member')).toContainText('Mehmet');
+		expect((await teacherSees(page, code)).map(s => s.nick).sort()).toEqual(['Ayşe', 'Mehmet']);
+
+		const other = await aClass(page, 'Sınıf B');
+		await page.evaluate(code => window.dsvClassroom.setOpen(code, false), other);
+		await page.goto('/plan.html#' + FRAGMENT + '&class=' + other);
+		await page.fill('#pp-nick', 'Mehmet');
+		await page.click('#pp-join-btn');                                         // asks to switch (accepted), then the class is closed
+		await expect(page.locator('#pp-class')).toContainText('kapalı');
+		expect(problems).toEqual([]);
+	});
+
+	test('without joining, an exercise page asks nothing from Firebase', async ({ page }) => {
+		const outside = [];
+		await page.route(/googleapis\.com/, route => { outside.push(route.request().url()); return route.abort(); });
+		const problems = await studentBrowser(page, { fake: false });
+		await page.addInitScript(() => { window.dsvFirebaseConfigOverride = { apiKey: 'k', projectId: 'p' }; });
+		await openExercise(page, 'exReverse.html');
+		await page.evaluate(() => { window.dsvFirebaseConfig = window.dsvFirebaseConfigOverride; });
+		await page.click('.ex-check');
+		await expect(page.locator('.ex-result')).toBeVisible();
+		expect(outside).toEqual([]);
+		expect(problems).toEqual([]);
+	});
+});
