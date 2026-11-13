@@ -14,6 +14,7 @@ Bağlı listelerin (linked list) nasıl çalıştığını, yazdığınız kodu 
 - Dizilerde arama ve sıralama (ikili arama, seçmeli, kabarcık, eklemeli, hızlı, heap ve sayarak sıralama): dizi çubuk olarak da çizilir, karşılaştırılan hücreler çerçevelenir, oynatıcının yanında karşılaştırma ve yazma sayacı çalışır.
 - 2B diziler ve dinamik programlama: `new Array(3, 4)` ile matris, `g[i][j]` ile okuma ve yazma; tuvalde satır ve sütun numaralı bir ızgara çizilir (okunan hücreler çerçeveli, yazılan hücre turuncu, eski değer üstü çizili, indis değişkenleri satır ve sütun kenarında işaretli). Altı sayfa: matris gezme, Pascal üçgeni, ızgarada yol sayısı, en uzun ortak altdizi (LCS), sırt çantası ve N vezir (geri izleme).
 - Alıştırma modu: `ex*.html` sayfalarında öğrenci görevi okur, kodu yazar ve **Kontrol et**'e basar; gizli bir test kodu ve beklenen değerler sonucu denetler (öğrencinin çizimi bozulmaz). Başarısız denemeden sonra sırayla ipuçları açılır, iki başarısız denemeden sonra örnek çözüm gösterilebilir; her kod diliyle (Düğüm, Türkçe, C++, Java) çözülür. İlerleme tarayıcıda tutulur, menüde ✓ görünür, ders planında alıştırma yalnızca doğru çözülünce "yapıldı" sayılır. On altı alıştırma: listeyi ters çevir, ortadaki düğüm, uzunluk, sona ekle, yinelenenleri sil, liste sıralı mı, listede döngü var mı, bağlı listeyle yığın, dizide en büyük değer, ikili arama, kabarcık sıralama, ağacın yüksekliği, ağaçtaki değerlerin toplamı, matriste satır toplamı, Pascal üçgeni, ızgarada yol sayısı.
+- Sınıf (öğretmenler, `class.html`): öğretmen e-posta ve şifreyle girer (sınıf açmak için e-postası doğrulanmış olmalı), bir ders planıyla sınıf açar ve öğrencilere `plan.html#plan=…&class=KOD` bağlantısını verir. Öğrenci yalnızca bir takma adla katılır; plandaki alıştırmalarda yaptığı kontroller öğretmene gider. Öğretmen öğrenci × alıştırma tablosunu görür, bir öğrencinin denemelerini (kod, karşılaştırma çizimi, hata) açar, yeni katılımı kapatır, öğrenciyi ya da sınıfın bütün verisini siler. Veriler Firebase'te (Firestore) durur; sınıfa katılmamış hiç kimsenin sayfası dışarıya istek yapmaz. Kurulum aşağıda ("Sınıf kurulumu").
 - Alıştırmalarda öğrenci kendi hatasını görür: başarısız bir kontrolde her tutmayan beklentinin altında **beklenen** ve **senin sonucun** yan yana çizilir (liste, dizi, matris ya da tek değer; farklı, eksik ve fazla elemanlar işaretli). Her kontrol (geçen, kalan, kodu çalışmayan) tarayıcıda **deneme geçmişine** yazılır: öğrenci eski kodunu, sonucunu ve çizimini açıp editöre geri yükleyebilir. Her şey öğrencinin tarayıcısında kalır; gizli test kodu ve girdileri hiçbir yerde görünmez.
 - Adım karşılaştırma: her adımda değişen şeyin önceki hali (eski bağ, pointer'ın eski yeri, eski değer) soluk ve kesik çizgiyle arkada görünür; ayarlardan kapatılabilir.
 - Siteye ilk gelen kullanıcıya kısa bir tanıtım turu sayfanın bölümlerini sırayla gösterir (ayarlardan yeniden başlatılabilir).
@@ -43,6 +44,24 @@ python3 -m http.server 8000
 
 Ardından http://localhost:8000 adresini açın. Node.js kuruluysa `npm start` de olur (http://localhost:8765).
 
+## Sınıf kurulumu
+
+Sınıf özelliği bir Firebase projesine bağlanır; `js/firebase-config.js` boşken (`null`) özellik kapalıdır ve hiçbir sayfa dışarıya bağlanmaz.
+
+1. [Firebase konsolunda](https://console.firebase.google.com) yeni bir proje açın (Google Analytics gerekmez).
+2. **Authentication → Sign-in method**: *Email/Password* ve *Anonymous* yöntemlerini açın.
+3. **Authentication → Settings → Authorized domains**: sitenin alan adını ekleyin (ör. `mehmetakifakkus.github.io`).
+4. **Firestore Database → Create database**: üretim modunda, bir Avrupa bölgesinde (ör. `europe-west3`) oluşturun.
+5. **Firestore → Rules**: depodaki `firestore.rules` dosyasının içeriğini yapıştırıp yayınlayın (ya da `npx firebase deploy --only firestore:rules`).
+6. **Project settings → Your apps → Web app** ekleyin; çıkan `apiKey` ve `projectId` değerlerini `js/firebase-config.js` dosyasına yazın:
+   ```js
+   window.dsvFirebaseConfig = {apiKey: 'AIza...', projectId: 'proje-kimligi'};
+   ```
+   Bu değerler her Firebase web uygulamasında herkese açıktır; veriyi Firestore kuralları korur.
+7. Dönem sonunda öğretmen `class.html`'de "Sınıfı ve bütün verisini sil" ile sınıfın verisini siler; öğrenci de plan sayfasında "Ayrıl ve verilerimi sil" ile kendi verisini silebilir.
+
+Kurallar Firestore emülatöründe test edilir (Java 21 gerekir): `npm run test:rules`.
+
 ## Testler
 
 Testler [Playwright](https://playwright.dev) ile gerçek bir tarayıcıda çalışır ve GitHub Actions'ta her PR'da kendiliğinden çalıştırılır.
@@ -53,6 +72,7 @@ npx playwright install chromium
 npm test
 ```
 
+- `tests/classroom.spec.js`: sınıf; veri katmanı (sahte arka uç ve Firebase REST istekleri), öğretmen sayfası, öğrencinin katılması ve gönderimi. `tests/rules/rules.test.mjs`: Firestore kuralları, emülatörde (`npm run test:rules`).
 - `tests/exercise.spec.js`: alıştırma sayfaları; başlangıç kodu geçmez, örnek çözüm geçer, ipucu ve çözüm kuralları, hata ve sonsuz döngü deneme sayılmaz, ilerleme ve ders planı, dört kod dili.
 - `tests/grammar.spec.js`: tarayıcısız gramer testleri; örnek sayfalardaki her kod bloğunun ayrıştırılabildiğini ve zor girdilerin doğru okunduğunu kontrol eder.
 - `tests/pages.spec.js`: her sayfanın bütün bloklarını çalıştırır; hata olmamasını, sitenin dışına istek gitmemesini ve sayfanın beklenen son durumda bitmesini kontrol eder. **Yeni bir sayfa eklerken** beklenen son durumunu bu dosyadaki `EXPECTED` listesine yazın, yoksa test başarısız olur.

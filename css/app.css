@@ -571,3 +571,36 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .ex-hist-load:hover, .ex-hist-clear:hover { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }
 .ex-cmp-value { max-width: 100%; padding: 3px 6px; white-space: normal; overflow-wrap: anywhere; text-align: left; line-height: 1.3; }
 .ex-result li { overflow-wrap: anywhere; min-width: 0; }
+
+/* the teacher's class page (class.html) */
+.cl-who { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-size: 14px; }
+.cl-msg { min-height: 1.2em; margin: 6px 0; font-size: 14px; color: var(--accent-text); }
+.cl-auth input, .cl-new input, .cl-confirm input, .cl-link { display: block; width: 100%; box-sizing: border-box; margin: 6px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 14px; }
+.cl-verify[hidden], .cl-confirm[hidden], .cl-attempts[hidden] { display: none; }
+.cl-list { display: flex; flex-direction: column; gap: 6px; }
+.cl-class { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); }
+.cl-class code { font-size: 13px; color: var(--muted); }
+.cl-class .tp-btn { margin-left: auto; text-decoration: none; }
+.cl-closed { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--hl-false); color: var(--text); font-size: 12px; font-weight: 600; }
+.cl-back { display: inline-block; margin-bottom: 6px; font-size: 14px; }
+.cl-tools { margin: 10px 0; }
+.tp-btn.danger { border-color: var(--viz-pointer); color: var(--viz-pointer); }
+.cl-table-box { max-width: 100%; overflow-x: auto; margin: 10px 0; }
+.cl-table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+.cl-table th, .cl-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; white-space: nowrap; }
+.cl-table thead th { background: var(--surface-2); font-weight: 600; }
+.cl-table tbody th { text-align: left; font-weight: 600; }
+.cl-cell { cursor: pointer; }
+.cl-cell.done { background: var(--hl-true); }
+.cl-cell.tried { background: color-mix(in srgb, var(--viz-changed) 18%, transparent); }
+.cl-cell:hover, .cl-cell:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.cl-del-student { margin-left: 6px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.cl-del-student:hover { color: var(--viz-pointer); }
+.tp-hint { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+
+/* the class line of a joined student (exercise panel) and the class box of the plan page */
+.ex-class { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ex-class-status { color: var(--accent-text); font-weight: 600; }
+.pp-class h2 { margin-top: 0; }
+.pp-nick { display: block; width: 100%; max-width: 320px; box-sizing: border-box; margin: 6px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 14px; }
+.pp-class-msg { min-height: 1.2em; margin: 6px 0 0; color: var(--viz-pointer); font-size: 14px; }

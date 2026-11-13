@@ -111,5 +111,36 @@
 		return wrap;
 	}
 
+	// one attempt of the history (the student's exercise page and the teacher's class page):
+	// h = {t, lang, code, kind, error, results}; o = {label(result), issue(h), when(iso), load(h) or null, note (text) or null}
+	function attemptView(h, o){
+		var item = mk('details', 'ex-hist-item');
+		item.setAttribute('data-kind', h.kind);
+		var sum = mk('summary');
+		sum.appendChild(mk('span', 'ex-hist-icon', h.kind === 'pass' ? '✓' : h.kind === 'error' ? '⚠' : '✗'));
+		sum.appendChild(mk('span', 'ex-hist-when', o.when(h.t)));
+		sum.appendChild(mk('span', 'ex-hist-issue', o.issue(h)));
+		item.appendChild(sum);
+		item.appendChild(mk('pre', 'ex-hist-code', h.code));
+		(Array.isArray(h.results) ? h.results : []).forEach(function(r){
+			if(!r || typeof r !== 'object') return;
+			item.appendChild(mk('div', 'ex-hist-label', o.label(r)));
+			var d = !r.failed && r.actual !== undefined ? draw(r.shape, r.expected, r.actual, r.nonList) : null;
+			if(d) item.appendChild(d);
+			else if(r.error && r.error !== h.error) item.appendChild(mk('p', 'ex-hist-error', r.error));
+		});
+		if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
+		if(o.load){
+			var load = mk('button', 'ex-hist-load', t('exHistLoad'));
+			load.type = 'button';
+			load.addEventListener('click', function(){ o.load(h); });
+			item.appendChild(load);
+		}
+		else if(o.note)
+			item.appendChild(mk('p', 'ex-hist-lang', o.note));
+		return item;
+	}
+
 	window.dsvCompare = {shape: shape, draw: draw};
+	window.dsvAttemptView = attemptView;
 })();

@@ -286,7 +286,7 @@ test('examples menu opens, marks the page and closes', async ({ page }) => {
 	await expect(page.locator('body')).toHaveClass(/drawer-open/);
 
 	const examples = await page.evaluate(() => window.dsvExamples.reduce((n, g) => n + g.items.length, 0));
-	await expect(page.locator('.drawer a')).toHaveCount(examples + 2); // + the main page and the teachers' page
+	await expect(page.locator('.drawer a')).toHaveCount(examples + 3); // + the main page, the teachers' plan page and the classes page
 	await expect(page.locator('.drawer a.active')).toHaveAttribute('href', 'queue.html');
 	await expect(page.locator('.drawer a.active')).toBeVisible();
 

@@ -33,3 +33,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  firestore-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Firestore kurallarını emülatörde test et
+        run: npm run test:rules

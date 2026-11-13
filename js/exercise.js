@@ -172,11 +172,47 @@
 			history.unshift({t: new Date().toISOString(), lang: window.dsvCodeLang || 'dugum', code: (ed ? ed.getValue() : '').slice(0, CODE_MAX),
 			                 kind: kind, error: error || null, results: results || []});
 			history = history.slice(0, HMAX);
+			var made = history[0];
 			var all = readHistory();
 			all[file] = history;
 			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
 			renderHistory();
+			toClass(made);
 		}
+
+		// ---- the class: a student who joined one (plan.html#…&class=CODE) sends the checks of the class plan's
+		// exercises to the teacher (js/classroom.js). Without a membership nothing is requested.
+		var C = window.dsvClassroom;
+		var member = C && C.enabled() ? C.membership() : null;
+		if(member){
+			var inPlan = window.dsvPlan && window.dsvPlan.fromHash('#' + (member.plan || ''));
+			if(!inPlan || inPlan.plan.items.map(function(x){ return x.file; }).indexOf(file) < 0) member = null;
+		}
+		var classLine = null, classStatus = null;
+		if(member){
+			classLine = mk('div', 'ex-class');
+			classLine.appendChild(mk('span', 'ex-class-who', t('exClassSending', {nick: member.nick})));
+			var change = mk('a', 'ex-class-change', t('exClassChange'));
+			change.href = 'plan.html#' + member.plan + '&class=' + member.code;
+			classLine.appendChild(change);
+			classStatus = mk('span', 'ex-class-status');
+			classStatus.setAttribute('role', 'status');
+			classLine.appendChild(classStatus);
+			panel.appendChild(classLine);
+		}
+		function classResult(r){
+			if(!classStatus || !r) return;
+			if(r.removed){ classStatus.textContent = t('exClassRemoved'); classLine.querySelector('.ex-class-who').hidden = true; classLine.querySelector('.ex-class-change').hidden = true; member = null; }
+			else if(r.queued) classStatus.textContent = t('exClassQueued');
+			else if(r.sent) classStatus.textContent = t('exClassSent');
+		}
+		function toClass(h){
+			if(!member || !h) return;
+			C.send(file, h).then(classResult);   // the class counts the checks made since joining (not this browser's earlier work)
+		}
+		if(member && (function(){ try { return (JSON.parse(localStorage.getItem('dsv-class-queue') || '[]') || []).length > 0; } catch(e) { return false; } })())
+			C.flush().then(classResult);   // what could not be sent last time
+
 		function labelOf(r){ var e = (spec.expect || [])[r.i]; return (e && (e[langIndex] || e[2])) || r.label; } // in today's language
 		function firstIssue(h){
 			if(h.results && h.results.length) return labelOf(h.results[0]);
@@ -210,29 +246,10 @@
 			historySummary.textContent = t('exHistory', {n: history.length});
 			historyList.textContent = '';
 			history.forEach(function(h){
-				var item = mk('details', 'ex-hist-item');
-				item.setAttribute('data-kind', h.kind);
-				var sum = mk('summary');
-				sum.appendChild(mk('span', 'ex-hist-icon', h.kind === 'pass' ? '✓' : h.kind === 'error' ? '⚠' : '✗'));
-				sum.appendChild(mk('span', 'ex-hist-when', when(h.t)));
-				sum.appendChild(mk('span', 'ex-hist-issue', firstIssue(h)));
-				item.appendChild(sum);
-				item.appendChild(mk('pre', 'ex-hist-code', h.code));
-				(h.results || []).forEach(function(r){
-					item.appendChild(mk('div', 'ex-hist-label', labelOf(r)));
-					var d = drawingOf(r);
-					if(d) item.appendChild(d);
-					else if(r.error && r.error !== h.error) item.appendChild(mk('p', 'ex-hist-error', r.error));
-				});
-				if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
-				if(h.lang === (window.dsvCodeLang || 'dugum')){
-					var load = mk('button', 'ex-hist-load', t('exHistLoad'));
-					load.type = 'button';
-					load.addEventListener('click', function(){ var ed = editorOf(); if(ed){ ed.setValue(h.code); ed.focus(); } });
-					item.appendChild(load);
-				}
-				else
-					item.appendChild(mk('p', 'ex-hist-lang', t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})));
+				var same = h.lang === (window.dsvCodeLang || 'dugum');
+				var item = window.dsvAttemptView(h, {label: labelOf, issue: firstIssue, when: when,
+					load: same ? function(x){ var ed = editorOf(); if(ed){ ed.setValue(x.code); ed.focus(); } } : null,
+					note: same ? null : t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})});
 				historyList.appendChild(item);
 			});
 		}

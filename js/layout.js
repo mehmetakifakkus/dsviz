@@ -303,6 +303,7 @@
 	drawer.appendChild(head);
 	drawer.appendChild(el('a', {href: 'index.html', 'class': page === 'index.html' ? 'active' : ''}, esc(t('homeLink'))));
 	drawer.appendChild(el('a', {href: 'teacher.html', 'class': 'drawer-teacher' + (page === 'teacher.html' ? ' active' : '')}, esc(t('teacherLink'))));
+	drawer.appendChild(el('a', {href: 'class.html', 'class': 'drawer-teacher drawer-class' + (page === 'class.html' ? ' active' : '')}, esc(t('classLink'))));
 	// Each group folds: its title is a button with the number of pages, and only the group of
 	// the current page is open at first. The groups the user opened stay open (localStorage).
 	var openGroups = [];

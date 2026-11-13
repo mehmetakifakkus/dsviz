@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// The classroom (see js/classroom.js and docs/superpowers/specs/2026-11-13-classroom-design.md).
+//   classes/{code}                               {name, ownerUid, plan, open, createdAt}
+//   classes/{code}/students/{uid}                {nick, joinedAt, updatedAt, progress}
+//   classes/{code}/students/{uid}/attempts/{id}  {file, t, lang, code, kind, error, results}
+// Teachers: e-mail accounts; a verified e-mail opens a class. Students: anonymous accounts.
+// Tested on the emulator: npm run test:rules (tests/rules/rules.test.mjs).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function classPath(code) { return /databases/$(database)/documents/classes/$(code); }
+    function isOwner(code) { return signedIn() && get(classPath(code)).data.ownerUid == request.auth.uid; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+
+    match /classes/{code} {
+      function validClass(d) {
+        return d.keys().hasOnly(['name', 'ownerUid', 'plan', 'open', 'createdAt'])
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
+          && d.plan is string && d.plan.size() <= 8000
+          && d.open is bool && d.ownerUid is string
+          && d.createdAt is string && d.createdAt.size() <= 40;
+      }
+      // a class is read by its code; only its owner lists it (nobody can list every class and fill them)
+      allow get: if signedIn();
+      allow list: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn() && request.auth.token.email_verified == true
+        && request.resource.data.ownerUid == request.auth.uid && validClass(request.resource.data);
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid && validClass(request.resource.data);
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+
+      match /students/{uid} {
+        function validStudent(d) {
+          return d.keys().hasOnly(['nick', 'joinedAt', 'updatedAt', 'progress'])
+            && d.nick is string && d.nick.size() >= 1 && d.nick.size() <= 30
+            && d.joinedAt is string && d.joinedAt.size() <= 40
+            && d.updatedAt is string && d.updatedAt.size() <= 40
+            && d.progress is map && d.progress.size() <= 200;
+        }
+        allow read: if isSelf(uid) || isOwner(code);
+        // only into an open class; a removed student cannot come back unless the class is open
+        allow create: if isSelf(uid) && exists(classPath(code)) && get(classPath(code)).data.open == true
+          && validStudent(request.resource.data);
+        allow update: if isSelf(uid) && exists(classPath(code)) && validStudent(request.resource.data);
+        allow delete: if isSelf(uid) || isOwner(code);
+
+        match /attempts/{id} {
+          allow read: if isSelf(uid) || isOwner(code);
+          // only while the student's record exists: after the teacher removes it, nothing more is written
+          allow create: if isSelf(uid) && exists(classPath(code))
+            && exists(/databases/$(database)/documents/classes/$(code)/students/$(uid))
+            && request.resource.data.keys().hasOnly(['file', 't', 'lang', 'code', 'kind', 'error', 'results'])
+            && request.resource.data.file is string && request.resource.data.file.size() <= 80
+            && request.resource.data.code is string && request.resource.data.code.size() <= 5000
+            && request.resource.data.kind in ['pass', 'fail', 'error']
+            && request.resource.data.t is string && request.resource.data.t.size() <= 40
+            && request.resource.data.lang in ['dugum', 'turkce', 'cpp', 'java']
+            && request.resource.data.results is string && request.resource.data.results.size() <= 60000
+            && request.resource.data.results.matches('\\[.*\\]')
+            && (request.resource.data.error == null || (request.resource.data.error is string && request.resource.data.error.size() <= 4000));
+          allow update: if false;
+          allow delete: if isSelf(uid) || isOwner(code);
+        }
+      }
+    }
+  }
+}
