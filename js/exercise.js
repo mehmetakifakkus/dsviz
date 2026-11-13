@@ -143,15 +143,96 @@
 			return window.dsvCompare.draw(r.shape, r.expected, r.actual, r.nonList);
 		}
 
+		// ---- the attempt history: every check, kept in this browser ('dsv-attempts': {file: [record...]}, newest first)
+		var HKEY = 'dsv-attempts', HMAX = 10, CODE_MAX = 5000;
+		var LANG_NAMES = {dugum: 'Düğüm', turkce: 'Düğüm (Türkçe)', cpp: 'C++', java: 'Java'};
+		function readHistory(){
+			try { var all = JSON.parse(localStorage.getItem(HKEY) || '{}'); return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
+			catch(e) { return {}; }
+		}
+		var history = (function(){ var h = readHistory()[file]; return Array.isArray(h) ? h : []; })(); // kept here too: a browser that stores nothing still shows the visit's attempts
+		function editorOf(){ var cm = card.querySelector('.CodeMirror'); return cm && cm.CodeMirror; }
+		function remember(kind, error, results){
+			var ed = editorOf();
+			history.unshift({t: new Date().toISOString(), lang: window.dsvCodeLang || 'dugum', code: (ed ? ed.getValue() : '').slice(0, CODE_MAX),
+			                 kind: kind, error: error || null, results: results || []});
+			history = history.slice(0, HMAX);
+			var all = readHistory();
+			all[file] = history;
+			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
+			renderHistory();
+		}
+		function labelOf(r){ var e = (spec.expect || [])[r.i]; return (e && (e[langIndex] || e[2])) || r.label; } // in today's language
+		function firstIssue(h){
+			if(h.results && h.results.length) return labelOf(h.results[0]);
+			if(h.error) return String(h.error).split('\n')[0];
+			return t(h.kind === 'pass' ? 'exHistPass' : h.kind === 'error' ? 'exHistError' : 'exHistFail');
+		}
+		function when(iso){
+			var d = new Date(iso);
+			try { return d.toLocaleString(window.dsv.settings.lang || 'tr', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); }
+			catch(e) { return d.toISOString().slice(0, 16).replace('T', ' '); }
+		}
+		var historyBox = mk('details', 'ex-history');
+		var historySummary = mk('summary');
+		historyBox.appendChild(historySummary);
+		var historyList = mk('div', 'ex-hist-list');
+		historyBox.appendChild(historyList);
+		var clearBtn = mk('button', 'ex-hist-clear', t('exHistClear'));
+		clearBtn.type = 'button';
+		historyBox.appendChild(clearBtn);
+		panel.parentNode.insertBefore(historyBox, panel.nextSibling);
+		clearBtn.addEventListener('click', function(){
+			history = [];
+			var all = readHistory();
+			delete all[file];
+			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
+			renderHistory();
+		});
+		function renderHistory(){
+			historyBox.hidden = history.length === 0;
+			historySummary.textContent = t('exHistory', {n: history.length});
+			historyList.textContent = '';
+			history.forEach(function(h){
+				var item = mk('details', 'ex-hist-item');
+				item.setAttribute('data-kind', h.kind);
+				var sum = mk('summary');
+				sum.appendChild(mk('span', 'ex-hist-icon', h.kind === 'pass' ? '✓' : h.kind === 'error' ? '⚠' : '✗'));
+				sum.appendChild(mk('span', 'ex-hist-when', when(h.t)));
+				sum.appendChild(mk('span', 'ex-hist-issue', firstIssue(h)));
+				item.appendChild(sum);
+				item.appendChild(mk('pre', 'ex-hist-code', h.code));
+				(h.results || []).forEach(function(r){
+					item.appendChild(mk('div', 'ex-hist-label', labelOf(r)));
+					var d = drawingOf(r);
+					if(d) item.appendChild(d);
+				});
+				if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
+				if(h.lang === (window.dsvCodeLang || 'dugum')){
+					var load = mk('button', 'ex-hist-load', t('exHistLoad'));
+					load.type = 'button';
+					load.addEventListener('click', function(){ var ed = editorOf(); if(ed){ ed.setValue(h.code); ed.focus(); } });
+					item.appendChild(load);
+				}
+				else
+					item.appendChild(mk('p', 'ex-hist-lang', t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})));
+				historyList.appendChild(item);
+			});
+		}
+		renderHistory();
+
 		check.addEventListener('click', function(){
 			var rec = mine();
 			if(!window.dsvRunBlock((spec.block || 1) - 1)){ // the student's own error: explained in the output panel, not an attempt
+				var out = document.getElementById('output');
+				remember('error', out ? out.textContent.trim() : '');
 				show(false, t('exRunError'));
 				return;
 			}
 			var typed = window.dsvPrintedText();      // what the student's run printed (the output panel fills only while it is animated)
 			var failures = [];
 			var ran = spec.test ? window.dsvRunQuiet(spec.test) : {ok: true, error: ''};
+			var testError = ran.ok ? null : ran.error;
 			if(!ran.ok)
 				failures.push(t('exTestError', {error: ran.error}));
 			else
@@ -171,6 +252,7 @@
 			if(!failures.length){
 				rec.done = true;
 				save(rec);
+				remember('pass');
 				show(true, t('exOk'));
 				var link = document.querySelector('.drawer a[href="' + file + '"]');          // the menu shows it now, not at the next load
 				if(link && !link.querySelector('.ex-mark')){
@@ -182,6 +264,7 @@
 			}
 			else {
 				save(rec);
+				remember('fail', testError, failures.map(function(f){ return f.result; }).filter(Boolean));
 				show(false, t('exBad'), failures);
 			}
 			refresh();

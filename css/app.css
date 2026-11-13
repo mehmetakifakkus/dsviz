@@ -546,3 +546,26 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .ex-cmp-arrow { color: var(--muted); font-size: 13px; }
 .ex-cmp-empty { color: var(--muted); font-style: italic; font-size: 13px; }
 @media (max-width: 600px) { .ex-compare { flex-direction: column; } }
+
+/* exercises: the attempt history under the panel */
+.ex-history { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.ex-history[hidden] { display: none; }
+.ex-history > summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.ex-hist-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.ex-hist-item { border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px; background: var(--surface-2); min-width: 0; }
+.ex-hist-item > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 13px; }
+.ex-hist-icon { font-weight: 700; }
+.ex-hist-item[data-kind="pass"] .ex-hist-icon { color: #16a34a; }
+.ex-hist-item[data-kind="fail"] .ex-hist-icon { color: var(--viz-pointer); }
+.ex-hist-item[data-kind="error"] .ex-hist-icon { color: var(--viz-changed); }
+.ex-hist-when { color: var(--muted); }
+.ex-hist-issue { min-width: 0; overflow-wrap: anywhere; }
+.ex-hist-code { margin: 8px 0; padding: 8px 10px; max-height: 260px; overflow: auto; border-radius: 8px; background: var(--code-bg); border: 1px solid var(--border); font-size: 12px; }
+.ex-hist-label { margin-top: 6px; font-size: 13px; font-weight: 600; }
+.ex-hist-error { margin: 6px 0; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex-hist-lang { margin: 6px 0; font-size: 13px; color: var(--muted); }
+.ex-hist-load, .ex-hist-clear {
+  margin-top: 6px; height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer;
+}
+.ex-hist-load:hover, .ex-hist-clear:hover { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }

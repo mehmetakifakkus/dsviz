@@ -337,3 +337,104 @@ test.describe('comparison drawing', () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+test.describe('attempt history', () => {
+	const items = page => page.locator('.ex-history .ex-hist-item');
+	const kinds = page => items(page).evaluateAll(els => els.map(e => e.getAttribute('data-kind')));
+	const setSetting = (page, key, value) => page.evaluate(([k, v]) => {
+		const s = JSON.parse(localStorage.getItem('dsv-settings') || '{}'); s[k] = v; localStorage.setItem('dsv-settings', JSON.stringify(s));
+	}, [key, value]);
+	const reload = async page => { await page.reload(); await page.waitForFunction(() => window.dsvReady === true); };
+
+	test('every check is kept, newest first; a code that does not run is kept but is not an attempt', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		await expect(page.locator('.ex-history')).toBeHidden();             // nothing yet
+		await check(page);                                                  // the starter fails
+		await setStudent(page, 'var q = nothing\n');
+		await check(page);                                                  // does not run
+		await setStudent(page, solutionOf('exReverse.html'));
+		await check(page);                                                  // passes
+		await expect(page.locator('.ex-history summary').first()).toHaveText('Önceki denemelerim (3)');
+		expect(await kinds(page)).toEqual(['pass', 'error', 'fail']);
+		expect((await progress(page))['exReverse.html'].attempts).toBe(2);
+		expect(problems).toEqual([]);
+	});
+
+	test('an attempt shows its code, its drawing and its first issue in the current language; its code can be loaded back', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		const wrong = 'function reverse(head)\n{\n  return head\n}\n';
+		await setStudent(page, wrong);
+		await check(page);
+		await page.locator('.ex-history > summary').click();
+		const item = items(page).first();
+		await expect(item.locator('summary')).toContainText('Dört düğümlü listeyi ters çevirince');
+		await item.locator('summary').click();
+		await expect(item.locator('pre.ex-hist-code')).toHaveText(wrong);
+		await expect(item.locator('.ex-compare')).toHaveCount(1);
+
+		await setStudent(page, 'something else\n');
+		await item.locator('.ex-hist-load').click();
+		expect(await page.evaluate(() => document.querySelectorAll('.CodeMirror')[1].CodeMirror.getValue())).toBe(wrong);
+
+		await setSetting(page, 'lang', 'en');
+		await reload(page);
+		await expect(items(page)).toHaveCount(1);                            // kept after a reload
+		await expect(items(page).first().locator('summary')).toContainText('Reversing a list of four nodes');
+		expect(problems).toEqual([]);
+	});
+
+	test('an attempt written in another code language cannot be loaded, but its code is shown', async ({ page }) => {
+		const problems = await openPage(page, 'exReverse.html');
+		await check(page);
+		await setSetting(page, 'codeLang', 'cpp');
+		await reload(page);
+		const item = items(page).first();
+		await page.locator('.ex-history > summary').click();
+		await item.locator('summary').click();
+		await expect(item.locator('.ex-hist-load')).toHaveCount(0);
+		await expect(item.locator('.ex-hist-lang')).toContainText('Düğüm');
+		await expect(item.locator('pre.ex-hist-code')).toContainText('function reverse(head)');
+		expect(problems).toEqual([]);
+	});
+
+	test('ten attempts are kept, long code is cut, the history can be cleared without touching progress', async ({ page }) => {
+		const problems = await openPage(page, 'exLength.html');
+		for (let k = 0; k < 11; k++) await check(page);
+		await expect(items(page)).toHaveCount(10);
+		await setStudent(page, solutionOf('exLength.html') + '// ' + 'x'.repeat(6000) + '\n');
+		await check(page);
+		const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('dsv-attempts'))['exLength.html'][0].code.length);
+		expect(saved).toBe(5000);
+		await page.locator('.ex-history > summary').click();
+		await page.locator('.ex-hist-clear').click();
+		await expect(page.locator('.ex-history')).toBeHidden();
+		await expect(page.locator('.ex-status')).toHaveText('Yapıldı ✓');
+		expect((await progress(page))['exLength.html'].done).toBe(true);
+		expect(problems).toEqual([]);
+	});
+
+	test('a crash only on hidden inputs is a failed attempt with its error, and nothing hidden is kept', async ({ page }) => {
+		const problems = await openPage(page, 'exMiddle.html');
+		await setStudent(page, 'function middle(head)\n{\n  return head.next.next.next.next.next\n}\n');
+		await check(page);
+		expect(await kinds(page)).toEqual(['fail']);
+		const stored = await page.evaluate(() => localStorage.getItem('dsv-attempts'));
+		expect(stored).toContain('null');                                  // the explained null-pointer message
+		expect(stored).not.toMatch(/build|walk\(|load\d/);
+		expect(await page.locator('.ex-history').textContent()).not.toMatch(/build|walk\(|load\d/);
+		expect(problems).toEqual([]);
+	});
+
+	test('with storage blocked the history still works during the visit', async ({ page }) => {
+		await page.addInitScript(() => {
+			const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+			Storage.prototype.getItem = function(k){ if (k === 'dsv-attempts') throw new Error('blocked'); return get.call(this, k); };
+			Storage.prototype.setItem = function(k, v){ if (k === 'dsv-attempts') throw new Error('quota'); return set.call(this, k, v); };
+		});
+		const problems = await openPage(page, 'exReverse.html');
+		await check(page);
+		await check(page);
+		await expect(items(page)).toHaveCount(2);
+		expect(problems).toEqual([]);
+	});
+});
