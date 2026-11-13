@@ -110,11 +110,20 @@
 			solution.open = true;
 		});
 
+		var sawNonList = false, nonListValue; // walk() was given something that is not a list: the drawing shows that value
 		function walk(h, field){
-			if(h !== null && h !== undefined && typeof h !== 'object') return String(h);   // a number, a string, true...: not a list, say what it is
+			if(h !== null && h !== undefined && typeof h !== 'object'){ sawNonList = true; nonListValue = h; return String(h); }   // a number, a string, true...: not a list, say what it is
 			var out = [];
 			for(var n = h; n && out.length < 50; n = n[field || 'next']) out.push(n.data);
 			return out.join('>');
+		}
+		// a value as JSON data for the drawing and the history: something that is not JSON (a function, a node with
+		// a cycle) or very large comes back as its text
+		function asData(v){
+			var p = plain(v);
+			if(p === undefined) return String(v);
+			if(p.length > 2000) return p.slice(0, 2000) + '…';
+			try { return JSON.parse(p); } catch(e) { return p; }
 		}
 		function plain(v){
 			try { return JSON.stringify(v === undefined ? null : v, function(k, x){ return x === undefined ? null : x; }); }
@@ -126,33 +135,142 @@
 			result.textContent = text;
 			if(lines && lines.length){
 				var ul = mk('ul');
-				lines.forEach(function(l){ ul.appendChild(mk('li', '', l)); });
+				lines.forEach(function(l){
+					var li = mk('li', '', typeof l === 'string' ? l : l.text);
+					var drawing = typeof l === 'string' ? null : drawingOf(l.result);
+					if(drawing) li.appendChild(drawing);
+					ul.appendChild(li);
+				});
 				result.appendChild(ul);
 			}
 		}
 
+		// a failing expectation, as drawn and kept in the history: {i, label, expected, actual, shape, nonList}
+		function drawingOf(r){
+			if(!r || !window.dsvCompare || r.failed) return null;   // no value: the expression itself failed
+			return window.dsvCompare.draw(r.shape, r.expected, r.actual, r.nonList);
+		}
+
+		// ---- the attempt history: every check, kept in this browser ('dsv-attempts': {file: [record...]}, newest first)
+		var HKEY = 'dsv-attempts', HMAX = 10, CODE_MAX = 5000;
+		var LANG_NAMES = {dugum: 'Düğüm', turkce: 'Düğüm (Türkçe)', cpp: 'C++', java: 'Java'};
+		function readHistory(){
+			try { var all = JSON.parse(localStorage.getItem(HKEY) || '{}'); return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
+			catch(e) { return {}; }
+		}
+		// a saved entry that is not what this page writes (edited by hand, an older format) is left out
+		function cleanEntry(h){
+			if(!h || typeof h !== 'object' || Array.isArray(h)) return null;
+			var results = Array.isArray(h.results) ? h.results.filter(function(r){ return r && typeof r === 'object' && !Array.isArray(r); }) : [];
+			return {t: String(h.t || ''), lang: String(h.lang || 'dugum'), code: String(h.code || ''), kind: h.kind === 'pass' || h.kind === 'error' ? h.kind : 'fail',
+			        error: h.error ? String(h.error) : null, results: results};
+		}
+		var history = (function(){ var h = readHistory()[file]; return Array.isArray(h) ? h.map(cleanEntry).filter(Boolean).slice(0, HMAX) : []; })(); // kept here too: a browser that stores nothing still shows the visit's attempts
+		function editorOf(){ var cm = card.querySelector('.CodeMirror'); return cm && cm.CodeMirror; }
+		function remember(kind, error, results){
+			var ed = editorOf();
+			history.unshift({t: new Date().toISOString(), lang: window.dsvCodeLang || 'dugum', code: (ed ? ed.getValue() : '').slice(0, CODE_MAX),
+			                 kind: kind, error: error || null, results: results || []});
+			history = history.slice(0, HMAX);
+			var all = readHistory();
+			all[file] = history;
+			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
+			renderHistory();
+		}
+		function labelOf(r){ var e = (spec.expect || [])[r.i]; return (e && (e[langIndex] || e[2])) || r.label; } // in today's language
+		function firstIssue(h){
+			if(h.results && h.results.length) return labelOf(h.results[0]);
+			if(h.error) return String(h.error).split('\n')[0];
+			return t(h.kind === 'pass' ? 'exHistPass' : h.kind === 'error' ? 'exHistError' : 'exHistFail');
+		}
+		function when(iso){
+			var d = new Date(iso);
+			if(isNaN(d.getTime())) return '';
+			try { return d.toLocaleString(window.dsv.settings.lang || 'tr', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); }
+			catch(e) { return d.toISOString().slice(0, 16).replace('T', ' '); }
+		}
+		var historyBox = mk('details', 'ex-history');
+		var historySummary = mk('summary');
+		historyBox.appendChild(historySummary);
+		var historyList = mk('div', 'ex-hist-list');
+		historyBox.appendChild(historyList);
+		var clearBtn = mk('button', 'ex-hist-clear', t('exHistClear'));
+		clearBtn.type = 'button';
+		historyBox.appendChild(clearBtn);
+		panel.parentNode.insertBefore(historyBox, panel.nextSibling);
+		clearBtn.addEventListener('click', function(){
+			history = [];
+			var all = readHistory();
+			delete all[file];
+			try { localStorage.setItem(HKEY, JSON.stringify(all)); } catch(e) {}
+			renderHistory();
+		});
+		function renderHistory(){
+			historyBox.hidden = history.length === 0;
+			historySummary.textContent = t('exHistory', {n: history.length});
+			historyList.textContent = '';
+			history.forEach(function(h){
+				var item = mk('details', 'ex-hist-item');
+				item.setAttribute('data-kind', h.kind);
+				var sum = mk('summary');
+				sum.appendChild(mk('span', 'ex-hist-icon', h.kind === 'pass' ? '✓' : h.kind === 'error' ? '⚠' : '✗'));
+				sum.appendChild(mk('span', 'ex-hist-when', when(h.t)));
+				sum.appendChild(mk('span', 'ex-hist-issue', firstIssue(h)));
+				item.appendChild(sum);
+				item.appendChild(mk('pre', 'ex-hist-code', h.code));
+				(h.results || []).forEach(function(r){
+					item.appendChild(mk('div', 'ex-hist-label', labelOf(r)));
+					var d = drawingOf(r);
+					if(d) item.appendChild(d);
+					else if(r.error && r.error !== h.error) item.appendChild(mk('p', 'ex-hist-error', r.error));
+				});
+				if(h.error) item.appendChild(mk('p', 'ex-hist-error', h.error));
+				if(h.lang === (window.dsvCodeLang || 'dugum')){
+					var load = mk('button', 'ex-hist-load', t('exHistLoad'));
+					load.type = 'button';
+					load.addEventListener('click', function(){ var ed = editorOf(); if(ed){ ed.setValue(h.code); ed.focus(); } });
+					item.appendChild(load);
+				}
+				else
+					item.appendChild(mk('p', 'ex-hist-lang', t('exHistOtherLang', {lang: LANG_NAMES[h.lang] || h.lang})));
+				historyList.appendChild(item);
+			});
+		}
+		renderHistory();
+
 		check.addEventListener('click', function(){
 			var rec = mine();
 			if(!window.dsvRunBlock((spec.block || 1) - 1)){ // the student's own error: explained in the output panel, not an attempt
+				var out = document.getElementById('output');
+				remember('error', out ? out.textContent.trim() : '');
 				show(false, t('exRunError'));
 				return;
 			}
 			var typed = window.dsvPrintedText();      // what the student's run printed (the output panel fills only while it is animated)
 			var failures = [];
 			var ran = spec.test ? window.dsvRunQuiet(spec.test) : {ok: true, error: ''};
+			var testError = ran.ok ? null : ran.error;
 			if(!ran.ok)
 				failures.push(t('exTestError', {error: ran.error}));
 			else
-				(spec.expect || []).forEach(function(e){
+				(spec.expect || []).forEach(function(e, i){
+					sawNonList = false;
 					var got = window.dsvEvalQuiet(e[0], {walk: walk, back: function(h){ return walk(h, 'prev'); }, output: function(){ return typed; }});
 					var actual = got.ok ? plain(got.value) : got.error;
-					if(!got.ok || actual !== plain(e[1]))
-						failures.push(t('exExpected', {label: e[langIndex] || e[2] || e[0], expected: plain(e[1]), actual: actual}));
+					if(!got.ok || actual !== plain(e[1])){
+						var label = e[langIndex] || e[2] || e[0];
+						var shape = window.dsvCompare ? window.dsvCompare.shape(e[0], e[1]) : 'value';
+						var raw = sawNonList && shape === 'list' ? nonListValue : got.value;   // a list check that got a number shows the number
+						var res = {i: i, label: label, expected: e[1], actual: got.ok ? asData(raw) : null, shape: shape, nonList: sawNonList};
+						if(!got.ok){ res.failed = true; res.error = got.error; }   // its own explained error (a real null result is drawn)
+						failures.push({text: t('exExpected', {label: label, expected: plain(e[1]), actual: actual}), result: res});
+					}
 				});
 			rec.attempts += 1;
 			if(!failures.length){
 				rec.done = true;
 				save(rec);
+				remember('pass');
 				show(true, t('exOk'));
 				var link = document.querySelector('.drawer a[href="' + file + '"]');          // the menu shows it now, not at the next load
 				if(link && !link.querySelector('.ex-mark')){
@@ -164,6 +282,9 @@
 			}
 			else {
 				save(rec);
+				var kept = failures.map(function(f){ return f.result; }).filter(Boolean);
+				var firstError = testError || (kept.filter(function(r){ return r.error; })[0] || {}).error || null;
+				remember('fail', firstError, kept);
 				show(false, t('exBad'), failures);
 			}
 			refresh();
