@@ -604,3 +604,15 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .pp-class h2 { margin-top: 0; }
 .pp-nick { display: block; width: 100%; max-width: 320px; box-sizing: border-box; margin: 6px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 14px; }
 .pp-class-msg { min-height: 1.2em; margin: 6px 0 0; color: var(--viz-pointer); font-size: 14px; }
+
+/* the menu search */
+.drawer-search { margin: 0 4px 8px; }
+.drawer-search input {
+  width: 100%; box-sizing: border-box; height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface-2); color: var(--text); font-size: 14px;
+}
+.drawer-search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; background: var(--surface); }
+.drawer.searching .drawer-items { display: block; }
+.drawer.searching .drawer-chevron { visibility: hidden; }
+.drawer-group[hidden], .drawer-items a[hidden], .drawer-empty[hidden] { display: none; }
+.drawer-empty { margin: 8px 10px; color: var(--muted); font-size: 14px; }

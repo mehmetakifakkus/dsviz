@@ -301,6 +301,12 @@
 	var closeBtn = el('button', {'class': 'icon-btn', 'aria-label': t('close'), title: t('close')}, ICON.close);
 	head.appendChild(closeBtn);
 	drawer.appendChild(head);
+	// search: every page title in Turkish, English and German, the group names and the file names; Turkish
+	// letters and accents do not matter (agac finds ağaç), every word must be found
+	var searchBox = el('div', {'class': 'drawer-search'},
+		'<input type="search" autocomplete="off" spellcheck="false" placeholder="' + esc(t('menuSearch')) + '" aria-label="' + esc(t('menuSearch')) + '">');
+	var searchInput = searchBox.querySelector('input');
+	drawer.appendChild(searchBox);
 	drawer.appendChild(el('a', {href: 'index.html', 'class': page === 'index.html' ? 'active' : ''}, esc(t('homeLink'))));
 	drawer.appendChild(el('a', {href: 'teacher.html', 'class': 'drawer-teacher' + (page === 'teacher.html' ? ' active' : '')}, esc(t('teacherLink'))));
 	drawer.appendChild(el('a', {href: 'class.html', 'class': 'drawer-teacher drawer-class' + (page === 'class.html' ? ' active' : '')}, esc(t('classLink'))));
@@ -316,9 +322,12 @@
 		var btn = el('button', {'class': 'drawer-group-btn', type: 'button', 'aria-expanded': open ? 'true' : 'false', 'aria-controls': 'menu-group-' + gi},
 			'<span>' + esc(pick(g.group)) + '</span><span class="drawer-count">' + g.items.length + '</span>' + ICON.chevron);
 		var items = el('div', {'class': 'drawer-items', id: 'menu-group-' + gi});
+		var groupWords = [g.group.tr, g.group.en, g.group.de].join(' ');
 		g.items.forEach(function(it){
 			var finished = (exerciseProgress()[it[0]] || {}).done === true; // an exercise the student solved
-			items.appendChild(el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1])) + (finished ? ' <span class="ex-mark" title="' + esc(t('exDone')) + '">✓</span>' : '')));
+			var a = el('a', {href: it[0], 'class': it[0] === page ? 'active' : ''}, esc(pick(it[1])) + (finished ? ' <span class="ex-mark" title="' + esc(t('exDone')) + '">✓</span>' : ''));
+			a.setAttribute('data-search', searchable([it[1].tr, it[1].en, it[1].de, it[0].replace(/\.html$/, '').replace(/([a-z])([A-Z])/g, '$1 $2'), groupWords].join(' ')));
+			items.appendChild(a);
 		});
 		btn.addEventListener('click', function(){
 			var now = !box.classList.contains('open');
@@ -331,6 +340,41 @@
 		box.appendChild(btn);
 		box.appendChild(items);
 		drawer.appendChild(box);
+	});
+
+	var emptyNote = el('p', {'class': 'drawer-empty', hidden: ''}, esc(t('menuNoResults')));
+	drawer.appendChild(emptyNote);
+	function searchable(text){
+		return String(text || '').replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+	}
+	function filterMenu(){
+		var words = searchable(searchInput.value).split(/\s+/).filter(Boolean), found = 0;
+		drawer.classList.toggle('searching', words.length > 0);
+		Array.prototype.forEach.call(drawer.querySelectorAll('.drawer-group'), function(box){
+			var links = box.querySelectorAll('.drawer-items a'), n = 0;
+			Array.prototype.forEach.call(links, function(a){
+				var hit = words.every(function(w){ return a.getAttribute('data-search').indexOf(w) >= 0; });
+				a.hidden = words.length > 0 && !hit;
+				if(hit) n++;
+			});
+			box.hidden = words.length > 0 && n === 0;
+			box.querySelector('.drawer-count').textContent = words.length ? n : links.length;
+			found += n;
+		});
+		emptyNote.hidden = !(words.length && found === 0);
+	}
+	searchInput.addEventListener('input', filterMenu);
+	searchInput.addEventListener('keydown', function(e){
+		if(e.key === 'Enter'){
+			var first = drawer.querySelector('.drawer-group:not([hidden]) .drawer-items a:not([hidden])');
+			if(first && searchInput.value.trim()){ e.preventDefault(); location.href = first.getAttribute('href'); }
+		}
+		else if(e.key === 'Escape' && searchInput.value){ // the first Escape clears the search, the next one closes the menu
+			e.preventDefault();
+			e.stopPropagation();
+			searchInput.value = '';
+			filterMenu();
+		}
 	});
 
 	function setDrawer(open){ document.body.classList.toggle('drawer-open', open); }

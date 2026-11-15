@@ -280,6 +280,50 @@ test('the code language is chosen in the settings; a shared C++ link stays C++',
 	expect(problems).toEqual([]);
 });
 
+test('the menu search finds pages by title in any of the three languages, ignores Turkish letters and accents, and shows only the matches', async ({ page }) => {
+	const problems = await openPage(page, 'queue.html');
+	await page.locator('.menu-btn').click();
+	const search = page.locator('.drawer-search input');
+	const shown = () => page.locator('.drawer-items a:visible').evaluateAll(as => as.map(a => a.getAttribute('href')));
+
+	await search.fill('bfs');
+	expect(await shown()).toEqual(['graph.html']);
+	await expect(page.locator('.drawer-group:visible')).toHaveCount(1);
+	await expect(page.locator('.drawer-group:visible .drawer-count')).toHaveText('1');
+	await expect(page.locator('.drawer > a[href="index.html"]')).toBeVisible();     // the main page and the teachers' pages stay
+
+	await search.fill('AGAC');                                                          // ağaç, Ağaçlar, ağacın…
+	const trees = await shown();
+	expect(trees).toEqual(expect.arrayContaining(['binarySearchTree.html', 'treeDelete.html', 'avlTree.html', 'exTreeHeight.html', 'exTreeSum.html']));
+	expect(trees).not.toContain('queue.html');
+
+	await search.fill('reverse list');                                                  // English titles, every word must match
+	expect(await shown()).toEqual(expect.arrayContaining(['reverseALinkedList.html', 'exReverse.html']));
+	await search.fill('umkehren');                                                      // German
+	expect(await shown()).toContain('exReverse.html');
+
+	await search.fill('graflar');                                                       // a group's name shows its pages
+	expect((await shown()).length).toBe(await page.evaluate(() => window.dsvExamples.find(g => g.group.tr === 'Graflar').items.length));
+
+	await search.fill('xyzqw');
+	await expect(page.locator('.drawer-empty')).toBeVisible();
+	await expect(page.locator('.drawer-empty')).toHaveText('Sonuç yok.');
+
+	await search.fill('');
+	await expect(page.locator('.drawer-group')).toHaveCount(await page.evaluate(() => window.dsvExamples.length));
+	await expect(page.locator('.drawer-group.open')).toHaveCount(1);                     // back as it was: only the current group open
+	await expect(page.locator('.drawer-empty')).toBeHidden();
+
+	await search.fill('kruskal');
+	await search.press('Escape');                                                       // the first Escape clears the search
+	await expect(search).toHaveValue('');
+	await expect(page.locator('body')).toHaveClass(/drawer-open/);
+	await search.fill('kruskal');
+	await search.press('Enter');                                                        // Enter opens the first match
+	await page.waitForURL(/kruskal\.html$/);
+	expect(problems).toEqual([]);
+});
+
 test('examples menu opens, marks the page and closes', async ({ page }) => {
 	const problems = await openPage(page, 'queue.html');
 	await page.locator('.menu-btn').click();
