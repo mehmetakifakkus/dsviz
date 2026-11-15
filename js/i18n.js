@@ -154,6 +154,8 @@
 		exClassSent: {tr: 'Öğretmenine gönderildi.', en: 'Sent to your teacher.', de: 'An deine Lehrkraft gesendet.'},
 		exClassQueued: {tr: 'Gönderilemedi; sonra yeniden denenecek.', en: 'Could not be sent; it will be tried again later.', de: 'Konnte nicht gesendet werden; es wird später erneut versucht.'},
 		exClassRemoved: {tr: 'Öğretmenin seni sınıftan çıkardı ya da sınıf silindi; sonuçların artık gönderilmiyor.', en: 'Your teacher removed you from the class or the class was deleted; your results are not sent any more.', de: 'Deine Lehrkraft hat dich aus der Klasse entfernt oder die Klasse gelöscht; deine Ergebnisse werden nicht mehr gesendet.'},
+		menuSearch: {tr: 'Sayfa ara…', en: 'Search pages…', de: 'Seiten suchen…'},
+		menuNoResults: {tr: 'Sonuç yok.', en: 'No results.', de: 'Keine Treffer.'},
 		classLink: {tr: 'Sınıflarım (öğretmenler)', en: 'My classes (teachers)', de: 'Meine Klassen (Lehrkräfte)'},
 		tpClass: {tr: 'Bu planla sınıf aç', en: 'Open a class with this plan', de: 'Mit diesem Plan eine Klasse eröffnen'},
 		clNotSetUp: {tr: 'Sınıf özelliği bu sitede henüz kurulmadı. Kurulum adımları README dosyasında ("Sınıf kurulumu").', en: 'The classroom is not set up on this site yet. The setup steps are in the README ("Sınıf kurulumu").', de: 'Die Klassenfunktion ist auf dieser Seite noch nicht eingerichtet. Die Schritte stehen in der README („Sınıf kurulumu“).'},
